@@ -28,11 +28,11 @@ const Layout = () => {
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-gray-50 dark:bg-black border-r border-gray-100 dark:border-gray-800 h-full p-8 transition-colors duration-200">
         <h1 className="text-2xl font-bold tracking-tight mb-10 text-gray-900 dark:text-white">Expenses.</h1>
-        <nav className="flex flex-col space-y-4">
+        <nav className="flex flex-col space-y-4 items-center flex-1">
           <NavItem to="/" icon={Home} label="Dashboard" />
           <NavItem to="/history" icon={Calendar} label="History" />
           <NavItem to="/analytics" icon={BarChart2} label="Insights" />
-          <div className="mt-auto">
+          <div className="mt-auto w-full flex justify-center">
             <NavItem to="/profile" icon={User} label="Profile" />
           </div>
         </nav>
@@ -101,7 +101,7 @@ const GlobalAddExpense = () => {
     <>
       <button
         onClick={() => setIsAddModalOpen(true)}
-        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-accent text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
+        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] backdrop-blur-sm text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
         aria-label="Add Expense"
       >
         <Plus className="w-8 h-8" />

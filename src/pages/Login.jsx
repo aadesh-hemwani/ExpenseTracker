@@ -15,6 +15,9 @@ const Login = () => {
   return (
     <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-black px-6 transition-colors duration-200">
       <div className="w-full max-w-sm text-center">
+        <div className="flex justify-center mb-6">
+          <img src="/pwa-512x512.png" alt="App Icon" className="w-24 h-24 rounded-3xl shadow-2xl" />
+        </div>
         <h1 className="text-3xl font-bold mb-2 tracking-tighter text-gray-900 dark:text-white">Expenses.</h1>
         <p className="text-gray-500 dark:text-gray-400 mb-8">Minimalist tracking for daily life.</p>
 
