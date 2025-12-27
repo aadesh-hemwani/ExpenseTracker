@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-accent: #6366f1; /* default indigo */
+  --color-accent-hover: #4f46e5;
+}
+
+body {
+  @apply bg-white text-gray-900 transition-colors duration-200;
+}
+
+.dark body {
+  @apply bg-gray-900 text-gray-100;
+}
+
+/* Custom Scrollbar Hiding for "no-scrollbar" class */
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  
+  /* Safe area padding for iPhones with notches */
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
