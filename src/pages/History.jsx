@@ -21,7 +21,7 @@ const MonthCard = ({ monthKey, total, onClick }) => {
   return (
     <button
       onClick={() => onClick(date)}
-      className="bg-white dark:bg-gray-800 p-5 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-accent/20 transition-all text-left flex flex-col justify-between h-32 group"
+      className="bg-white dark:bg-black p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-accent/20 transition-all text-left flex flex-col justify-between h-32 group"
     >
       <div className="flex justify-between items-start w-full">
         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider group-hover:text-accent transition-colors">
@@ -49,6 +49,16 @@ const History = () => {
   const [view, setView] = useState('list'); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState(null); // The specific day clicked in calendar
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Helper to handle closing animation
+  const handleCloseModal = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setSelectedDate(null);
+      setIsClosing(false);
+    }, 500); // Duration matches animation
+  };
 
   // 1. Group Data for the "Month Grid" View
   const monthGroups = useMemo(() => {
@@ -131,7 +141,7 @@ const History = () => {
           <div className="flex items-center gap-4 mb-6">
             <button
               onClick={backToGrid}
-              className="p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
               <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             </button>
@@ -162,7 +172,7 @@ const History = () => {
                   className={`
                     relative h-14 md:h-24 rounded-xl flex flex-col items-center justify-start pt-2 transition-all border
                     ${!isCurrentMonth ? 'opacity-30' : 'opacity-100'}
-                    ${isSelected ? 'bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10' : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border-transparent'}
+                    ${isSelected ? 'bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10' : 'bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent'}
                     ${isToday(day) && !isSelected ? 'text-accent font-bold bg-accent/10' : ''}
                   `}
                 >
@@ -190,12 +200,12 @@ const History = () => {
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
           {/* 1. Backdrop (Click to close) */}
           <div
-            className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity"
-            onClick={() => setSelectedDate(null)}
+            className={`absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+            onClick={handleCloseModal}
           />
 
           {/* 2. Content Card */}
-          <div className="relative z-[110] bg-white dark:bg-gray-900 w-full max-w-md md:rounded-3xl rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom-10 duration-300 max-h-[70vh] flex flex-col">
+          <div className={`relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-3xl md:rounded-3xl p-6 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[70vh] flex flex-col mb-3 md:mb-0 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
 
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
@@ -208,8 +218,8 @@ const History = () => {
                 </p>
               </div>
               <button
-                onClick={() => setSelectedDate(null)}
-                className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                onClick={handleCloseModal}
+                className="p-2 bg-gray-100 dark:bg-gray-900 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
               >
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
@@ -219,7 +229,7 @@ const History = () => {
             <div className="overflow-y-auto space-y-4 pr-2 pb-6">
               {getExpensesForDay(selectedDate).length > 0 ? (
                 getExpensesForDay(selectedDate).map(expense => (
-                  <div key={expense.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 hover:shadow-md active:scale-[0.98] transition-all duration-200">
+                  <div key={expense.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-md active:scale-[0.98] transition-all duration-200">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-10 rounded-full bg-accent"></div>
                       <div>

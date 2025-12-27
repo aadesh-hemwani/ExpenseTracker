@@ -65,7 +65,7 @@ const Profile = () => {
       <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">Profile.</h1>
 
       {/* User Card */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm flex flex-col items-center text-center mb-6 transition-colors duration-200">
+      <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center text-center mb-6 transition-colors duration-200">
         <div className="relative mb-4">
           {user?.photoURL ? (
             <img
@@ -74,11 +74,11 @@ const Profile = () => {
               className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
             />
           ) : (
-            <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-800 shadow-lg">
+            <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-lg">
               <UserIcon className="w-10 h-10 text-accent" />
             </div>
           )}
-          <div className="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white dark:border-gray-800"></div>
+          <div className="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900"></div>
         </div>
 
         <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.displayName}</h2>
@@ -94,9 +94,9 @@ const Profile = () => {
       <div className="space-y-6">
 
         {/* Appearance Settings */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-200">
+        <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-200">
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-indigo-50 dark:bg-gray-700 rounded-lg text-accent">
+            <div className="p-2 bg-indigo-50 dark:bg-gray-900 rounded-lg text-accent">
               <Palette className="w-5 h-5" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Appearance</h3>
@@ -105,7 +105,7 @@ const Profile = () => {
           {/* Dark Mode Toggle */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-gray-700 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
+              <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-gray-900 text-yellow-400' : 'bg-yellow-100 text-yellow-600'}`}>
                 {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
               </div>
               <div>
@@ -145,7 +145,7 @@ const Profile = () => {
         </div>
 
         {/* Budget Setting */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-200">
+        <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-accent/10 rounded-lg text-accent">
               <Wallet className="w-5 h-5" />
@@ -163,12 +163,12 @@ const Profile = () => {
                 value={budget}
                 onChange={(e) => setBudget(e.target.value)}
                 placeholder="Ex: 25000"
-                className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-accent focus:border-accent block w-full p-3 font-semibold transition-colors disabled:opacity-50"
+                className="flex-1 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white text-sm rounded-xl focus:ring-accent focus:border-accent block w-full p-3 font-semibold transition-colors disabled:opacity-50"
               />
               <button
                 type="submit"
                 disabled={loading}
-                className="bg-black text-white px-6 rounded-xl font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="bg-black dark:bg-white text-white dark:text-black px-6 rounded-xl font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 {loading ? '...' : <Save className="w-4 h-4" />}
                 {loading ? '' : 'Save'}

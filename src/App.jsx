@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
@@ -12,6 +12,18 @@ import Profile from './pages/Profile';
 import { ThemeProvider } from './context/ThemeContext';
 
 function App() {
+    // Prevent Zoom on iOS
+    useEffect(() => {
+        const handleGestureStart = (e) => {
+            e.preventDefault();
+        };
+
+        document.addEventListener('gesturestart', handleGestureStart);
+
+        return () => {
+            document.removeEventListener('gesturestart', handleGestureStart);
+        };
+    }, []);
     return (
         <ThemeProvider>
             <AuthProvider>

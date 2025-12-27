@@ -21,7 +21,7 @@ const formatCurrency = (val) =>
 const CustomTooltip = ({ active, payload, label }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white dark:bg-gray-800 p-3 border border-gray-100 dark:border-gray-700 shadow-xl rounded-xl">
+      <div className="bg-white dark:bg-black p-3 border border-gray-100 dark:border-gray-800 shadow-xl rounded-xl">
         <p className="text-xs text-gray-400 font-semibold mb-1">{label}</p>
         <p className="text-lg font-bold text-gray-900 dark:text-white">
           {formatCurrency(payload[0].value)}
@@ -59,7 +59,7 @@ const Analytics = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-5 bg-gray-900 dark:bg-gray-700 text-white rounded-2xl shadow-lg">
+        <div className="p-5 bg-gray-900 dark:bg-black border border-gray-800 text-white rounded-2xl shadow-lg">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">This Month</span>
             <ArrowUpRight className="w-4 h-4 text-gray-400" />
@@ -67,7 +67,7 @@ const Analytics = () => {
           <div className="text-2xl font-bold">{formatCurrency(currentMonthTotal)}</div>
         </div>
 
-        <div className="p-5 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-2xl shadow-sm">
+        <div className="p-5 bg-white dark:bg-black border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Top Category</span>
             <PieChart className="w-4 h-4 text-gray-400" />
@@ -82,7 +82,7 @@ const Analytics = () => {
       </div>
 
       {/* Monthly Trend Chart */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-3xl border border-gray-100 dark:border-gray-700 shadow-sm">
+      <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Monthly Trend</h3>
 
         <div className="h-64 w-full">

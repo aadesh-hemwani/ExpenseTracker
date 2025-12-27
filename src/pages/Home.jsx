@@ -111,7 +111,7 @@ const Home = () => {
                 </div>
 
                 <div className="flex items-center space-x-2 pt-2">
-                    <div className={`flex items-center justify-center px-2 py-1 rounded-full ${trendDirection === 'down' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                    <div className={`flex items-center justify-center px-2 py-1 rounded-full ${trendDirection === 'down' ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}>
                         {trendDirection === 'down' ? <TrendingDown className="w-4 h-4 mr-1" /> : <TrendingUp className="w-4 h-4 mr-1" />}
                         <span className="text-xs font-semibold">
                             {percentageChange}% vs last month
@@ -136,10 +136,10 @@ const Home = () => {
                         expenses.map((t) => (
                             <div
                                 key={t.id}
-                                className="flex items-center justify-between p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm active:scale-[0.98] hover:scale-[1.01] hover:shadow-md transition-all duration-200"
+                                className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm active:scale-[0.98] hover:scale-[1.01] hover:shadow-md transition-all duration-200"
                             >
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 bg-gray-50 dark:bg-gray-700 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-600">
+                                    <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-800">
                                         {getCategoryIcon(t.category)}
                                     </div>
                                     <div>
@@ -154,7 +154,7 @@ const Home = () => {
                                         {formatCurrency(t.amount)}
                                     </span>
                                     {t.note && (
-                                        <span className="text-xs text-gray-400 truncate max-w-[100px] block">{t.note}</span>
+                                        <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">{t.note}</span>
                                     )}
                                 </div>
                             </div>

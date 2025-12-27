@@ -8,7 +8,7 @@ const NavItem = ({ to, icon: Icon, label }) => (
     to={to}
     className={({ isActive }) =>
       `flex flex-col items-center justify-center transition-all duration-300 ${isActive
-        ? 'px-6 py-2 rounded-full bg-accent text-white shadow-[0_0_20px_rgba(99,102,241,0.5)] scale-110'
+        ? 'px-6 py-3 rounded-full bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] text-white shadow-[0_0_50px_rgba(99,102,241,0.06)] scale-110'
         : 'w-12 h-12 text-gray-400 hover:text-gray-900 dark:hover:text-white'
       }`
     }
@@ -24,9 +24,9 @@ const NavItem = ({ to, icon: Icon, label }) => (
 
 const Layout = () => {
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 font-sans md:flex-row transition-colors duration-200">
+    <div className="flex flex-col h-screen bg-white dark:bg-black text-gray-900 dark:text-gray-100 font-sans md:flex-row transition-colors duration-200">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-gray-50 dark:bg-gray-800 border-r border-gray-100 dark:border-gray-700 h-full p-8 transition-colors duration-200">
+      <aside className="hidden md:flex flex-col w-64 bg-gray-50 dark:bg-black border-r border-gray-100 dark:border-gray-800 h-full p-8 transition-colors duration-200">
         <h1 className="text-2xl font-bold tracking-tight mb-10 text-gray-900 dark:text-white">Expenses.</h1>
         <nav className="flex flex-col space-y-4">
           <NavItem to="/" icon={Home} label="Dashboard" />
@@ -39,7 +39,7 @@ const Layout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-gray-900 transition-colors duration-200">
+      <main className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-black transition-colors duration-200">
         <div className="max-w-2xl mx-auto p-5 md:p-10 pb-24 md:pb-10">
           <Outlet />
         </div>
@@ -49,7 +49,7 @@ const Layout = () => {
       <GlobalAddExpense />
 
       {/* Mobile Bottom Navigation - Floating Pill */}
-      <nav className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] bg-white/10 dark:bg-gray-900/10 backdrop-blur-sm border-2 border-white/60 dark:border-gray-700/20 rounded-full px-2 shadow-2xl shadow-gray-200/50 dark:shadow-black/50 flex justify-between items-center z-50 transition-all duration-300">
+      <nav className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] bg-black/5 dark:bg-white/10 backdrop-blur-sm border-2 border-black/10 dark:border-white/10 rounded-full px-2 shadow-[0_0_15px_rgba(99,102,241,0.12)] flex justify-between items-center z-50 transition-all duration-300">
         <NavItem to="/" icon={Home} label="Home" />
         <NavItem to="/history" icon={Calendar} label="History" />
         <NavItem to="/analytics" icon={BarChart2} label="Insights" />
@@ -101,7 +101,7 @@ const GlobalAddExpense = () => {
     <>
       <button
         onClick={() => setIsAddModalOpen(true)}
-        className="md:hidden fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-accent text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
+        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-accent text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
         aria-label="Add Expense"
       >
         <Plus className="w-8 h-8" />
@@ -113,19 +113,19 @@ const GlobalAddExpense = () => {
             className={`absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
             onClick={handleCloseModal}
           />
-          <div className={`relative z-10 bg-white dark:bg-gray-900 w-full md:w-[32rem] max-w-full rounded-t-[2rem] md:rounded-3xl p-4 md:p-8 shadow-2xl duration-300 max-h-[90vh] flex flex-col mx-auto ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+          <div className={`relative z-10 bg-white dark:bg-black w-[95%] md:w-[32rem] max-w-full rounded-3xl md:rounded-3xl px-6 py-6 md:p-8 shadow-2xl duration-300 max-h-[90vh] flex flex-col mx-auto mb-3 md:mb-0 border border-gray-200 dark:border-gray-800 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
             <div className="flex justify-between items-center mb-6 shrink-0">
               <h3 className="text-xl font-bold dark:text-white">New Expense</h3>
-              <button onClick={handleCloseModal} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+              <button onClick={handleCloseModal} className="p-2 bg-gray-100 dark:bg-gray-900 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">
                 <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
               </button>
             </div>
-            <div className="overflow-y-auto pb-5">
-              <form onSubmit={handleSave} className="space-y-6 pb-2">
+            <div className="overflow-y-auto">
+              <form onSubmit={handleSave} className="space-y-6">
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Date</label>
                   <div className="relative">
-                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 pl-10 text-sm font-semibold text-gray-900 dark:text-white focus:ring-accent focus:border-accent" required />
+                    <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full min-w-0 appearance-none bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 pl-10 text-base font-semibold text-gray-900 dark:text-white focus:ring-0 focus:border-none focus:outline-none" required />
                     <CalendarIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   </div>
                 </div>
@@ -133,7 +133,7 @@ const GlobalAddExpense = () => {
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Amount</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none"><span className="text-gray-500 dark:text-gray-400 font-bold text-xl">₹</span></div>
-                    <input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-4 pl-10 pr-4 text-xl font-bold text-gray-900 dark:text-white focus:ring-accent focus:border-accent" autoFocus required />
+                    <input type="number" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl py-4 pl-10 pr-4 text-xl font-bold text-gray-900 dark:text-white focus:ring-0 focus:border-none focus:outline-none" required />
                   </div>
                 </div>
                 <div>
@@ -146,7 +146,7 @@ const GlobalAddExpense = () => {
                 </div>
                 <div>
                   <label className="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-2">Note</label>
-                  <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note..." className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-sm focus:ring-accent focus:border-accent font-medium text-gray-900 dark:text-white" />
+                  <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="Add a note..." className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 text-base  font-medium text-gray-900 dark:text-white focus:ring-0 focus:border-none focus:outline-none" />
                 </div>
                 <button type="submit" disabled={isSubmitting || !amount} className="w-full bg-accent text-white py-4 rounded-xl font-bold text-lg hover:bg-accent-hover transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xl shadow-accent/20">
                   {isSubmitting && <Loader2 className="w-5 h-5 animate-spin" />}

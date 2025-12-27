@@ -3,12 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --color-accent: #6366f1; /* default indigo */
+  --color-accent: #6366f1;
+  /* default indigo */
   --color-accent-hover: #4f46e5;
+  user-select: none
 }
 
 body {
   @apply bg-white text-gray-900 transition-colors duration-200;
+  touch-action: manipulation;
+}
+
+html {
+  touch-action: manipulation;
 }
 
 .dark body {
@@ -20,11 +27,12 @@ body {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  
+
   /* Safe area padding for iPhones with notches */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
