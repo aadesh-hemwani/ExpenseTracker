@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isSameMonth, subMonths } from 'date-fns';
-import { useExpenses } from '../hooks/useExpenses';
+import { useExpenses, useRecentExpenses } from '../hooks/useExpenses';
 import Card from '../components/Card';
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 
@@ -28,7 +28,8 @@ const formatCurrency = (amount) => {
 
 
 const Home = () => {
-    const { expenses, loading, deleteExpense } = useExpenses();
+    const { expenses, loading } = useRecentExpenses();
+    const { deleteExpense } = useExpenses();
 
     // Derived State (Calculations)
     const { currentMonthTotal, percentageChange, trendDirection } = useMemo(() => {

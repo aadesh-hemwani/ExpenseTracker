@@ -79,7 +79,7 @@ const Analytics = () => {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-5 bg-gradient-to-br from-accent to-purple-900 dark:to-purple-400 text-white rounded-3xl shadow-lg">
+        <div className="p-5 bg-gradient-to-br from-accent to-purple-900 dark:to-purple-400 text-white rounded-2xl shadow-lg">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium dark:text-gray-950 uppercase tracking-wider">This Month</span>
             <ArrowUpRight className="w-4 h-4 dark:text-gray-950" />

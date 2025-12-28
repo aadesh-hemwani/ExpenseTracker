@@ -11,11 +11,10 @@ import {
   isToday,
   parseISO
 } from 'date-fns';
-import { ChevronLeft, ArrowLeft, X, Calendar as CalendarIcon, Trash2, Apple, ShoppingCart, Car, PartyPopper, IndianRupee } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { ChevronLeft, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
 import Card from '../components/Card';
-import { useExpenses } from '../hooks/useExpenses';
-import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
+import { useMonthlyStats, useExpenses } from '../hooks/useExpenses';
+import DayDetailModal from '../components/DayDetailModal';
 
 // --- Sub-Component: Month Card ---
 const MonthCard = ({ monthKey, total, onClick }) => {
@@ -49,7 +48,9 @@ const MonthCard = ({ monthKey, total, onClick }) => {
 
 // --- Main Component ---
 const History = () => {
-  const { expenses, deleteExpense } = useExpenses();
+  // Use Optimized Hook: Fetches only tiny stats docs
+  const { stats, loading } = useMonthlyStats();
+
   const [view, setView] = useState('list'); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState(null); // The specific day clicked in calendar
@@ -66,19 +67,12 @@ const History = () => {
 
   // 1. Group Data for the "Month Grid" View
   const monthGroups = useMemo(() => {
-    const groups = {};
-    expenses.forEach(exp => {
-      // Create a key like "2023-12" to group by month
-      const key = format(exp.date, 'yyyy-MM');
-      if (!groups[key]) groups[key] = 0;
-      groups[key] += Number(exp.amount);
-    });
+    // We can use the 'stats' directly now!
+    // stats array: [{ monthKey: '2023-11', total: 500, count: 2 }, ...]
 
     // Sort by date descending (newest months first)
-    return Object.entries(groups)
-      .sort((a, b) => b[0].localeCompare(a[0]))
-      .map(([key, total]) => ({ key, total }));
-  }, [expenses]);
+    return stats.sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+  }, [stats]);
 
   // 2. Calendar Logic Helpers
   const generateCalendarDays = (monthDate) => {
@@ -89,23 +83,101 @@ const History = () => {
     return eachDayOfInterval({ start: startDate, end: endDate });
   };
 
-  const getExpensesForDay = (date) => {
-    return expenses.filter(e => isSameDay(e.date, date));
-  };
+  // Note: We don't have daily totals for the calendar grid view readily available without fetching expenses for that month.
+  // We can fetch them when we enter the calendar view for a specific month.
+  // For now, let's keep the "dots" simple or we need `useExpensesForMonth` at this level if we want to show daily totals in the calendar grid cells.
+  // Decision: To show per-day totals in the calendar grid, we DO need the expenses for that month.
+  // So when `view === 'calendar'`, we should fetch expenses for `currentMonth`.
 
-  const getDailyTotal = (date) => {
-    return getExpensesForDay(date).reduce((acc, curr) => acc + Number(curr.amount), 0);
-  };
+  // Let's create a sub-component for the Calendar View to encapsulate that data fetching!
 
-  // 3. Handlers
-  const openMonthCalendar = (date) => {
+  return (
+    <div className="animate-fade-in pt-4 h-full flex flex-col pb-20 md:pb-0">
+
+      {/* VIEW 1: MONTH GRID OVERVIEW */}
+      {view === 'list' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">History</h1>
+          </div>
+
+          {monthGroups.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <CalendarIcon className="w-12 h-12 mb-4 opacity-20" />
+              <p>No history yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {monthGroups.map(({ monthKey, total }) => (
+                <MonthCard
+                  key={monthKey}
+                  monthKey={monthKey}
+                  total={total}
+                  onClick={openMonthCalendar}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* VIEW 2: SPECIFIC MONTH CALENDAR */}
+      {view === 'calendar' && (
+        <CalendarView
+          currentMonth={currentMonth}
+          onBack={backToGrid}
+          onSelectDate={setSelectedDate}
+          selectedDate={selectedDate}
+        />
+      )}
+
+      {/* MODAL: The Day Detail View */}
+      {selectedDate && (
+        <DayDetailModal
+          selectedDate={selectedDate}
+          onClose={handleCloseModal}
+          isClosing={isClosing}
+        />
+      )}
+    </div>
+  );
+
+  // --- Handlers ---
+  function openMonthCalendar(date) {
     setCurrentMonth(date);
     setView('calendar');
-  };
+  }
 
-  const backToGrid = () => {
+  function backToGrid() {
     setView('list');
     setSelectedDate(null);
+  }
+};
+
+// --- Sub-Component: Calendar View (Fetches its own data for the month) ---
+// We move this here to use the `useExpensesForMonth` hook cleanly
+import { useExpensesForMonth } from '../hooks/useExpenses';
+import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
+import { Apple, ShoppingCart, Car, PartyPopper, IndianRupee } from 'lucide-react';
+
+const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate }) => {
+  // Fetch expenses for this month to populate the calendar grid dots/totals
+  const { expenses } = useExpensesForMonth(currentMonth);
+  const { deleteExpense } = useExpenses();
+
+  // Helper to calc daily totals from the fetched month expenses
+  const getDailyTotal = (date) => {
+    return expenses
+      .filter(e => isSameDay(e.date, date))
+      .reduce((acc, curr) => acc + Number(curr.amount), 0);
+  };
+
+  const generateCalendarDays = (monthDate) => {
+    const monthStart = startOfMonth(monthDate);
+    const monthEnd = endOfMonth(monthStart);
+    const startDate = startOfWeek(monthStart);
+    const endDate = endOfWeek(monthEnd);
+    return eachDayOfInterval({ start: startDate, end: endDate });
   };
 
   const getCategoryIcon = (cat) => {
@@ -118,151 +190,83 @@ const History = () => {
     }
   };
 
-  // --- RENDER ---
   return (
-    <div className="animate-fade-in pt-4 h-full flex flex-col pb-20 md:pb-0">
+    <div className="space-y-4 animate-in slide-in-from-right-10 duration-200 pb-20">
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={onBack}
+          className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+        </button>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          {format(currentMonth, 'MMMM yyyy')}
+        </h2>
+      </div>
 
-      {/* VIEW 1: MONTH GRID OVERVIEW */}
-      {view === 'list' && (
-        <div className="space-y-6">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">History</h1>
-
-          {monthGroups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <CalendarIcon className="w-12 h-12 mb-4 opacity-20" />
-              <p>No history yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {monthGroups.map(({ key, total }) => (
-                <MonthCard
-                  key={key}
-                  monthKey={key}
-                  total={total}
-                  onClick={openMonthCalendar}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* VIEW 2: SPECIFIC MONTH CALENDAR */}
-      {view === 'calendar' && (
-        <div className="space-y-4 animate-in slide-in-from-right-10 duration-200">
-
-          {/* Header with Back Button */}
-          <div className="flex items-center gap-4 mb-6">
-            <button
-              onClick={backToGrid}
-              className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {format(currentMonth, 'MMMM yyyy')}
-            </h2>
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1 md:gap-2">
+        {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
+          <div key={day} className="text-center text-xs font-semibold text-gray-300 py-2">
+            {day}
           </div>
+        ))}
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1 md:gap-2">
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(day => (
-              <div key={day} className="text-center text-xs font-semibold text-gray-300 py-2">
-                {day}
-              </div>
-            ))}
+        {generateCalendarDays(currentMonth).map((day, idx) => {
+          const dailyTotal = getDailyTotal(day);
+          const hasSpend = dailyTotal > 0;
+          const isSelected = selectedDate && isSameDay(day, selectedDate);
+          const isCurrentMonth = isSameMonth(day, currentMonth);
 
-            {generateCalendarDays(currentMonth).map((day, idx) => {
-              const dailyTotal = getDailyTotal(day);
-              const hasSpend = dailyTotal > 0;
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedDate(day)}
-                  disabled={!isCurrentMonth} // Optional: Disable days not in this month
-                  className={`
+          return (
+            <button
+              key={idx}
+              onClick={() => onSelectDate(day)}
+              disabled={!isCurrentMonth}
+              className={`
                     relative h-14 md:h-24 rounded-xl flex flex-col items-center justify-start pt-2 transition-all border
                     ${!isCurrentMonth ? 'opacity-30' : 'opacity-100'}
                     ${isSelected ? 'bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10' : 'bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent'}
                     ${isToday(day) && !isSelected ? 'text-accent font-bold bg-accent/10' : ''}
                   `}
-                >
-                  <span className="text-sm">{format(day, 'd')}</span>
+            >
+              <span className="text-sm">{format(day, 'd')}</span>
 
-                  {hasSpend && (
-                    <>
-                      {/* Mobile Dot */}
-                      <div className={`mt-1 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white dark:bg-black' : 'bg-accent'} md:hidden`} />
-                      {/* Desktop Amount */}
-                      <span className={`hidden md:block text-[10px] mt-1 font-medium ${isSelected ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
-                        ₹{dailyTotal}
-                      </span>
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL FIX: The Day Detail View */}
-      {selectedDate && (
-        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
-          {/* 1. Backdrop (Click to close) */}
-          <div
-            className={`absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
-            onClick={handleCloseModal}
-          />
-
-          {/* 2. Content Card */}
-          <div className={`relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[50px] md:rounded-3xl p-6 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[70vh] flex flex-col mb-3 md:mb-0 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
-
-            {/* Modal Header */}
-            <div className="flex justify-between items-center mb-6 shrink-0">
-              <div>
-                <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-                  {format(selectedDate, 'EEEE, MMM do')}
-                </h3>
-                <p className="text-sm text-gray-500 font-medium mt-1">
-                  Daily Total: <span className="text-gray-900 dark:text-white font-bold">₹{getDailyTotal(selectedDate)}</span>
-                </p>
-              </div>
-              <button
-                onClick={handleCloseModal}
-                className="p-2 bg-gray-100 dark:bg-gray-900 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
-            </div>
-
-            {/* Scrollable Transaction List */}
-            <div className="overflow-y-auto space-y-4 pr-2 pb-6">
-              {getExpensesForDay(selectedDate).length > 0 ? (
-                <AnimatePresence>
-                  {getExpensesForDay(selectedDate).map(expense => (
-                    <SwipeableExpenseItem
-                      key={expense.id}
-                      t={expense}
-                      getCategoryIcon={getCategoryIcon}
-                      onDelete={deleteExpense}
-                      className="mb-0"
-                    />
-                  ))}
-                </AnimatePresence>
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-gray-300 font-medium">No expenses on this day.</p>
-                </div>
+              {hasSpend && (
+                <>
+                  {/* Mobile Dot */}
+                  <div className={`mt-1 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white dark:bg-black' : 'bg-accent'} md:hidden`} />
+                  {/* Desktop Amount */}
+                  <span className={`hidden md:block text-[10px] mt-1 font-medium ${isSelected ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
+                    ₹{dailyTotal}
+                  </span>
+                </>
               )}
-            </div>
+            </button>
+          );
+        })}
+      </div>
 
-          </div>
+      {/* Monthly Expenses List */}
+      <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">All Expenses in {format(currentMonth, 'MMMM')}</h3>
+        <div className="space-y-4">
+          {expenses.length > 0 ? (
+            expenses.map(expense => (
+              <SwipeableExpenseItem
+                key={expense.id}
+                t={expense}
+                getCategoryIcon={getCategoryIcon}
+                onDelete={deleteExpense}
+              // Use default wrapper style for list consistency
+              />
+            ))
+          ) : (
+            <p className="text-center text-gray-400 text-sm py-4">No expenses recorded for this month.</p>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };
