@@ -71,7 +71,7 @@ const Home = () => {
                     <div className={`flex items-center justify-center px-2 py-1 rounded-full ${trendDirection === 'down' ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}>
                         {trendDirection === 'down' ? <TrendingDown className="w-4 h-4 mr-1" /> : <TrendingUp className="w-4 h-4 mr-1" />}
                         <span className="text-xs font-semibold">
-                            {percentageChange}% vs last month
+                            {percentageChange}% {trendDirection === 'down' ? 'less' : 'more'} than last month
                         </span>
                     </div>
                 </div>
