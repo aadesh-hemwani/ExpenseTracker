@@ -6,12 +6,12 @@
   --color-accent: #6366f1;
   /* default indigo */
   --color-accent-hover: #4f46e5;
-  user-select: none
 }
 
 body {
   @apply bg-white text-gray-900 transition-colors duration-200;
   touch-action: manipulation;
+  user-select: none;
 }
 
 html {

@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { LogOut, Save, User as UserIcon, ShieldCheck, Wallet, Moon, Sun, Palette, Check } from 'lucide-react';
+import Card from '../components/Card';
 
 const Profile = () => {
   const { user, logOut } = useAuth();
@@ -62,10 +63,10 @@ const Profile = () => {
     <div className="animate-fade-in pt-4 max-w-lg mx-auto">
 
       {/* Header */}
-      <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">Profile.</h1>
+      <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">Profile</h1>
 
       {/* User Card */}
-      <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm flex flex-col items-center text-center mb-6 transition-colors duration-200">
+      <Card className="flex flex-col items-center text-center mb-6">
         <div className="relative mb-4">
           {user?.photoURL ? (
             <img
@@ -88,13 +89,13 @@ const Profile = () => {
           <ShieldCheck className="w-3 h-3" />
           <span>Google Verified</span>
         </div>
-      </div>
+      </Card>
 
       {/* Settings Section */}
       <div className="space-y-6">
 
         {/* Appearance Settings */}
-        <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-200">
+        <Card>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-indigo-50 dark:bg-gray-900 rounded-lg text-accent">
               <Palette className="w-5 h-5" />
@@ -142,10 +143,11 @@ const Profile = () => {
               ))}
             </div>
           </div>
-        </div>
+        </Card>
+
 
         {/* Budget Setting */}
-        <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm transition-colors duration-200">
+        <Card>
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-accent/10 rounded-lg text-accent">
               <Wallet className="w-5 h-5" />
@@ -180,7 +182,7 @@ const Profile = () => {
               </p>
             )}
           </form>
-        </div>
+        </Card>
 
         {/* Danger Zone / Logout */}
         <button
@@ -191,12 +193,13 @@ const Profile = () => {
           Sign Out
         </button>
 
-        <p className="text-center text-xs text-gray-300 dark:text-gray-600 pt-4">
-          Version 1.0.0 • Expense Tracker PWA
-        </p>
-
       </div>
-    </div>
+
+      <p className="text-center text-xs text-gray-300 dark:text-gray-600 pt-4">
+        Version 1.0.0 • Expense Tracker PWA
+      </p>
+
+    </div >
   );
 };
 

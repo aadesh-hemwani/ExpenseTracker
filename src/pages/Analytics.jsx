@@ -13,6 +13,11 @@ import { useExpenses } from '../hooks/useExpenses';
 import { processMonthlyData, getCategoryBreakdown } from '../utils/analyticsHelpers';
 import { ArrowUpRight, PieChart } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
+import Card from '../components/Card';
 
 const formatCurrency = (val) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
@@ -33,8 +38,23 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 const Analytics = () => {
+  const { user } = useAuth();
   const { expenses } = useExpenses();
   const { theme, accentColor, accentColors } = useTheme();
+  const [budget, setBudget] = useState(0);
+
+  useEffect(() => {
+    const fetchBudget = async () => {
+      if (user?.uid) {
+        const userRef = doc(db, 'users', user.uid);
+        const docSnap = await getDoc(userRef);
+        if (docSnap.exists()) {
+          setBudget(docSnap.data().monthlyBudgetCap || 0);
+        }
+      }
+    };
+    fetchBudget();
+  }, [user]);
 
   // Memoize data calculation so it doesn't run on every render
   const monthlyData = useMemo(() => processMonthlyData(expenses), [expenses]);
@@ -53,21 +73,21 @@ const Analytics = () => {
 
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Insights.</h1>
+        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">Insights</h1>
         <p className="text-gray-500 mt-2">Visualize your spending patterns.</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-5 bg-gray-900 dark:bg-black border border-gray-800 text-white rounded-2xl shadow-lg">
+        <div className="p-5 bg-gradient-to-br from-accent to-purple-900 dark:to-purple-400 text-white rounded-3xl shadow-lg">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">This Month</span>
-            <ArrowUpRight className="w-4 h-4 text-gray-400" />
+            <span className="text-xs font-medium dark:text-gray-950 uppercase tracking-wider">This Month</span>
+            <ArrowUpRight className="w-4 h-4 dark:text-gray-950" />
           </div>
-          <div className="text-2xl font-bold">{formatCurrency(currentMonthTotal)}</div>
+          <div className="text-4xl font-bold">{formatCurrency(currentMonthTotal)}</div>
         </div>
 
-        <div className="p-5 bg-white dark:bg-black border border-gray-100 dark:border-gray-800 rounded-2xl shadow-sm">
+        <Card className="rounded-2xl p-5">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Top Category</span>
             <PieChart className="w-4 h-4 text-gray-400" />
@@ -78,11 +98,48 @@ const Analytics = () => {
           <div className="text-sm text-gray-500 mt-1">
             {topCategory ? formatCurrency(topCategory.value) : 'No data'}
           </div>
-        </div>
+        </Card>
       </div>
 
+      {/* Budget Progress Card */}
+      {budget > 0 && (
+        <Card className="p-6">
+          <div className="flex justify-between items-end mb-2">
+            <div>
+              <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Monthly Budget</p>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                {formatCurrency(currentMonthTotal)} <span className="text-sm font-normal text-gray-400">/ {formatCurrency(budget)}</span>
+              </h2>
+            </div>
+            <div className="text-right">
+              <span className={`text-xl font-bold ${(currentMonthTotal / budget) > 1 ? 'text-red-500' :
+                (currentMonthTotal / budget) > 0.8 ? 'text-yellow-500' : 'text-green-500'
+                }`}>
+                {Math.min(((currentMonthTotal / budget) * 100).toFixed(0), 999)}%
+              </span>
+            </div>
+          </div>
+
+          {/* Progress Bar Container */}
+          <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-3">
+            <div
+              className={`h-full rounded-full transition-all duration-1000 ease-out ${(currentMonthTotal / budget) > 1 ? 'bg-red-500' :
+                (currentMonthTotal / budget) > 0.8 ? 'bg-yellow-400' : 'bg-green-500'
+                }`}
+              style={{ width: `${Math.min((currentMonthTotal / budget) * 100, 100)}%` }}
+            />
+          </div>
+
+          <p className="text-xs text-gray-400 mt-3 text-right">
+            {currentMonthTotal > budget
+              ? `Over budget by ${formatCurrency(currentMonthTotal - budget)}`
+              : `${formatCurrency(budget - currentMonthTotal)} remaining`}
+          </p>
+        </Card>
+      )}
+
       {/* Monthly Trend Chart */}
-      <div className="bg-white dark:bg-black p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm">
+      <Card>
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Monthly Trend</h3>
 
         <div className="h-64 w-full">
@@ -113,7 +170,9 @@ const Analytics = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </Card>
+
+
 
       {/* Category Breakdown List */}
       <div className="space-y-4 pb-20">

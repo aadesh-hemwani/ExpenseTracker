@@ -136,7 +136,7 @@ const Home = () => {
                         expenses.map((t) => (
                             <div
                                 key={t.id}
-                                className="flex items-center justify-between p-4 bg-white dark:bg-black rounded-2xl border border-gray-100 dark:border-gray-800 shadow-sm active:scale-[0.98] hover:scale-[1.01] hover:shadow-md transition-all duration-200"
+                                className="flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl shadow-sm active:scale-[0.98] hover:scale-[1.01] hover:shadow-md transition-all duration-200"
                             >
                                 <div className="flex items-center space-x-4">
                                     <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-800">

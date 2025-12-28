@@ -12,6 +12,7 @@ import {
   parseISO
 } from 'date-fns';
 import { ChevronLeft, ArrowLeft, X, Calendar as CalendarIcon } from 'lucide-react';
+import Card from '../components/Card';
 import { useExpenses } from '../hooks/useExpenses';
 
 // --- Sub-Component: Month Card ---
@@ -19,9 +20,10 @@ const MonthCard = ({ monthKey, total, onClick }) => {
   const date = parseISO(monthKey + "-01"); // Convert "2023-11" to Date object
 
   return (
-    <button
+    <Card
+      as="button"
       onClick={() => onClick(date)}
-      className="bg-white dark:bg-black p-5 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-md hover:border-accent/20 transition-all text-left flex flex-col justify-between h-32 group"
+      className="p-5 rounded-2xl shadow-sm hover:shadow-md hover:border-accent/20 text-left flex flex-col justify-between h-32 group"
     >
       <div className="flex justify-between items-start w-full">
         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider group-hover:text-accent transition-colors">
@@ -39,7 +41,7 @@ const MonthCard = ({ monthKey, total, onClick }) => {
           {format(date, 'yyyy')}
         </span>
       </div>
-    </button>
+    </Card>
   );
 };
 
@@ -111,7 +113,7 @@ const History = () => {
       {/* VIEW 1: MONTH GRID OVERVIEW */}
       {view === 'list' && (
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">History.</h1>
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">History</h1>
 
           {monthGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
