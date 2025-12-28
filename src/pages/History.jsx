@@ -24,7 +24,7 @@ const MonthCard = ({ monthKey, total, onClick }) => {
     <Card
       as="button"
       onClick={() => onClick(date)}
-      className="p-5 rounded-2xl shadow-sm hover:shadow-md hover:border-accent/20 text-left flex flex-col justify-between h-32 group"
+      className="text-left flex flex-col justify-between h-32 group"
     >
       <div className="flex justify-between items-start w-full">
         <span className="text-sm font-bold text-gray-400 uppercase tracking-wider group-hover:text-accent transition-colors">
