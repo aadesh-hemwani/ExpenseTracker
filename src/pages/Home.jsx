@@ -5,27 +5,30 @@ import {
     Loader2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { format, isSameMonth, subMonths } from 'date-fns';
-import { useExpenses, useRecentExpenses } from '../hooks/useExpenses';
+import { format, subMonths } from 'date-fns';
+import { useExpenses, useRecentExpenses, useMonthlyStats } from '../hooks/useExpenses';
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 import { formatCurrency } from '../utils/formatUtils';
 import { getCategoryIcon } from '../utils/uiUtils';
 
 
 const Home = () => {
-    const { expenses, loading } = useRecentExpenses();
+    const { expenses, loading: loadingRecent } = useRecentExpenses();
+    const { stats, loading: loadingStats } = useMonthlyStats();
     const { deleteExpense } = useExpenses();
 
     // Derived State (Calculations)
     const { currentMonthTotal, percentageChange, trendDirection } = useMemo(() => {
         const now = new Date();
+        const currentMonthKey = format(now, 'yyyy-MM');
         const lastMonthDate = subMonths(now, 1);
+        const lastMonthKey = format(lastMonthDate, 'yyyy-MM');
 
-        const thisMonthExpenses = expenses.filter(e => e.date && isSameMonth(e.date, now));
-        const lastMonthExpenses = expenses.filter(e => e.date && isSameMonth(e.date, lastMonthDate));
+        const thisMonthStat = stats.find(s => s.monthKey === currentMonthKey);
+        const lastMonthStat = stats.find(s => s.monthKey === lastMonthKey);
 
-        const thisMonthSum = thisMonthExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-        const lastMonthSum = lastMonthExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+        const thisMonthSum = thisMonthStat ? Number(thisMonthStat.total) : 0;
+        const lastMonthSum = lastMonthStat ? Number(lastMonthStat.total) : 0;
 
         let pctChange = 0;
         if (lastMonthSum > 0) {
@@ -37,13 +40,13 @@ const Home = () => {
             percentageChange: Math.abs(pctChange).toFixed(0),
             trendDirection: thisMonthSum > lastMonthSum ? 'up' : 'down'
         };
-    }, [expenses]);
+    }, [stats]);
 
 
 
 
 
-    if (loading) {
+    if (loadingRecent || loadingStats) {
         return (
             <div className="flex justify-center items-center h-[50vh]">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-300" />

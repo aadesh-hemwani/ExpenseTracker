@@ -213,9 +213,22 @@ export const useExpenses = () => {
     }
   };
 
+  const updateMonthlyStat = async (monthKey, total, count) => {
+    if (!user) return;
+    const statsRef = collection(db, 'users', user.uid, 'stats');
+    const statDocRef = doc(statsRef, monthKey);
+    try {
+      await setDoc(statDocRef, { total, count }, { merge: true });
+      console.log(`Stats updated for ${monthKey}: Total ${total}, Count ${count}`);
+    } catch (e) {
+      console.error("Failed to update stats:", e);
+    }
+  };
+
   return {
     addExpense,
     deleteExpense,
+    updateMonthlyStat,
     // Keep 'expenses' and 'loading' for backward compatibility if needed,
     // but better to force migration.
     // We'll return empty arrays for compatibility to prevent crashes until we update UI.

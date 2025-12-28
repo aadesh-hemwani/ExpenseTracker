@@ -9,7 +9,7 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { useMonthlyStats, useExpensesForMonth } from '../hooks/useExpenses';
+import { useMonthlyStats, useExpensesForMonth, useExpenses } from '../hooks/useExpenses';
 import { getCategoryBreakdown } from '../utils/analyticsHelpers';
 import { format, subMonths } from 'date-fns';
 import { ArrowUpRight, PieChart } from 'lucide-react';
@@ -63,6 +63,29 @@ const Analytics = () => {
     };
     fetchBudget();
   }, [user]);
+
+  // AUTO-SYNC STATS Logic
+  const { updateMonthlyStat } = useExpenses();
+  useEffect(() => {
+    if (loading) return; // Wait for expenses to load
+
+    const currentMonthKey = format(targetDate, 'yyyy-MM');
+    // Calculate true totals from actual expenses
+    const trueTotal = monthlyExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
+    const trueCount = monthlyExpenses.length;
+
+    // Find cached stat
+    const cachedStat = stats.find(s => s.monthKey === currentMonthKey);
+
+    // Compare and Update if needed
+    // We allow a small tolerance or just strict equality. Since these are user input numbers, strict should work.
+    // If stat doesn't exist OR total mismatches OR count mismatches
+    if (!cachedStat || cachedStat.total !== trueTotal || cachedStat.count !== trueCount) {
+      console.log(`Auto-Syncing Stats for ${currentMonthKey}...`);
+      console.log(`Cached: ${cachedStat?.total}, True: ${trueTotal}`);
+      updateMonthlyStat(currentMonthKey, trueTotal, trueCount);
+    }
+  }, [monthlyExpenses, stats, loading, targetDate, updateMonthlyStat]);
 
   // A. Prepare Data for "Monthly Trend" (Last 6 Months) from 'stats'
   const monthlyData = useMemo(() => {
