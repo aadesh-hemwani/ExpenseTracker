@@ -13,7 +13,7 @@ const DayDetailModal = ({ selectedDate, onClose, isClosing, expenses = [] }) => 
 
     // 2. Filter for the specific day client-side
     const dayExpenses = useMemo(() => {
-        return expenses.filter(e => isSameDay(e.date, select`edDate));
+        return expenses.filter(e => isSameDay(e.date, selectedDate));
     }, [expenses, selectedDate]);
 
     const dailyTotal = dayExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
@@ -22,12 +22,12 @@ const DayDetailModal = ({ selectedDate, onClose, isClosing, expenses = [] }) => 
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
             {/* 1. Backdrop (Click to close) */}
             <div
-                className={`absolute inset - 0 bg - gray - 900 / 30 backdrop - blur - sm transition - opacity ${ isClosing? 'animate-fade-out': 'animate-fade-in' }`}
+                className={`absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
                 onClick={onClose}
             />
 
             {/* 2. Content Card */}
-            <div className={`relative z - 10 bg - white dark: bg - black w - [95 %] max - w - md rounded - [50px] md: rounded - 3xl p - 6 shadow - 2xl border border - gray - 200 / 50 dark: border - white / 10 max - h - [70vh] flex flex - col mb - 3 md: mb - 0 ${ isClosing? 'animate-slide-down': 'animate-slide-up' }`}>
+            <div className={`relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[50px] md:rounded-3xl p-6 shadow-2xl border border-gray-200/50 dark:border-white/10 max-h-[70vh] flex flex-col mb-3 md:mb-0 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
 
                 {/* Modal Header */}
                 <div className="flex justify-between items-center mb-6 shrink-0">
