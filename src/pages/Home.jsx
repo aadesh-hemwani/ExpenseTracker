@@ -8,9 +8,13 @@ import {
     Car,
     IndianRupee,
     Loader2,
+    Trash2,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { format, isSameMonth, subMonths } from 'date-fns';
 import { useExpenses } from '../hooks/useExpenses';
+import Card from '../components/Card';
+import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 
 // Utility for clean currency formatting
 const formatCurrency = (amount) => {
@@ -21,8 +25,10 @@ const formatCurrency = (amount) => {
     }).format(amount);
 };
 
+
+
 const Home = () => {
-    const { expenses, loading } = useExpenses();
+    const { expenses, loading, deleteExpense } = useExpenses();
 
     // Derived State (Calculations)
     const { currentMonthTotal, percentageChange, trendDirection } = useMemo(() => {
@@ -133,32 +139,16 @@ const Home = () => {
                             <p className="text-gray-300 text-xs mt-1">Tap + to add one.</p>
                         </div>
                     ) : (
-                        expenses.map((t) => (
-                            <div
-                                key={t.id}
-                                className="flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl shadow-sm active:scale-[0.98] hover:scale-[1.01] hover:shadow-md transition-all duration-200"
-                            >
-                                <div className="flex items-center space-x-4">
-                                    <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-800">
-                                        {getCategoryIcon(t.category)}
-                                    </div>
-                                    <div>
-                                        <p className="font-semibold text-gray-900 dark:text-white text-sm">{t.category}</p>
-                                        <p className="text-xs text-gray-400 mt-0.5">
-                                            {t.date ? format(t.date, 'MMM dd') : 'Just now'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <span className="font-bold text-gray-900 dark:text-white block text-sm">
-                                        {formatCurrency(t.amount)}
-                                    </span>
-                                    {t.note && (
-                                        <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">{t.note}</span>
-                                    )}
-                                </div>
-                            </div>
-                        ))
+                        <AnimatePresence>
+                            {expenses.map((t) => (
+                                <SwipeableExpenseItem
+                                    key={t.id}
+                                    t={t}
+                                    getCategoryIcon={getCategoryIcon}
+                                    onDelete={deleteExpense}
+                                />
+                            ))}
+                        </AnimatePresence>
                     )}
                 </div>
             </section>

@@ -11,9 +11,11 @@ import {
   isToday,
   parseISO
 } from 'date-fns';
-import { ChevronLeft, ArrowLeft, X, Calendar as CalendarIcon } from 'lucide-react';
+import { ChevronLeft, ArrowLeft, X, Calendar as CalendarIcon, Trash2, Apple, ShoppingCart, Car, PartyPopper, IndianRupee } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import Card from '../components/Card';
 import { useExpenses } from '../hooks/useExpenses';
+import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 
 // --- Sub-Component: Month Card ---
 const MonthCard = ({ monthKey, total, onClick }) => {
@@ -47,7 +49,7 @@ const MonthCard = ({ monthKey, total, onClick }) => {
 
 // --- Main Component ---
 const History = () => {
-  const { expenses } = useExpenses();
+  const { expenses, deleteExpense } = useExpenses();
   const [view, setView] = useState('list'); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState(null); // The specific day clicked in calendar
@@ -104,6 +106,16 @@ const History = () => {
   const backToGrid = () => {
     setView('list');
     setSelectedDate(null);
+  };
+
+  const getCategoryIcon = (cat) => {
+    switch (cat) {
+      case 'Food': return <Apple className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
+      case 'Shopping': return <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
+      case 'Transport': return <Car className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
+      case 'Entertainment': return <PartyPopper className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
+      default: return <IndianRupee className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
+    }
   };
 
   // --- RENDER ---
@@ -207,7 +219,7 @@ const History = () => {
           />
 
           {/* 2. Content Card */}
-          <div className={`relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-3xl md:rounded-3xl p-6 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[70vh] flex flex-col mb-3 md:mb-0 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+          <div className={`relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[50px] md:rounded-3xl p-6 shadow-2xl border border-gray-200 dark:border-gray-800 max-h-[70vh] flex flex-col mb-3 md:mb-0 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
 
             {/* Modal Header */}
             <div className="flex justify-between items-center mb-6 shrink-0">
@@ -230,18 +242,17 @@ const History = () => {
             {/* Scrollable Transaction List */}
             <div className="overflow-y-auto space-y-4 pr-2 pb-6">
               {getExpensesForDay(selectedDate).length > 0 ? (
-                getExpensesForDay(selectedDate).map(expense => (
-                  <div key={expense.id} className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800 hover:shadow-md active:scale-[0.98] transition-all duration-200">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2 h-10 rounded-full bg-accent"></div>
-                      <div>
-                        <p className="font-bold text-gray-900 dark:text-white text-sm">{expense.category}</p>
-                        {expense.note && <p className="text-xs text-gray-500 line-clamp-1">{expense.note}</p>}
-                      </div>
-                    </div>
-                    <span className="font-bold text-gray-900 dark:text-white">₹{expense.amount}</span>
-                  </div>
-                ))
+                <AnimatePresence>
+                  {getExpensesForDay(selectedDate).map(expense => (
+                    <SwipeableExpenseItem
+                      key={expense.id}
+                      t={expense}
+                      getCategoryIcon={getCategoryIcon}
+                      onDelete={deleteExpense}
+                      className="mb-0"
+                    />
+                  ))}
+                </AnimatePresence>
               ) : (
                 <div className="text-center py-10">
                   <p className="text-gray-300 font-medium">No expenses on this day.</p>

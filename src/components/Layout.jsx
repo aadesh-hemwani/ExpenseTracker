@@ -49,7 +49,7 @@ const Layout = () => {
       <GlobalAddExpense />
 
       {/* Mobile Bottom Navigation - Floating Pill */}
-      <nav className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] bg-black/5 dark:bg-white/10 backdrop-blur-sm border-2 border-black/10 dark:border-white/10 rounded-full px-2 shadow-[0_0_15px_rgba(99,102,241,0.12)] flex justify-between items-center z-50 transition-all duration-300">
+      <nav className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] bg-black/10 dark:bg-white/10 backdrop-blur-[5px] border border-white dark:border-black/25 rounded-full px-2 shadow-[0_0_30px_rgba(191, 191, 191,0.12)] flex justify-between items-center z-50 transition-all duration-300">
         <NavItem to="/" icon={Home} label="Home" />
         <NavItem to="/history" icon={Calendar} label="History" />
         <NavItem to="/analytics" icon={BarChart2} label="Insights" />
@@ -101,7 +101,7 @@ const GlobalAddExpense = () => {
     <>
       <button
         onClick={() => setIsAddModalOpen(true)}
-        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] backdrop-blur-sm text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
+        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-[color-mix(in_srgb,var(--color-accent),transparent_30%)] backdrop-blur-[5px] text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
         aria-label="Add Expense"
       >
         <Plus className="w-8 h-8" />
@@ -110,10 +110,10 @@ const GlobalAddExpense = () => {
       {isAddModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
           <div
-            className={`absolute inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+            className={`absolute inset-0 bg-gray-900/50 backdrop-blur-[5px] transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
             onClick={handleCloseModal}
           />
-          <div className={`relative z-10 bg-white dark:bg-black w-[95%] md:w-[32rem] max-w-full rounded-3xl md:rounded-3xl px-6 py-6 md:p-8 shadow-2xl duration-300 max-h-[90vh] flex flex-col mx-auto mb-3 md:mb-0 border border-gray-200 dark:border-gray-800 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+          <div className={`relative z-10 bg-white dark:bg-black w-[95%] md:w-[32rem] max-w-full rounded-[50px] md:rounded-3xl px-6 py-6 md:p-8 shadow-2xl duration-300 max-h-[90vh] flex flex-col mx-auto mb-3 md:mb-0 border border-gray-200 dark:border-gray-800 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
             <div className="flex justify-between items-center mb-6 shrink-0">
               <h3 className="text-xl font-bold dark:text-white">New Expense</h3>
               <button onClick={handleCloseModal} className="p-2 bg-gray-100 dark:bg-gray-900 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors">

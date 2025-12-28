@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { 
-  collection, 
-  addDoc, 
-  onSnapshot, 
-  query, 
-  orderBy, 
+import {
+  collection,
+  addDoc,
+  onSnapshot,
+  query,
+  orderBy,
   serverTimestamp,
-  Timestamp 
+  Timestamp,
+  deleteDoc,
+  doc
 } from 'firebase/firestore'; // Added Timestamp
 import { useAuth } from '../context/AuthContext';
 
@@ -29,7 +31,7 @@ export const useExpenses = () => {
       const docs = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data(),
-        date: doc.data().date?.toDate() 
+        date: doc.data().date?.toDate()
       }));
       setExpenses(docs);
       setLoading(false);
@@ -41,13 +43,13 @@ export const useExpenses = () => {
   // UPDATED: Now accepts a 'customDate' argument
   const addExpense = async (amount, category, note, customDate) => {
     if (!user) return;
-    
+
     const collectionRef = collection(db, 'users', user.uid, 'expenses');
-    
+
     // Convert string date (YYYY-MM-DD) to Firestore Timestamp
     // We add the current time to the selected date so it doesn't default to midnight
     let finalDate = serverTimestamp();
-    
+
     if (customDate) {
       const now = new Date();
       const selected = new Date(customDate);
@@ -64,5 +66,11 @@ export const useExpenses = () => {
     });
   };
 
-  return { expenses, loading, addExpense };
+  const deleteExpense = async (id) => {
+    if (!user) return;
+    const docRef = doc(db, 'users', user.uid, 'expenses', id);
+    await deleteDoc(docRef);
+  };
+
+  return { expenses, loading, addExpense, deleteExpense };
 };
