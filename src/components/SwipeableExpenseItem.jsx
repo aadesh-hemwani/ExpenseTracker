@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, useMotionValue, useAnimation } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-import Card from './Card';
+
 
 // Utility for clean currency formatting (localized to IN)
 const formatCurrency = (amount) => {
@@ -57,29 +57,27 @@ const SwipeableExpenseItem = ({ t, getCategoryIcon, onDelete, className = "", ca
                 dragConstraints={{ left: -80, right: 0 }}
                 dragElastic={0.1}
                 onDragEnd={handleDragEnd}
-                className="relative z-10 bg-transparent"
+                className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.3px] border-gray-200/20 dark:shadow-sm shadow-[0_0_30px_rgba(70,70,70,0.1)] active:scale-[0.98] transition-all duration-200 ${cardClassName}`}
             >
-                <Card className={`flex items-center justify-between p-4 bg-white dark:bg-dark-card active:scale-[0.98] transition-all duration-200 shadow-sm border border-gray-100 dark:border-gray-800 ${cardClassName}`}>
-                    <div className="flex items-center space-x-4">
-                        <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-800">
-                            {getCategoryIcon(t.category)}
-                        </div>
-                        <div className="text-left">
-                            <p className="font-semibold text-gray-900 dark:text-white text-sm">{t.category}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                                {t.date ? format(t.date, 'MMM dd') : 'Just now'}
-                            </p>
-                        </div>
+                <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-800">
+                        {getCategoryIcon(t.category)}
                     </div>
-                    <div className="text-right">
-                        <span className="font-bold text-gray-900 dark:text-white block text-sm">
-                            {formatCurrency(t.amount)}
-                        </span>
-                        {t.note && (
-                            <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">{t.note}</span>
-                        )}
+                    <div className="text-left">
+                        <p className="font-semibold text-gray-900 dark:text-white text-sm">{t.category}</p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                            {t.date ? format(t.date, 'MMM dd') : 'Just now'}
+                        </p>
                     </div>
-                </Card>
+                </div>
+                <div className="text-right">
+                    <span className="font-bold text-gray-900 dark:text-white block text-sm">
+                        {formatCurrency(t.amount)}
+                    </span>
+                    {t.note && (
+                        <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">{t.note}</span>
+                    )}
+                </div>
             </motion.div>
         </motion.div>
     );

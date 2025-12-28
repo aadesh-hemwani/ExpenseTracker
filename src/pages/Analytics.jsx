@@ -9,8 +9,9 @@ import {
   ResponsiveContainer,
   Cell
 } from 'recharts';
-import { useExpenses } from '../hooks/useExpenses';
-import { processMonthlyData, getCategoryBreakdown } from '../utils/analyticsHelpers';
+import { useMonthlyStats, useExpensesForMonth } from '../hooks/useExpenses';
+import { getCategoryBreakdown } from '../utils/analyticsHelpers';
+import { format, subMonths } from 'date-fns';
 import { ArrowUpRight, PieChart } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
@@ -39,7 +40,14 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const Analytics = () => {
   const { user } = useAuth();
-  const { expenses } = useExpenses();
+  // 1. Get High-Level Stats for Trend Chart
+  const { stats } = useMonthlyStats();
+
+  // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
+  // We default to the current month for the "Insight" view
+  const [targetDate, setTargetDate] = useState(new Date());
+  const { expenses: monthlyExpenses, loading } = useExpensesForMonth(targetDate);
+
   const { theme, accentColor, accentColors } = useTheme();
   const [budget, setBudget] = useState(0);
 
@@ -56,11 +64,31 @@ const Analytics = () => {
     fetchBudget();
   }, [user]);
 
-  // Memoize data calculation so it doesn't run on every render
-  const monthlyData = useMemo(() => processMonthlyData(expenses), [expenses]);
-  const categoryData = useMemo(() => getCategoryBreakdown(expenses), [expenses]);
+  // A. Prepare Data for "Monthly Trend" (Last 6 Months) from 'stats'
+  const monthlyData = useMemo(() => {
+    const last6 = [];
+    const today = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const date = subMonths(today, i);
+      const key = format(date, 'yyyy-MM');
+      const data = stats.find(s => s.monthKey === key);
+      last6.push({
+        name: format(date, 'MMM'),
+        total: data ? data.total : 0,
+        key: key
+      });
+    }
+    return last6;
+  }, [stats]);
 
-  const currentMonthTotal = monthlyData[monthlyData.length - 1]?.total || 0;
+  // B. Prepare Data for "Category Breakdown" (Current Month Only)
+  const categoryData = useMemo(() => getCategoryBreakdown(monthlyExpenses), [monthlyExpenses]);
+
+  // Current Month KPI (Calculated from detailed expenses for accuracy/liveliness)
+  const currentMonthTotal = useMemo(() => {
+    return monthlyExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
+  }, [monthlyExpenses]);
+
   const topCategory = categoryData[0];
 
   // Chart Colors based on Theme
@@ -163,7 +191,8 @@ const Analytics = () => {
                 {monthlyData.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={index === monthlyData.length - 1 ? accentColors[accentColor]?.default || '#6366f1' : '#e5e7eb'}
+                    fill={accentColors[accentColor]?.default || '#6366f1'}
+                    fillOpacity={index === monthlyData.length - 1 ? 1 : 0.3}
                   />
                 ))}
               </Bar>
@@ -176,7 +205,7 @@ const Analytics = () => {
 
       {/* Category Breakdown List */}
       <div className="space-y-4 pb-20">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Breakdown</h3>
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">This Month's Breakdown</h3>
         {categoryData.map((cat, index) => (
           <div key={index} className="flex items-center justify-between p-3">
             <div className="flex items-center gap-3">
