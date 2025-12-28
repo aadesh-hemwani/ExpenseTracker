@@ -3,20 +3,43 @@ import { Outlet, NavLink } from 'react-router-dom';
 import { Home, Calendar, BarChart2, User, Plus, X, Loader2, Apple, ShoppingCart, Car, PartyPopper, IndianRupee, Calendar as CalendarIcon } from 'lucide-react';
 import { useExpenses } from '../hooks/useExpenses';
 
+// --- Liquid Glass SVG Filter ---
+const LiquidGlassFilter = () => (
+  <svg style={{ position: 'absolute', width: 0, height: 0, pointerEvents: 'none' }}>
+    <defs>
+      <filter id="liquid-glass" x="-20%" y="-20%" width="140%" height="140%">
+        {/* Generate turbulence for the liquid distortion */}
+        <feTurbulence type="turbulence" baseFrequency="0.01" numOctaves="3" result="turbulence" seed="5" />
+        {/* Displace the background using the turbulence */}
+        <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="25" xChannelSelector="R" yChannelSelector="G" result="distorted" />
+
+        {/* Add a specular highlight for the glossy surface feeling */}
+        <feSpecularLighting in="turbulence" surfaceScale="2" specularConstant="1" specularExponent="20" lightingColor="#ffffff" result="specular">
+          <fePointLight x="-50" y="-100" z="200" />
+        </feSpecularLighting>
+
+        {/* Composite the specular highlight over the distorted background */}
+        <feComposite in="specular" in2="distorted" operator="in" result="specularComposite" />
+        <feComposite in="specularComposite" in2="distorted" operator="arithmetic" k1="0" k2="1" k3="1" k4="0" />
+      </filter>
+    </defs>
+  </svg>
+);
+
 const NavItem = ({ to, icon: Icon, label }) => (
   <NavLink
     to={to}
     className={({ isActive }) =>
-      `flex flex-col items-center justify-center transition-all duration-300 ${isActive
-        ? 'px-6 py-3 rounded-full bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] text-white shadow-[0_0_50px_rgba(99,102,241,0.06)] scale-110'
-        : 'w-12 h-12 text-gray-400 hover:text-gray-900 dark:hover:text-white'
+      `flex flex-col items-center justify-center transition-all duration-300 relative z-10 ${isActive
+        ? 'px-6 py-3 rounded-full bg-white/20 text-white shadow-[0_4px_20px_rgba(255,255,255,0.3)] scale-110 backdrop-blur-md border border-white/30'
+        : 'w-12 h-12 text-gray-500 hover:text-gray-900 dark:hover:text-white dark:text-gray-400'
       }`
     }
   >
     {({ isActive }) => (
       <>
-        <Icon className="w-5 h-5 mb-0.5" strokeWidth={2.5} />
-        <span className={`text-[10px] font-medium leading-none ${isActive ? 'block' : 'hidden md:block'}`}>{label}</span>
+        <Icon className="w-5 h-5 mb-0.5 drop-shadow-sm" strokeWidth={2.5} />
+        <span className={`text-[10px] font-bold leading-none ${isActive ? 'block' : 'hidden md:block'}`}>{label}</span>
       </>
     )}
   </NavLink>
@@ -25,6 +48,8 @@ const NavItem = ({ to, icon: Icon, label }) => (
 const Layout = () => {
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-black text-gray-900 dark:text-gray-100 font-sans md:flex-row transition-colors duration-200">
+      <LiquidGlassFilter />
+
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-gray-50 dark:bg-black border-r border-gray-100 dark:border-gray-800 h-full p-8 transition-colors duration-200">
         <h1 className="text-2xl font-bold tracking-tight mb-10 text-gray-900 dark:text-white">Expenses.</h1>
@@ -48,8 +73,15 @@ const Layout = () => {
       {/* Global Add Expense FAB & Modal */}
       <GlobalAddExpense />
 
-      {/* Mobile Bottom Navigation - Floating Pill */}
-      <nav className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] bg-black/5 dark:bg-white/10 backdrop-blur-sm border-2 border-black/10 dark:border-white/10 rounded-full px-2 shadow-[0_0_15px_rgba(99,102,241,0.12)] flex justify-between items-center z-50 transition-all duration-300">
+      {/* Mobile Bottom Navigation - Liquid Glass Pill */}
+      <nav
+        className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] rounded-full px-2 flex justify-between items-center z-50 transition-all duration-300 border border-white/20 dark:border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.1)]"
+        style={{
+          backdropFilter: 'url(#liquid-glass) blur(8px)',
+          WebkitBackdropFilter: 'url(#liquid-glass) blur(8px)', // Safari support attempt, though SVG filter might fail
+          backgroundColor: 'rgba(255, 255, 255, 0.1)' // Minimal tint mainly provided by reflection
+        }}
+      >
         <NavItem to="/" icon={Home} label="Home" />
         <NavItem to="/history" icon={Calendar} label="History" />
         <NavItem to="/analytics" icon={BarChart2} label="Insights" />
@@ -101,10 +133,17 @@ const GlobalAddExpense = () => {
     <>
       <button
         onClick={() => setIsAddModalOpen(true)}
-        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] backdrop-blur-sm text-white rounded-full shadow-2xl hover:bg-accent-hover transition-all active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20"
+        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] rounded-full text-white z-40 flex items-center justify-center border border-white/40 shadow-[0_8px_32px_rgba(99,102,241,0.25)] hover:scale-105 active:scale-95 transition-all overflow-hidden"
         aria-label="Add Expense"
+        style={{
+          backdropFilter: 'url(#liquid-glass) blur(6px)',
+          WebkitBackdropFilter: 'url(#liquid-glass) blur(6px)',
+          backgroundColor: 'rgba(99, 102, 241, 0.2)' // Accent tint
+        }}
       >
-        <Plus className="w-8 h-8" />
+        {/* Inner gradient blob for extra juice */}
+        <div className="absolute inset-0 bg-gradient-to-tr from-accent/40 to-transparent opacity-80" />
+        <Plus className="w-8 h-8 relative z-10 drop-shadow-md" strokeWidth={3} />
       </button>
 
       {isAddModalOpen && (
