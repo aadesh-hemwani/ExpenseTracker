@@ -1,30 +1,15 @@
 import React, { useMemo } from 'react';
 import {
-    Apple,
-    PartyPopper,
     TrendingUp,
     TrendingDown,
-    ShoppingCart,
-    Car,
-    IndianRupee,
     Loader2,
-    Trash2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, isSameMonth, subMonths } from 'date-fns';
 import { useExpenses, useRecentExpenses } from '../hooks/useExpenses';
-import Card from '../components/Card';
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
-
-// Utility for clean currency formatting
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: 0
-    }).format(amount);
-};
-
+import { formatCurrency } from '../utils/formatUtils';
+import { getCategoryIcon } from '../utils/uiUtils';
 
 
 const Home = () => {
@@ -54,44 +39,9 @@ const Home = () => {
         };
     }, [expenses]);
 
-    const handleCloseModal = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            setIsAddModalOpen(false);
-            setIsClosing(false);
-        }, 500); // Match animation duration
-    };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
-        if (!amount) return;
 
-        setIsSubmitting(true);
-        try {
-            await addExpense(amount, category, note, date);
 
-            // Reset Form & Close with Animation
-            setAmount('');
-            setCategory('Food');
-            setNote('');
-            setDate(new Date().toISOString().split('T')[0]);
-            handleCloseModal();
-        } catch (error) {
-            console.error("Failed to add expense", error);
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const getCategoryIcon = (cat) => {
-        switch (cat) {
-            case 'Food': return <Apple className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-            case 'Shopping': return <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-            case 'Transport': return <Car className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-            case 'Entertainment': return <PartyPopper className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-            default: return <IndianRupee className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-        }
-    };
 
     if (loading) {
         return (

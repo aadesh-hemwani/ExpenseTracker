@@ -4,14 +4,7 @@ import { Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 
-// Utility for clean currency formatting (localized to IN)
-const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: 0
-    }).format(amount);
-};
+import { formatCurrency } from '../utils/formatUtils';
 
 const SwipeableExpenseItem = ({ t, getCategoryIcon, onDelete, className = "", cardClassName = "" }) => {
     const controls = useAnimation();
@@ -57,10 +50,10 @@ const SwipeableExpenseItem = ({ t, getCategoryIcon, onDelete, className = "", ca
                 dragConstraints={{ left: -80, right: 0 }}
                 dragElastic={0.1}
                 onDragEnd={handleDragEnd}
-                className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.3px] border-gray-200/20 dark:shadow-sm shadow-[0_0_30px_rgba(70,70,70,0.1)] active:scale-[0.98] transition-all duration-200 ${cardClassName}`}
+                className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.5px] border-gray-200/20 dark:border-white/10 dark:shadow-none shadow-[0_0_30px_rgba(70,70,70,0.1)] active:scale-[0.98] transition-all duration-200 ${cardClassName}`}
             >
                 <div className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-gray-50 dark:bg-gray-900 rounded-full flex items-center justify-center border border-gray-100 dark:border-gray-800">
+                    <div className="w-10 h-10 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/10">
                         {getCategoryIcon(t.category)}
                     </div>
                     <div className="text-left">

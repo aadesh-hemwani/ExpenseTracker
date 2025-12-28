@@ -13,7 +13,7 @@ import {
 } from 'date-fns';
 import { ChevronLeft, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
 import Card from '../components/Card';
-import { useMonthlyStats, useExpenses } from '../hooks/useExpenses';
+import { useMonthlyStats, useExpenses, useExpensesForMonth } from '../hooks/useExpenses';
 import DayDetailModal from '../components/DayDetailModal';
 
 // --- Sub-Component: Month Card ---
@@ -57,6 +57,7 @@ const History = () => {
   const [isClosing, setIsClosing] = useState(false);
 
   // Helper to handle closing animation
+  // Helper to handle closing animation
   const handleCloseModal = () => {
     setIsClosing(true);
     setTimeout(() => {
@@ -64,6 +65,10 @@ const History = () => {
       setIsClosing(false);
     }, 500); // Duration matches animation
   };
+
+  // 0. Fetch Expenses for the current month view (Optimization: Lifted from CalendarView/Modal)
+  // We only fetch if we are in calendar view, or if we have a selected date (which implies calendar view contexts)
+  const { expenses: monthExpenses, loading: monthLoading } = useExpensesForMonth(view === 'calendar' ? currentMonth : null);
 
   // 1. Group Data for the "Month Grid" View
   const monthGroups = useMemo(() => {
@@ -128,6 +133,7 @@ const History = () => {
           onBack={backToGrid}
           onSelectDate={setSelectedDate}
           selectedDate={selectedDate}
+          expenses={monthExpenses}
         />
       )}
 
@@ -137,6 +143,7 @@ const History = () => {
           selectedDate={selectedDate}
           onClose={handleCloseModal}
           isClosing={isClosing}
+          expenses={monthExpenses}
         />
       )}
     </div>
@@ -154,15 +161,12 @@ const History = () => {
   }
 };
 
-// --- Sub-Component: Calendar View (Fetches its own data for the month) ---
-// We move this here to use the `useExpensesForMonth` hook cleanly
-import { useExpensesForMonth } from '../hooks/useExpenses';
+// --- Sub-Component: Calendar View ---
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
-import { Apple, ShoppingCart, Car, PartyPopper, IndianRupee } from 'lucide-react';
+import { getCategoryIcon } from '../utils/uiUtils';
 
-const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate }) => {
-  // Fetch expenses for this month to populate the calendar grid dots/totals
-  const { expenses } = useExpensesForMonth(currentMonth);
+const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate, expenses = [] }) => {
+  // Expenses are now passed down!
   const { deleteExpense } = useExpenses();
 
   // Helper to calc daily totals from the fetched month expenses
@@ -180,15 +184,7 @@ const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate }) => {
     return eachDayOfInterval({ start: startDate, end: endDate });
   };
 
-  const getCategoryIcon = (cat) => {
-    switch (cat) {
-      case 'Food': return <Apple className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-      case 'Shopping': return <ShoppingCart className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-      case 'Transport': return <Car className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-      case 'Entertainment': return <PartyPopper className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-      default: return <IndianRupee className="w-5 h-5 text-gray-700 dark:text-gray-200" />;
-    }
-  };
+
 
   return (
     <div className="space-y-4 animate-in slide-in-from-right-10 duration-200 pb-20">
