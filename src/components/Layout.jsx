@@ -4,21 +4,33 @@ import { Home, Calendar, BarChart2, User, Plus, X, Loader2, Sparkles, Calendar a
 import { useExpenses } from '../hooks/useExpenses';
 import { CATEGORIES } from '../utils/uiUtils';
 
+import { motion } from 'framer-motion';
+
 const NavItem = ({ to, icon: Icon, label }) => (
   <NavLink
     to={to}
-    className={({ isActive }) =>
-      `flex flex-col items-center justify-center transition-all duration-300 ${isActive
-        ? 'px-6 py-3 rounded-full bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] text-white shadow-[0_0_50px_rgba(99,102,241,0.06)] scale-110'
-        : 'w-12 h-12 text-gray-400 hover:text-gray-900 dark:hover:text-white'
-      }`
-    }
+    className="relative flex items-center justify-center"
   >
     {({ isActive }) => (
-      <>
-        <Icon className="w-5 h-5 mb-0.5" strokeWidth={2.5} />
-        <span className={`text-[10px] font-medium leading-none ${isActive ? 'block' : 'hidden md:block'}`}>{label}</span>
-      </>
+      <div className={`
+        relative flex flex-col items-center justify-center rounded-full transition-all duration-300
+        ${isActive ? 'px-6 py-3' : 'w-12 h-12'}
+      `}>
+        {isActive && (
+          <motion.div
+            layoutId="nav-pill"
+            className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] rounded-full shadow-[0_0_20px_rgba(99,102,241,0.3)] z-0"
+            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+          />
+        )}
+
+        <div className={`relative z-10 flex flex-col items-center transition-colors duration-200 ${isActive ? 'text-white' : 'text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
+          <Icon className={`w-5 h-5 mb-0.5 ${isActive ? 'scale-110' : ''}`} strokeWidth={2.5} />
+          <span className={`text-[10px] font-medium leading-none whitespace-nowrap ${isActive ? 'block' : 'hidden md:block'}`}>
+            {label}
+          </span>
+        </div>
+      </div>
     )}
   </NavLink>
 );
