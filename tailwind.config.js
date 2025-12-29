@@ -12,7 +12,7 @@ export default {
           DEFAULT: 'var(--color-accent)',
           hover: 'var(--color-accent-hover)',
         },
-        'dark-card': '#1c1c1e',
+        'dark-card': '#0f0f0f',
       },
       keyframes: {
         'slide-up': {

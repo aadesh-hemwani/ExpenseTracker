@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
 import { X } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
 import { useExpenses } from '../hooks/useExpenses';
-import SwipeableExpenseItem from './SwipeableExpenseItem';
-import { getCategoryIcon } from '../utils/uiUtils';
+import { getCategoryIcon, CATEGORIES } from '../utils/uiUtils';
 import { formatCurrency } from '../utils/formatUtils';
+import { format } from 'date-fns';
 
 const ExpenseListModal = ({ title, onClose, isClosing, expenses = [] }) => {
     const { deleteExpense } = useExpenses();
@@ -25,7 +24,8 @@ const ExpenseListModal = ({ title, onClose, isClosing, expenses = [] }) => {
                 {/* Modal Header */}
                 <div className="flex justify-between items-center mb-6 shrink-0">
                     <div>
-                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                        <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            {CATEGORIES.includes(title) && <span className="p-2 bg-gray-100 dark:bg-white/10 rounded-full">{getCategoryIcon(title)}</span>}
                             {title}
                         </h3>
                         <p className="text-sm text-gray-500 font-medium mt-1">
@@ -34,26 +34,35 @@ const ExpenseListModal = ({ title, onClose, isClosing, expenses = [] }) => {
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-2 bg-gray-100 dark:bg-gray-900 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                        className="p-2 bg-gray-100 dark:bg-dark-card rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
                     >
                         <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                 </div>
 
                 {/* Scrollable Transaction List */}
-                <div className="overflow-y-auto space-y-4 pr-2 pb-6 min-h-[200px]">
+                <div className="overflow-y-auto pr-2 pb-6 min-h-[200px]">
                     {expenses.length > 0 ? (
-                        <AnimatePresence>
-                            {expenses.map(expense => (
-                                <SwipeableExpenseItem
+                        <div className="flex flex-col">
+                            {expenses.map((expense, index) => (
+                                <div
                                     key={expense.id}
-                                    t={expense}
-                                    getCategoryIcon={getCategoryIcon}
-                                    onDelete={deleteExpense}
-                                    className="mb-0"
-                                />
+                                    className={`flex justify-between items-center py-4 ${index !== expenses.length - 1 ? 'border-b border-gray-100 dark:border-white/5' : ''}`}
+                                >
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-gray-900 dark:text-white font-medium text-[15px]">
+                                            {expense.note || 'Unknown Expense'}
+                                        </span>
+                                        <span className="text-xs text-gray-400 font-medium">
+                                            {format(new Date(expense.date), 'MMM dd')}
+                                        </span>
+                                    </div>
+                                    <span className="text-gray-900 dark:text-white font-bold">
+                                        {formatCurrency(expense.amount)}
+                                    </span>
+                                </div>
                             ))}
-                        </AnimatePresence>
+                        </div>
                     ) : (
                         <div className="text-center py-10">
                             <p className="text-gray-300 font-medium">No expenses found.</p>

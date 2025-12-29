@@ -21,7 +21,7 @@ const AiInsights = ({ insights = [] }) => {
 
     return (
         <div className="pt-2">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2">
                 <div className="p-1.5 bg-indigo-500/10 rounded-lg">
                     <BrainCircuit className="w-5 h-5 text-accent" />
                 </div>

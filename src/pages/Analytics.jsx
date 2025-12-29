@@ -271,21 +271,23 @@ const Analytics = () => {
       {/* Category Breakdown List */}
       <div className="space-y-4 pb-20">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">This Month's Breakdown</h3>
-        {categoryData.map((cat, index) => (
-          <button
-            key={index}
-            onClick={() => handleCategoryClick(cat.name)}
-            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700/50 rounded-full flex items-center justify-center">
-                {getCategoryIcon(cat.name)}
+        <div className="overflow-hidden">
+          {categoryData.map((cat, index) => (
+            <button
+              key={index}
+              onClick={() => handleCategoryClick(cat.name)}
+              className={`w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${index !== categoryData.length - 1 ? 'border-b border-gray-100 dark:border-white/5' : ''}`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/5">
+                  {getCategoryIcon(cat.name)}
+                </div>
+                <span className="font-medium text-gray-700 dark:text-gray-300">{cat.name}</span>
               </div>
-              <span className="font-medium text-gray-700 dark:text-gray-300">{cat.name}</span>
-            </div>
-            <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(cat.value)}</span>
-          </button>
-        ))}
+              <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(cat.value)}</span>
+            </button>
+          ))}
+        </div>
         {categoryData.length === 0 && (
           <div className="text-center py-10 text-gray-400 text-sm">No expenses recorded yet.</div>
         )}
