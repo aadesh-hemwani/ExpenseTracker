@@ -12,6 +12,7 @@ import {
   parseISO
 } from 'date-fns';
 import { ChevronLeft, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import Card from '../components/Card';
 import { useMonthlyStats, useExpenses, useExpensesForMonth } from '../hooks/useExpenses';
 import ExpenseListModal from '../components/ExpenseListModal';
@@ -54,16 +55,9 @@ const History = () => {
   const [view, setView] = useState('list'); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState(null); // The specific day clicked in calendar
-  const [isClosing, setIsClosing] = useState(false);
 
-  // Helper to handle closing animation
-  // Helper to handle closing animation
   const handleCloseModal = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setSelectedDate(null);
-      setIsClosing(false);
-    }, 500); // Duration matches animation
+    setSelectedDate(null);
   };
 
 
@@ -142,14 +136,15 @@ const History = () => {
       )}
 
       {/* Day Detail Modal (Calendar View) */}
-      {selectedDate && (
-        <ExpenseListModal
-          title={format(selectedDate, 'EEEE, MMM do')}
-          expenses={monthExpenses.filter(e => isSameDay(e.date, selectedDate))}
-          onClose={handleCloseModal}
-          isClosing={isClosing}
-        />
-      )}
+      <AnimatePresence>
+        {selectedDate && (
+          <ExpenseListModal
+            title={format(selectedDate, 'EEEE, MMM do')}
+            expenses={monthExpenses.filter(e => isSameDay(e.date, selectedDate))}
+            onClose={handleCloseModal}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 

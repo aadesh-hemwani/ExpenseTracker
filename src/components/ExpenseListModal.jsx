@@ -1,25 +1,34 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { X } from 'lucide-react';
 import { useExpenses } from '../hooks/useExpenses';
 import { getCategoryIcon, CATEGORIES } from '../utils/uiUtils';
 import { formatCurrency } from '../utils/formatUtils';
 import { format } from 'date-fns';
+import { motion, AnimatePresence } from 'framer-motion';
 
-const ExpenseListModal = ({ title, onClose, isClosing, expenses = [] }) => {
-    const { deleteExpense } = useExpenses();
-
+const ExpenseListModal = ({ title, onClose, expenses = [] }) => {
     const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center">
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center pointer-events-none">
             {/* Backdrop (Click to close) */}
-            <div
-                className={`absolute inset-0 bg-gray-900/30 backdrop-blur-sm transition-opacity ${isClosing ? 'animate-fade-out' : 'animate-fade-in'}`}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm pointer-events-auto"
                 onClick={onClose}
             />
 
             {/* Content Card */}
-            <div className={`relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[50px] md:rounded-3xl p-6 shadow-2xl border border-gray-200/50 dark:border-white/10 max-h-[70vh] flex flex-col mb-3 md:mb-0 ${isClosing ? 'animate-slide-down' : 'animate-slide-up'}`}>
+            <motion.div
+                initial={{ y: "100%", opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: "100%", opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[50px] md:rounded-3xl p-6 shadow-2xl border border-gray-200/50 dark:border-white/10 max-h-[70vh] flex flex-col mb-3 md:mb-0 pointer-events-auto"
+            >
 
                 {/* Modal Header */}
                 <div className="flex justify-between items-center mb-6 shrink-0">
@@ -41,7 +50,7 @@ const ExpenseListModal = ({ title, onClose, isClosing, expenses = [] }) => {
                 </div>
 
                 {/* Scrollable Transaction List */}
-                <div className="overflow-y-auto pr-2 pb-6 min-h-[200px]">
+                <div className="overflow-y-auto pr-2 pb-6 min-h-[200px] no-scrollbar">
                     {expenses.length > 0 ? (
                         <div className="flex flex-col">
                             {expenses.map((expense, index) => (
@@ -70,7 +79,7 @@ const ExpenseListModal = ({ title, onClose, isClosing, expenses = [] }) => {
                     )}
                 </div>
 
-            </div>
+            </motion.div>
         </div>
     );
 };

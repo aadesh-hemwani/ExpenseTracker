@@ -14,6 +14,7 @@ import { getCategoryBreakdown } from '../utils/analyticsHelpers';
 import { getCategoryIcon } from '../utils/uiUtils';
 import { format, subMonths } from 'date-fns';
 import { ArrowUpRight, PieChart } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
@@ -56,18 +57,13 @@ const Analytics = () => {
   const { expenses: monthlyExpenses, loading } = useExpensesForMonth(targetDate, stats);
 
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [isClosing, setIsClosing] = useState(false);
 
   const handleCategoryClick = (category) => {
     setSelectedCategory(category);
   };
 
   const handleCloseModal = () => {
-    setIsClosing(true);
-    setTimeout(() => {
-      setSelectedCategory(null);
-      setIsClosing(false);
-    }, 500);
+    setSelectedCategory(null);
   };
 
   const { theme, accentColor, accentColors } = useTheme();
@@ -294,14 +290,15 @@ const Analytics = () => {
       </div>
 
       {/* Category Expense Modal */}
-      {selectedCategory && (
-        <ExpenseListModal
-          title={selectedCategory}
-          expenses={monthlyExpenses.filter(e => e.category === selectedCategory)}
-          onClose={handleCloseModal}
-          isClosing={isClosing}
-        />
-      )}
+      <AnimatePresence>
+        {selectedCategory && (
+          <ExpenseListModal
+            title={selectedCategory}
+            expenses={monthlyExpenses.filter(e => e.category === selectedCategory)}
+            onClose={handleCloseModal}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
