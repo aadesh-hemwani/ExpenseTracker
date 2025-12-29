@@ -4,7 +4,23 @@ import { useTheme } from '../context/ThemeContext';
 import { db } from '../firebase';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { LogOut, Save, User as UserIcon, ShieldCheck, Wallet, Moon, Sun, Palette, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Card from '../components/Card';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
 
 const Profile = () => {
   const { user, logOut } = useAuth();
@@ -60,39 +76,46 @@ const Profile = () => {
   };
 
   return (
-    <div className="animate-fade-in pt-4 max-w-lg mx-auto">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="pt-4 max-w-lg mx-auto"
+    >
 
       {/* Header */}
-      <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">Profile</h1>
+      <motion.h1 variants={item} className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-8">Profile</motion.h1>
 
       {/* User Card */}
-      <Card className="flex flex-col items-center text-center mb-6">
-        <div className="relative mb-4">
-          {user?.photoURL ? (
-            <img
-              src={user.photoURL}
-              alt={user.displayName}
-              className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-lg">
-              <UserIcon className="w-10 h-10 text-accent" />
-            </div>
-          )}
-          <div className="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900"></div>
-        </div>
+      <motion.div variants={item}>
+        <Card className="flex flex-col items-center text-center mb-6">
+          <div className="relative mb-4">
+            {user?.photoURL ? (
+              <img
+                src={user.photoURL}
+                alt={user.displayName}
+                className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-lg">
+                <UserIcon className="w-10 h-10 text-accent" />
+              </div>
+            )}
+            <div className="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900"></div>
+          </div>
 
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.displayName}</h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">{user?.email}</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{user?.displayName}</h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">{user?.email}</p>
 
-        <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full border border-green-100 dark:border-green-900/30">
-          <ShieldCheck className="w-3 h-3" />
-          <span>Google Verified</span>
-        </div>
-      </Card>
+          <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full border border-green-100 dark:border-green-900/30">
+            <ShieldCheck className="w-3 h-3" />
+            <span>Google Verified</span>
+          </div>
+        </Card>
+      </motion.div>
 
       {/* Settings Section */}
-      <div className="space-y-6">
+      <motion.div variants={item} className="space-y-6">
 
         {/* Appearance Settings */}
         <Card>
@@ -193,13 +216,13 @@ const Profile = () => {
           Sign Out
         </button>
 
-      </div>
+      </motion.div>
 
-      <p className="text-center text-xs text-gray-300 dark:text-gray-600 pt-4">
+      <motion.p variants={item} className="text-center text-xs text-gray-300 dark:text-gray-600 pt-4">
         Version 1.0.0 • Expense Tracker PWA
-      </p>
+      </motion.p>
 
-    </div >
+    </motion.div >
   );
 };
 

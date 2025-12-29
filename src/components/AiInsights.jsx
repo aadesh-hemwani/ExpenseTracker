@@ -38,11 +38,12 @@ const AiInsights = ({ insights = [] }) => {
             >
                 {insights.map((insight, idx) => (
                     <motion.div
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 15, duration: 0.5 }}
                         key={insight.id}
                         initial={{ opacity: 0, scale: 0.95 }}
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
-                        transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }}
                         className={`
                             min-w-full md:min-w-[320px] p-5
                             bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md

@@ -14,8 +14,24 @@ import { getCategoryBreakdown } from '../utils/analyticsHelpers';
 import { getCategoryIcon } from '../utils/uiUtils';
 import { format, subMonths } from 'date-fns';
 import { ArrowUpRight, PieChart } from 'lucide-react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
+import CountUp from '../components/CountUp';
+
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
 import { useAuth } from '../context/AuthContext';
 import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -143,24 +159,33 @@ const Analytics = () => {
   const textColor = '#9ca3af';
 
   return (
-    <div className="space-y-8 animate-fade-in pt-4">
+    <motion.div
+      variants={container}
+      initial="hidden"
+      animate="show"
+      className="space-y-8 pt-4"
+    >
 
       {/* Header */}
-      <div>
+      <motion.div variants={item}>
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">Insights</h1>
         <p className="text-gray-500 mt-2">Visualize your spending patterns.</p>
-      </div>
+      </motion.div>
 
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-5 bg-gradient-to-br from-accent to-purple-900 dark:to-purple-400 text-white rounded-2xl shadow-lg">
+      <motion.div variants={item} className="grid grid-cols-2 gap-4">
+        <motion.div
+          whileTap={{ scale: 0.98 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="p-5 bg-gradient-to-br from-accent to-purple-900 dark:to-purple-400 text-white rounded-2xl shadow-lg"
+        >
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium dark:text-gray-950 uppercase tracking-wider">This Month</span>
             <ArrowUpRight className="w-4 h-4 dark:text-gray-950" />
           </div>
-          <div className="text-4xl font-bold">{formatCurrency(currentMonthTotal)}</div>
-        </div>
+          <div className="text-4xl font-bold"><CountUp value={currentMonthTotal} /></div>
+        </motion.div>
 
         <Card className="rounded-2xl p-5">
           <div className="flex justify-between items-start mb-4">
@@ -174,48 +199,58 @@ const Analytics = () => {
             {topCategory ? formatCurrency(topCategory.value) : 'No data'}
           </div>
         </Card>
-      </div>
+      </motion.div>
 
       {/* Budget Progress Card */}
-      {budget > 0 && (
-        <Card className="p-6">
-          <div className="flex justify-between items-end mb-2">
-            <div>
-              <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Monthly Budget</p>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                {formatCurrency(currentMonthTotal)} <span className="text-sm font-normal text-gray-400">/ {formatCurrency(budget)}</span>
-              </h2>
-            </div>
-            <div className="text-right">
-              <span className={`text-xl font-bold ${(currentMonthTotal / budget) > 1 ? 'text-red-500' :
-                (currentMonthTotal / budget) > 0.8 ? 'text-yellow-500' : 'text-green-500'
-                }`}>
-                {Math.min(((currentMonthTotal / budget) * 100).toFixed(0), 999)}%
-              </span>
-            </div>
-          </div>
+      {
+        budget > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Card className="p-6">
+              <div className="flex justify-between items-end mb-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">Monthly Budget</p>
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                    {formatCurrency(currentMonthTotal)} <span className="text-sm font-normal text-gray-400">/ {formatCurrency(budget)}</span>
+                  </h2>
+                </div>
+                <div className="text-right">
+                  <span className={`text-xl font-bold ${(currentMonthTotal / budget) > 1 ? 'text-red-500' :
+                    (currentMonthTotal / budget) > 0.8 ? 'text-yellow-500' : 'text-green-500'
+                    }`}>
+                    {Math.min(((currentMonthTotal / budget) * 100).toFixed(0), 999)}%
+                  </span>
+                </div>
+              </div>
 
-          {/* Progress Bar Container */}
-          <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-3">
-            <div
-              className={`h-full rounded-full transition-all duration-1000 ease-out ${(currentMonthTotal / budget) > 1 ? 'bg-red-500' :
-                (currentMonthTotal / budget) > 0.8 ? 'bg-yellow-400' : 'bg-green-500'
-                }`}
-              style={{ width: `${Math.min((currentMonthTotal / budget) * 100, 100)}%` }}
-            />
-          </div>
+              {/* Progress Bar Container */}
+              <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-3">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ease-out ${(currentMonthTotal / budget) > 1 ? 'bg-red-500' :
+                    (currentMonthTotal / budget) > 0.8 ? 'bg-yellow-400' : 'bg-green-500'
+                    }`}
+                  style={{ width: `${Math.min((currentMonthTotal / budget) * 100, 100)}%` }}
+                />
+              </div>
 
-          <p className="text-xs text-gray-400 mt-3 text-right">
-            {currentMonthTotal > budget
-              ? `Over budget by ${formatCurrency(currentMonthTotal - budget)}`
-              : `${formatCurrency(budget - currentMonthTotal)} remaining`}
-          </p>
-        </Card>
-      )}
+              <p className="text-xs text-gray-400 mt-3 text-right">
+                {currentMonthTotal > budget
+                  ? `Over budget by ${formatCurrency(currentMonthTotal - budget)}`
+                  : `${formatCurrency(budget - currentMonthTotal)} remaining`}
+              </p>
+            </Card>
+          </motion.div>
+        )
+      }
 
-      <AiInsights insights={insights} />
+      <motion.div variants={item}>
+        <AiInsights insights={insights} />
+      </motion.div>
 
-      <div className="pt-2">
+      <motion.div variants={item} className="pt-2">
         {/* Monthly Trend Chart */}
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-indigo-500/10 rounded-lg">
@@ -260,12 +295,12 @@ const Analytics = () => {
           </div>
         </Card>
 
-      </div>
+      </motion.div>
 
 
 
       {/* Category Breakdown List */}
-      <div className="space-y-4 pb-20">
+      <motion.div variants={item} className="space-y-4 pb-20">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">This Month's Breakdown</h3>
         <div className="overflow-hidden">
           {categoryData.map((cat, index) => (
@@ -287,7 +322,7 @@ const Analytics = () => {
         {categoryData.length === 0 && (
           <div className="text-center py-10 text-gray-400 text-sm">No expenses recorded yet.</div>
         )}
-      </div>
+      </motion.div>
 
       {/* Category Expense Modal */}
       <AnimatePresence>
@@ -299,7 +334,7 @@ const Analytics = () => {
           />
         )}
       </AnimatePresence>
-    </div>
+    </motion.div >
   );
 };
 

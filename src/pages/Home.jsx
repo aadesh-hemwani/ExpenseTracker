@@ -11,6 +11,22 @@ import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 import { formatCurrency } from '../utils/formatUtils';
 import { getCategoryIcon } from '../utils/uiUtils';
 
+import CountUp from '../components/CountUp';
+
+const container = {
+    hidden: { opacity: 0 },
+    show: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.1
+        }
+    }
+};
+
+const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+};
 
 const Home = () => {
     const { expenses, loading: loadingRecent } = useRecentExpenses();
@@ -65,7 +81,7 @@ const Home = () => {
                             {format(new Date(), 'MMMM yyyy')}
                         </span>
                         <h1 className="text-5xl font-bold text-gray-900 dark:text-white mt-2 tracking-tight">
-                            {formatCurrency(currentMonthTotal)}
+                            <CountUp value={currentMonthTotal} />
                         </h1>
                     </div>
                 </div>
@@ -93,16 +109,24 @@ const Home = () => {
                             <p className="text-gray-300 text-xs mt-1">Tap + to add one.</p>
                         </div>
                     ) : (
-                        <AnimatePresence>
-                            {expenses.map((t) => (
-                                <SwipeableExpenseItem
-                                    key={t.id}
-                                    t={t}
-                                    getCategoryIcon={getCategoryIcon}
-                                    onDelete={deleteExpense}
-                                />
-                            ))}
-                        </AnimatePresence>
+                        <motion.div
+                            variants={container}
+                            initial="hidden"
+                            animate="show"
+                            className="space-y-4"
+                        >
+                            <AnimatePresence mode='popLayout'>
+                                {expenses.map((t) => (
+                                    <motion.div key={t.id} variants={item} layout>
+                                        <SwipeableExpenseItem
+                                            t={t}
+                                            getCategoryIcon={getCategoryIcon}
+                                            onDelete={deleteExpense}
+                                        />
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
+                        </motion.div>
                     )}
                 </div>
             </section>
