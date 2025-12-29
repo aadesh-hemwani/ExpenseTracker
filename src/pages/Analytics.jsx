@@ -46,7 +46,7 @@ const Analytics = () => {
   // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
   // We default to the current month for the "Insight" view
   const [targetDate, setTargetDate] = useState(new Date());
-  const { expenses: monthlyExpenses, loading } = useExpensesForMonth(targetDate);
+  const { expenses: monthlyExpenses, loading } = useExpensesForMonth(targetDate, stats);
 
   const { theme, accentColor, accentColors } = useTheme();
   const [budget, setBudget] = useState(0);

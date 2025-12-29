@@ -17,7 +17,7 @@ import { useMonthlyStats, useExpenses, useExpensesForMonth } from '../hooks/useE
 import DayDetailModal from '../components/DayDetailModal';
 
 // --- Sub-Component: Month Card ---
-const MonthCard = ({ monthKey, total, onClick }) => {
+const MonthCard = React.memo(({ monthKey, total, onClick }) => {
   const date = parseISO(monthKey + "-01"); // Convert "2023-11" to Date object
 
   return (
@@ -44,7 +44,7 @@ const MonthCard = ({ monthKey, total, onClick }) => {
       </div>
     </Card>
   );
-};
+});
 
 // --- Main Component ---
 const History = () => {
@@ -66,9 +66,10 @@ const History = () => {
     }, 500); // Duration matches animation
   };
 
-  // 0. Fetch Expenses for the current month view (Optimization: Lifted from CalendarView/Modal)
-  // We only fetch if we are in calendar view, or if we have a selected date (which implies calendar view contexts)
-  const { expenses: monthExpenses, loading: monthLoading } = useExpensesForMonth(view === 'calendar' ? currentMonth : null);
+
+
+  // 3. Get Specific Month Expenses (On Demand) - Now uses Cache with Stats Validation
+  const { expenses: monthExpenses, loading: expensesLoading } = useExpensesForMonth(view === 'calendar' ? currentMonth : null, stats);
 
   // 1. Group Data for the "Month Grid" View
   const monthGroups = useMemo(() => {
@@ -80,13 +81,15 @@ const History = () => {
   }, [stats]);
 
   // 2. Calendar Logic Helpers
-  const generateCalendarDays = (monthDate) => {
-    const monthStart = startOfMonth(monthDate);
+  // 2. Calendar Logic Helpers
+  const calendarDays = useMemo(() => {
+    if (view !== 'calendar') return [];
+    const monthStart = startOfMonth(currentMonth);
     const monthEnd = endOfMonth(monthStart);
     const startDate = startOfWeek(monthStart);
     const endDate = endOfWeek(monthEnd);
     return eachDayOfInterval({ start: startDate, end: endDate });
-  };
+  }, [currentMonth, view]);
 
   // Note: We don't have daily totals for the calendar grid view readily available without fetching expenses for that month.
   // We can fetch them when we enter the calendar view for a specific month.
@@ -134,6 +137,7 @@ const History = () => {
           onSelectDate={setSelectedDate}
           selectedDate={selectedDate}
           expenses={monthExpenses}
+          calendarDays={calendarDays}
         />
       )}
 
@@ -165,24 +169,27 @@ const History = () => {
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 import { getCategoryIcon } from '../utils/uiUtils';
 
-const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate, expenses = [] }) => {
+const CalendarView = React.memo(({ currentMonth, onBack, onSelectDate, selectedDate, expenses = [], calendarDays }) => {
   // Expenses are now passed down!
   const { deleteExpense } = useExpenses();
 
-  // Helper to calc daily totals from the fetched month expenses
+  // Optimized: Create a map of daily totals to avoid repeated filtering
+  const dailyTotalsMap = useMemo(() => {
+    const map = {};
+    expenses.forEach(e => {
+      if (!e.date) return;
+      const dayKey = format(e.date, 'yyyy-MM-dd');
+      map[dayKey] = (map[dayKey] || 0) + Number(e.amount);
+    });
+    return map;
+  }, [expenses]);
+
   const getDailyTotal = (date) => {
-    return expenses
-      .filter(e => isSameDay(e.date, date))
-      .reduce((acc, curr) => acc + Number(curr.amount), 0);
+    const key = format(date, 'yyyy-MM-dd');
+    return dailyTotalsMap[key] || 0;
   };
 
-  const generateCalendarDays = (monthDate) => {
-    const monthStart = startOfMonth(monthDate);
-    const monthEnd = endOfMonth(monthStart);
-    const startDate = startOfWeek(monthStart);
-    const endDate = endOfWeek(monthEnd);
-    return eachDayOfInterval({ start: startDate, end: endDate });
-  };
+
 
 
 
@@ -209,11 +216,16 @@ const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate, expens
           </div>
         ))}
 
-        {generateCalendarDays(currentMonth).map((day, idx) => {
+        {calendarDays.map((day, idx) => {
           const dailyTotal = getDailyTotal(day);
-          const hasSpend = dailyTotal > 0;
+          const roundedTotal = Math.ceil(dailyTotal);
+          const hasSpend = roundedTotal > 0;
           const isSelected = selectedDate && isSameDay(day, selectedDate);
           const isCurrentMonth = isSameMonth(day, currentMonth);
+
+          let amountColor = 'text-green-500';
+          if (roundedTotal > 2000) amountColor = 'text-red-500';
+          else if (roundedTotal >= 1000) amountColor = 'text-yellow-500';
 
           return (
             <button
@@ -231,11 +243,9 @@ const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate, expens
 
               {hasSpend && (
                 <>
-                  {/* Mobile Dot */}
-                  <div className={`mt-1 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-white dark:bg-black' : 'bg-accent'} md:hidden`} />
                   {/* Desktop Amount */}
-                  <span className={`hidden md:block text-[10px] mt-1 font-medium ${isSelected ? 'text-gray-300 dark:text-gray-600' : 'text-gray-500 dark:text-gray-400'}`}>
-                    ₹{dailyTotal}
+                  <span className={`block md:text-[10px] text-[8px] mt-1 font-medium ${isSelected ? 'text-gray-300 dark:text-gray-600' : amountColor}`}>
+                    ₹{roundedTotal}
                   </span>
                 </>
               )}
@@ -265,6 +275,6 @@ const CalendarView = ({ currentMonth, onBack, onSelectDate, selectedDate, expens
       </div>
     </div>
   );
-};
+});
 
 export default History;

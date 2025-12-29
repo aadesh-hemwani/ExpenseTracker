@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '../firebase';
 import {
   collection,
@@ -20,6 +20,9 @@ import {
 } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { format } from 'date-fns';
+
+// --- FILE LEVEL CACHE ---
+const expensesCache = {}; // Format: { "yyyy-MM": { data: [], validation: { total: 0, count: 0 } } }
 
 // --- HUB FOR ALL EXPENSE LOGIC ---
 
@@ -82,7 +85,8 @@ export const useMonthlyStats = () => {
 };
 
 // 3. Hook for fetching detailed expenses for a SPECIFIC month (On Demand)
-export const useExpensesForMonth = (date) => {
+// 3. Hook for fetching detailed expenses for a SPECIFIC month (On Demand)
+export const useExpensesForMonth = (date, allStats = []) => {
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
@@ -93,32 +97,97 @@ export const useExpensesForMonth = (date) => {
       return;
     }
 
-    setLoading(true);
-    const start = new Date(date.getFullYear(), date.getMonth(), 1);
-    const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+    const monthKey = format(date, 'yyyy-MM');
+    const currentMonthKey = format(new Date(), 'yyyy-MM');
+    const isPastMonth = monthKey < currentMonthKey; // Actually, strictly just != current is probably safer for "static" assumption, but logic holds.
 
-    const collectionRef = collection(db, 'users', user.uid, 'expenses');
-    const q = query(
-      collectionRef,
-      where('date', '>=', Timestamp.fromDate(start)),
-      where('date', '<=', Timestamp.fromDate(end)),
-      orderBy('date', 'desc')
-    );
+    // If it's the CURRENT month, we want REAL-TIME updates (onSnapshot) always.
+    if (monthKey === currentMonthKey) {
+      // ... existing onSnapshot logic ...
+      setLoading(true);
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
 
-    // We can use getDocs here to fetch once instead of listening, 
-    // BUT listening ensures real-time updates if we delete something.
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const docs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        date: doc.data().date?.toDate()
-      }));
-      setExpenses(docs);
-      setLoading(false);
-    });
+      const collectionRef = collection(db, 'users', user.uid, 'expenses');
+      const q = query(
+        collectionRef,
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        orderBy('date', 'desc')
+      );
 
-    return unsubscribe;
-  }, [user, date]); // Re-run when user selects a different month
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const docs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date?.toDate()
+        }));
+        setExpenses(docs);
+        setLoading(false);
+      });
+      return unsubscribe;
+    } else {
+      // PAST MONTHS: Attempt Cache with Validation
+      const cached = expensesCache[monthKey];
+      const matchingStat = allStats.find(s => s.monthKey === monthKey);
+
+      // Validate Cache
+      let isValid = false;
+      if (cached && matchingStat) {
+        // Check if cached validation tokens match current real-time stats
+        if (cached.validation.total === matchingStat.total && cached.validation.count === matchingStat.count) {
+          isValid = true;
+        }
+      } else if (cached && !matchingStat) {
+        // Edge case: Maybe stats haven't loaded yet? Or month has no stats?
+        // If month has no stats (empty), cache should probably be empty too.
+        // For safety, if we have cache but no current stats to verify, we might trust cache OR refetch.
+        // Let's assume if we lack stats, we refetch to be safe.
+        isValid = false;
+      }
+
+      if (isValid) {
+        console.log(`[Cache Hit] Serving ${monthKey} from memory.`);
+        setExpenses(cached.data);
+        setLoading(false);
+        return; // No subscription needed
+      }
+
+      // Cache Miss or Invalid -> Fetch Once
+      console.log(`[Cache Miss] Fetching ${monthKey}...`);
+      setLoading(true);
+
+      const start = new Date(date.getFullYear(), date.getMonth(), 1);
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
+      const collectionRef = collection(db, 'users', user.uid, 'expenses');
+      const q = query(
+        collectionRef,
+        where('date', '>=', Timestamp.fromDate(start)),
+        where('date', '<=', Timestamp.fromDate(end)),
+        orderBy('date', 'desc')
+      );
+
+      getDocs(q).then((snapshot) => {
+        const docs = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date?.toDate()
+        }));
+
+        // Update Cache (only if we have validation data to lock it)
+        if (matchingStat) {
+          expensesCache[monthKey] = {
+            data: docs,
+            validation: { total: matchingStat.total, count: matchingStat.count }
+          };
+        }
+
+        setExpenses(docs);
+        setLoading(false);
+      });
+    }
+
+  }, [user, date, allStats]); // Re-run if stats change (this ensures auto-invalidation if someone else adds expense!)
 
   return { expenses, loading };
 };
@@ -130,7 +199,7 @@ export const useExpenses = () => {
   // Backward compatibility signatures (will check if they are still needed)
   // For now, we return the actions.
 
-  const addExpense = async (amount, category, note, customDate) => {
+  const addExpense = useCallback(async (amount, category, note, customDate) => {
     if (!user) return;
 
     const collectionRef = collection(db, 'users', user.uid, 'expenses');
@@ -173,9 +242,9 @@ export const useExpenses = () => {
     } catch (e) {
       console.error("Transaction failed: ", e);
     }
-  };
+  }, [user]);
 
-  const deleteExpense = async (id, amount, date) => {
+  const deleteExpense = useCallback(async (id, amount, date) => {
     if (!user) return;
     // We need amount and date to update the stats correctly. 
     // If not passed, we might need to fetch the doc first.
@@ -211,9 +280,9 @@ export const useExpenses = () => {
     } catch (e) {
       console.error("Delete failed: ", e);
     }
-  };
+  }, [user]);
 
-  const updateMonthlyStat = async (monthKey, total, count) => {
+  const updateMonthlyStat = useCallback(async (monthKey, total, count) => {
     if (!user) return;
     const statsRef = collection(db, 'users', user.uid, 'stats');
     const statDocRef = doc(statsRef, monthKey);
@@ -223,7 +292,7 @@ export const useExpenses = () => {
     } catch (e) {
       console.error("Failed to update stats:", e);
     }
-  };
+  }, [user]);
 
   return {
     addExpense,

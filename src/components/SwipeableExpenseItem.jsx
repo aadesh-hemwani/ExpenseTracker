@@ -6,7 +6,7 @@ import { format } from 'date-fns';
 
 import { formatCurrency } from '../utils/formatUtils';
 
-const SwipeableExpenseItem = ({ t, getCategoryIcon, onDelete, className = "", cardClassName = "" }) => {
+const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, className = "", cardClassName = "" }) => {
     const controls = useAnimation();
     const x = useMotionValue(0);
 
@@ -75,6 +75,6 @@ const SwipeableExpenseItem = ({ t, getCategoryIcon, onDelete, className = "", ca
             </motion.div>
         </motion.div>
     );
-};
+});
 
 export default SwipeableExpenseItem;
