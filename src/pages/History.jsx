@@ -14,7 +14,7 @@ import {
 import { ChevronLeft, ArrowLeft, Calendar as CalendarIcon } from 'lucide-react';
 import Card from '../components/Card';
 import { useMonthlyStats, useExpenses, useExpensesForMonth } from '../hooks/useExpenses';
-import DayDetailModal from '../components/DayDetailModal';
+import ExpenseListModal from '../components/ExpenseListModal';
 
 // --- Sub-Component: Month Card ---
 const MonthCard = React.memo(({ monthKey, total, onClick }) => {
@@ -141,13 +141,13 @@ const History = () => {
         />
       )}
 
-      {/* MODAL: The Day Detail View */}
+      {/* Day Detail Modal (Calendar View) */}
       {selectedDate && (
-        <DayDetailModal
-          selectedDate={selectedDate}
+        <ExpenseListModal
+          title={format(selectedDate, 'EEEE, MMM do')}
+          expenses={monthExpenses.filter(e => isSameDay(e.date, selectedDate))}
           onClose={handleCloseModal}
           isClosing={isClosing}
-          expenses={monthExpenses}
         />
       )}
     </div>

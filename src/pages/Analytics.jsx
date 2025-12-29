@@ -11,6 +11,7 @@ import {
 } from 'recharts';
 import { useMonthlyStats, useExpensesForMonth, useExpenses } from '../hooks/useExpenses';
 import { getCategoryBreakdown } from '../utils/analyticsHelpers';
+import { getCategoryIcon } from '../utils/uiUtils';
 import { format, subMonths } from 'date-fns';
 import { ArrowUpRight, PieChart } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -19,6 +20,12 @@ import { db } from '../firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { useState, useEffect } from 'react';
 import Card from '../components/Card';
+import ExpenseListModal from '../components/ExpenseListModal';
+import AiInsights from '../components/AiInsights';
+import { generateInsights } from '../utils/insights';
+// import { ChartLine } from 'lucide-react';
+import { BarChart2Icon } from 'lucide-react';
+
 
 const formatCurrency = (val) =>
   new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(val);
@@ -47,6 +54,21 @@ const Analytics = () => {
   // We default to the current month for the "Insight" view
   const [targetDate, setTargetDate] = useState(new Date());
   const { expenses: monthlyExpenses, loading } = useExpensesForMonth(targetDate, stats);
+
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleCategoryClick = (category) => {
+    setSelectedCategory(category);
+  };
+
+  const handleCloseModal = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      setSelectedCategory(null);
+      setIsClosing(false);
+    }, 500);
+  };
 
   const { theme, accentColor, accentColors } = useTheme();
   const [budget, setBudget] = useState(0);
@@ -112,6 +134,11 @@ const Analytics = () => {
     return monthlyExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
   }, [monthlyExpenses]);
 
+  // Generate AI Insights
+  const insights = useMemo(() => {
+    return generateInsights(stats, monthlyExpenses, currentMonthTotal, budget);
+  }, [stats, monthlyExpenses, currentMonthTotal, budget]);
+
   const topCategory = categoryData[0];
 
   // Chart Colors based on Theme
@@ -127,6 +154,7 @@ const Analytics = () => {
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">Insights</h1>
         <p className="text-gray-500 mt-2">Visualize your spending patterns.</p>
       </div>
+
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-4">
@@ -189,40 +217,54 @@ const Analytics = () => {
         </Card>
       )}
 
-      {/* Monthly Trend Chart */}
-      <Card>
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Monthly Trend</h3>
+      <AiInsights insights={insights} />
 
-        <div className="h-64 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
-              <XAxis
-                dataKey="name"
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: textColor, fontSize: 12 }}
-                dy={10}
-              />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fill: textColor, fontSize: 12 }}
-              />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: cursorColor }} />
-              <Bar dataKey="total" radius={[6, 6, 6, 6]} barSize={32}>
-                {monthlyData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={accentColors[accentColor]?.default || '#6366f1'}
-                    fillOpacity={index === monthlyData.length - 1 ? 1 : 0.3}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+      <div className="pt-2">
+        {/* Monthly Trend Chart */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 bg-indigo-500/10 rounded-lg">
+            <BarChart2Icon className="w-5 h-5 text-accent" />
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-purple-600 bg-clip-text text-transparent">
+            Monthly Trend
+          </h2>
+
         </div>
-      </Card>
+        <Card className='mt-0'>
+          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Monthly Trend</h3>
+
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={gridColor} />
+                <XAxis
+                  dataKey="name"
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: textColor, fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: textColor, fontSize: 12 }}
+                />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: cursorColor }} />
+                <Bar dataKey="total" radius={[6, 6, 6, 6]} barSize={32}>
+                  {monthlyData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={accentColors[accentColor]?.default || '#6366f1'}
+                      fillOpacity={index === monthlyData.length - 1 ? 1 : 0.3}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </Card>
+
+      </div>
 
 
 
@@ -230,18 +272,34 @@ const Analytics = () => {
       <div className="space-y-4 pb-20">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white">This Month's Breakdown</h3>
         {categoryData.map((cat, index) => (
-          <div key={index} className="flex items-center justify-between p-3">
+          <button
+            key={index}
+            onClick={() => handleCategoryClick(cat.name)}
+            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          >
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 rounded-full bg-accent" />
+              <div className="w-8 h-8 bg-gray-100 dark:bg-gray-700/50 rounded-full flex items-center justify-center">
+                {getCategoryIcon(cat.name)}
+              </div>
               <span className="font-medium text-gray-700 dark:text-gray-300">{cat.name}</span>
             </div>
             <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(cat.value)}</span>
-          </div>
+          </button>
         ))}
         {categoryData.length === 0 && (
           <div className="text-center py-10 text-gray-400 text-sm">No expenses recorded yet.</div>
         )}
       </div>
+
+      {/* Category Expense Modal */}
+      {selectedCategory && (
+        <ExpenseListModal
+          title={selectedCategory}
+          expenses={monthlyExpenses.filter(e => e.category === selectedCategory)}
+          onClose={handleCloseModal}
+          isClosing={isClosing}
+        />
+      )}
     </div>
   );
 };

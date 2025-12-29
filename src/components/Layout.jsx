@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Outlet, NavLink } from 'react-router-dom';
-import { Home, Calendar, BarChart2, User, Plus, X, Loader2, Apple, ShoppingCart, Car, PartyPopper, IndianRupee, Calendar as CalendarIcon } from 'lucide-react';
+import { Home, Calendar, BarChart2, User, Plus, X, Loader2, Sparkles, Calendar as CalendarIcon } from 'lucide-react';
 import { useExpenses } from '../hooks/useExpenses';
 import { CATEGORIES } from '../utils/uiUtils';
 
@@ -53,7 +53,7 @@ const Layout = () => {
       <nav className="md:hidden fixed bottom-6 left-4 right-24 h-[4.5rem] bg-black/10 dark:bg-white/10 backdrop-blur-[5px] border border-white dark:border-black/25 rounded-full px-2 shadow-[0_0_30px_rgba(191, 191, 191,0.12)] flex justify-between items-center z-50 transition-all duration-300">
         <NavItem to="/" icon={Home} label="Home" />
         <NavItem to="/history" icon={Calendar} label="History" />
-        <NavItem to="/analytics" icon={BarChart2} label="Insights" />
+        <NavItem to="/analytics" icon={Sparkles} label="Insights" />
         <NavItem to="/profile" icon={User} label="Profile" />
       </nav>
     </div>
