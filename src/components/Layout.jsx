@@ -20,7 +20,7 @@ const NavItem = ({ to, icon: Icon, label }) => (
           <motion.div
             layoutId="nav-pill"
             className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] rounded-full shadow-[0_0_20px_rgba(99,102,241,0.3)] z-0"
-            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+            transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
           />
         )}
 

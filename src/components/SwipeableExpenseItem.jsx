@@ -51,7 +51,7 @@ const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, classNa
                 dragElastic={0.1}
                 onDragEnd={handleDragEnd}
                 whileTap={{ scale: 0.98 }}
-                className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.5px] border-gray-200/20 dark:border-white/10 dark:shadow-none shadow-[0_0_30px_rgba(70,70,70,0.1)] ${cardClassName}`}
+                className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.5px] border-gray-200/20 dark:border-white/10 dark:shadow-none shadow-[0_0_20px_rgba(70,70,70,0.15)] ${cardClassName}`}
             >
                 <div className="flex items-center space-x-4">
                     <div className="w-10 h-10 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/10">

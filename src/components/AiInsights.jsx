@@ -34,7 +34,7 @@ const AiInsights = ({ insights = [] }) => {
             <div
                 ref={containerRef}
                 onScroll={handleScroll}
-                className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
+                className="flex overflow-x-auto gap-4 py-4 -mx-5 px-5 md:mx-0 md:px-0 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
             >
                 {insights.map((insight, idx) => (
                     <motion.div
@@ -47,7 +47,7 @@ const AiInsights = ({ insights = [] }) => {
                             min-w-full md:min-w-[320px] p-5
                             bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
                             rounded-2xl border border-gray-100 dark:border-white/5
-                            shadow-sm dark:shadow-none
+                            dark:shadow-none shadow-[0_0_20px_rgba(70,70,70,0.15)]
                             snap-center flex flex-col gap-4 relative overflow-hidden group
                         `}
                     >
