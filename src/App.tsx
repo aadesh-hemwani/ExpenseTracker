@@ -13,6 +13,7 @@ import { ThemeProvider } from "./context/ThemeContext";
 
 import ReloadPrompt from "./components/ReloadPrompt";
 import NotificationManager from "./components/NotificationManager";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   // Prevent Zoom on iOS
@@ -29,28 +30,30 @@ function App() {
   }, []);
   return (
     <ThemeProvider>
-      <ReloadPrompt />
-      <AuthProvider>
-        <NotificationManager />
+      <ErrorBoundary>
+        <ReloadPrompt />
         <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            {/* Protected Routes */}
-            <Route
-              element={
-                <ProtectedRoute>
-                  <Layout />
-                </ProtectedRoute>
-              }
-            >
-              <Route path="/" element={<Home />} />
-              <Route path="/history" element={<History />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/profile" element={<Profile />} />
-            </Route>
-          </Routes>
+          <AuthProvider>
+            <NotificationManager />
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              {/* Protected Routes */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <Layout />
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<Home />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
+            </Routes>
+          </AuthProvider>
         </BrowserRouter>
-      </AuthProvider>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

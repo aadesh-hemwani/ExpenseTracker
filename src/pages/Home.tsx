@@ -13,6 +13,7 @@ import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 
 import CountUp from "../components/CountUp";
+import InsightSheet from "../components/InsightSheet";
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,11 +34,17 @@ const Home = () => {
   const { expenses, loading: loadingRecent } = useRecentExpenses();
   const { stats, loading: loadingStats } = useMonthlyStats();
   const { deleteExpense } = useExpenses();
-  const [showTooltip, setShowTooltip] = useState(false);
+  const [showInsightSheet, setShowInsightSheet] = useState(false);
 
   const lastMonthDate = subMonths(new Date(), 1);
   const { expenses: lastMonthExpenses } = useExpensesForMonth(
     lastMonthDate,
+    stats
+  );
+
+  // Fetch FULL current month expenses (real-time) for the graph
+  const { expenses: thisMonthFullExpenses } = useExpensesForMonth(
+    new Date(),
     stats
   );
 
@@ -48,6 +55,8 @@ const Home = () => {
     trendDirection,
     lastMonthPartialSum,
     diff,
+    thisMonthGraphData,
+    lastMonthGraphData,
   } = useMemo(() => {
     const now = new Date();
     const currentMonthKey = format(now, "yyyy-MM");
@@ -79,6 +88,50 @@ const Home = () => {
 
     const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
+    // --- Graph Data Prep ---
+    const getCumulativeData = (
+      expensesList: typeof expenses,
+      daysInMonth = 31
+    ) => {
+      // 1. Initialize array of 0s for each day
+      const dailyTotals = new Array(daysInMonth).fill(0);
+
+      // 2. Sum up expenses per day
+      expensesList.forEach((expense) => {
+        // @ts-ignore
+        const d =
+          expense.date instanceof Timestamp
+            ? expense.date.toDate()
+            : expense.date;
+        if (d) {
+          const dayIndex = d.getDate() - 1; // 0-indexed
+          if (dayIndex >= 0 && dayIndex < daysInMonth) {
+            dailyTotals[dayIndex] += Number(expense.amount);
+          }
+        }
+      });
+
+      // 3. Convert to cumulative
+      const cumulative = [];
+      let runningTotal = 0;
+      for (let i = 0; i < daysInMonth; i++) {
+        runningTotal += dailyTotals[i];
+        cumulative.push(runningTotal);
+      }
+      return cumulative;
+    };
+
+    // For This Month: Only go up to TODAY (don't show flat line for future)
+    const currentDayIndex = now.getDate();
+
+    // For Last Month: Use 31 days but only slice up to current day for comparison
+    const fullLastMonthData = getCumulativeData(lastMonthExpenses, 31);
+    const lastMonthGraphData = fullLastMonthData.slice(0, currentDayIndex);
+
+    // We calculate full array for this month first to be safe, then slice
+    const fullCurrentMonthData = getCumulativeData(thisMonthFullExpenses, 31);
+    const thisMonthGraphData = fullCurrentMonthData.slice(0, currentDayIndex);
+
     return {
       currentMonthTotal: thisMonthSum,
       percentageChange: Math.abs(pctChange).toFixed(0),
@@ -86,8 +139,10 @@ const Home = () => {
       lastMonthPartialSum,
       lastMonthDate,
       diff: Math.abs(thisMonthSum - lastMonthPartialSum),
+      thisMonthGraphData: [0, ...thisMonthGraphData],
+      lastMonthGraphData: [0, ...lastMonthGraphData],
     };
-  }, [stats, lastMonthExpenses]);
+  }, [stats, lastMonthExpenses, thisMonthFullExpenses]);
 
   if (loadingRecent || loadingStats) {
     return (
@@ -115,9 +170,7 @@ const Home = () => {
         <div className="flex items-center space-x-2 pt-2">
           <div
             className="relative flex items-center"
-            onMouseEnter={() => setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
-            onClick={() => setShowTooltip(!showTooltip)}
+            onClick={() => setShowInsightSheet(true)}
           >
             <div
               className={`cursor-pointer relative z-10 flex items-center justify-center px-2 py-1 rounded-full transition-shadow duration-300 ${
@@ -136,40 +189,6 @@ const Home = () => {
                 {trendDirection === "down" ? "less" : "more"} than last month
               </span>
             </div>
-            <AnimatePresence>
-              {showTooltip && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute top-full left-0 mt-2 z-50 w-64 p-3 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-700/50"
-                >
-                  <p className="text-xs text-gray-600 dark:text-gray-300">
-                    You had spent{" "}
-                    <span className="font-bold text-gray-900 dark:text-white">
-                      ₹{lastMonthPartialSum.toLocaleString()}
-                    </span>{" "}
-                    till {format(lastMonthDate, "do")} of last month.
-                    <br />
-                    <span className="mt-1 block">
-                      That's{" "}
-                      <span
-                        className={
-                          trendDirection === "down"
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-red-600 dark:text-red-400"
-                        }
-                      >
-                        ₹{diff.toLocaleString()}{" "}
-                        {trendDirection === "down" ? "less" : "more"}
-                      </span>{" "}
-                      than your current spend.
-                    </span>
-                  </p>
-                  <div className="absolute -top-1 left-4 w-2 h-2 bg-white dark:bg-zinc-800 border-l border-t border-gray-100 dark:border-zinc-700/50 transform rotate-45"></div>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       </header>
@@ -210,6 +229,21 @@ const Home = () => {
           )}
         </div>
       </section>
+
+      <InsightSheet
+        isOpen={showInsightSheet}
+        onClose={() => setShowInsightSheet(false)}
+        data={{
+          currentMonthTotal,
+          lastMonthPartialSum,
+          diff,
+          trendDirection,
+          percentageChange,
+          thisMonthGraphData,
+          lastMonthGraphData,
+        }}
+        lastMonthDate={lastMonthDate}
+      />
     </div>
   );
 };

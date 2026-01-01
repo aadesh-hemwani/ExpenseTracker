@@ -8,12 +8,15 @@ import {
   sendNotification,
 } from "../utils/notificationUtils";
 import { format, differenceInCalendarDays, subDays } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
+import { Bell } from "lucide-react";
 
 const NotificationManager = () => {
   const { user } = useAuth();
   const { expenses } = useRecentExpenses();
   const { stats } = useMonthlyStats();
   const [budgetCap, setBudgetCap] = useState<number | null>(null);
+  const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 
   const getDate = (date: any): Date | null => {
     if (!date) return null;
@@ -25,10 +28,39 @@ const NotificationManager = () => {
     }
   };
 
-  // Initial Permission Request
+  // Initial Permission Request Logic
   useEffect(() => {
-    requestNotificationPermission();
+    // Check if browser supports notifications
+    if ("Notification" in window) {
+      if (Notification.permission === "default") {
+        // Show our nice modal instead of native prompt immediately
+        setIsPermissionModalOpen(true);
+      } else if (Notification.permission === "granted") {
+        // Already granted, ensure we are set up (e.g. server workers if needed)
+        requestNotificationPermission();
+      }
+    }
   }, []);
+
+  const handleEnableNotifications = async () => {
+    const granted = await requestNotificationPermission();
+    if (granted) {
+      setIsPermissionModalOpen(false);
+      // Optional: Send a welcome notification?
+      sendNotification(
+        "✅ Notifications Enabled",
+        "You'll now receive updates about your budget!"
+      );
+    } else {
+      // User denied native prompt
+      setIsPermissionModalOpen(false);
+    }
+  };
+
+  const handleCloseModal = () => {
+    setIsPermissionModalOpen(false);
+    // Could save to localStorage to not ask again for X days
+  };
 
   // Fetch User Budget
   useEffect(() => {
@@ -202,7 +234,64 @@ const NotificationManager = () => {
     checkWeekly();
   }, [expenses]);
 
-  return null; // Logic only component
+  return (
+    <AnimatePresence>
+      {isPermissionModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center pointer-events-none">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-gray-900/50 backdrop-blur-[5px] pointer-events-auto"
+            onClick={handleCloseModal}
+          />
+
+          {/* Modal Content */}
+          <motion.div
+            initial={{ y: "100%", opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            exit={{ y: "100%", opacity: 0, scale: 0.95 }}
+            transition={{
+              type: "spring",
+              damping: 25,
+              stiffness: 300,
+              mass: 0.8,
+            }}
+            className="relative z-10 bg-white dark:bg-black w-[90%] md:w-[28rem] max-w-full rounded-[40px] md:rounded-3xl p-6 md:p-8 shadow-2xl mx-auto mb-6 md:mb-0 border border-gray-200 dark:border-white/10 pointer-events-auto flex flex-col items-center text-center"
+          >
+            <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6 text-accent">
+              <Bell className="w-8 h-8 fill-current" />
+            </div>
+
+            <h3 className="text-xl font-bold dark:text-white mb-2">
+              Stay on Track
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 text-sm leading-relaxed">
+              Enable notifications to get daily reminders, budget alerts, and
+              weekly summaries. We promise not to spam you!
+            </p>
+
+            <div className="flex flex-col w-full gap-3">
+              <button
+                onClick={handleEnableNotifications}
+                className="w-full bg-accent text-white py-3.5 rounded-xl font-bold text-base hover:bg-accent-hover transition-all active:scale-[0.98] shadow-lg shadow-accent/20"
+              >
+                Enable Notifications
+              </button>
+              <button
+                onClick={handleCloseModal}
+                className="w-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 py-3.5 rounded-xl font-bold text-base hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              >
+                Not Now
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
 };
 
 export default NotificationManager;
