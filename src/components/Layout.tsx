@@ -100,7 +100,7 @@ const Layout = () => {
       <GlobalAddExpense />
 
       {/* Mobile Bottom Navigation - Liquid Glass Style */}
-      <div className="md:hidden fixed bottom-6 left-4 right-24 z-50">
+      <div className="md:hidden fixed bottom-2 left-4 right-24 z-50">
         <LiquidNavBar
           items={[
             {
