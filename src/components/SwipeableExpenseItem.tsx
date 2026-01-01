@@ -1,16 +1,24 @@
-import React from 'react';
-import { motion, useMotionValue, useAnimation } from 'framer-motion';
+import { ReactNode, memo } from 'react';
+import { motion, useMotionValue, useAnimation, PanInfo } from 'framer-motion';
 import { Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
-
-
 import { formatCurrency } from '../utils/formatUtils';
+import { Expense } from '../types';
+import { Timestamp } from 'firebase/firestore';
 
-const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, className = "", cardClassName = "" }) => {
+interface SwipeableExpenseItemProps {
+    t: Expense;
+    getCategoryIcon: (category: string) => ReactNode;
+    onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
+    className?: string;
+    cardClassName?: string;
+}
+
+const SwipeableExpenseItem = memo(({ t, getCategoryIcon, onDelete, className = "", cardClassName = "" }: SwipeableExpenseItemProps) => {
     const controls = useAnimation();
     const x = useMotionValue(0);
 
-    const handleDragEnd = async (event, info) => {
+    const handleDragEnd = async (_: any, info: PanInfo) => {
         const offset = info.offset.x;
         const velocity = info.velocity.x;
 
@@ -21,6 +29,13 @@ const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, classNa
             // Otherwise snap back to closed
             await controls.start({ x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } });
         }
+    };
+
+    // Helper to safely get date object
+    const getDate = (date: any): Date => {
+        if (date instanceof Timestamp) return date.toDate();
+        if (date instanceof Date) return date;
+        return new Date(); // Fallback
     };
 
     return (
@@ -34,7 +49,7 @@ const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, classNa
             {/* Delete Background Layer (The Button) */}
             <div className="absolute top-1/2 -translate-y-1/2 right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center z-0">
                 <button
-                    onClick={() => onDelete(t.id)}
+                    onClick={() => onDelete(t.id, t.amount, t.date)}
                     className="w-full h-full flex items-center justify-center text-white"
                     aria-label="Delete"
                 >
@@ -60,7 +75,7 @@ const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, classNa
                     <div className="text-left">
                         <p className="font-semibold text-gray-900 dark:text-white text-sm">{t.category}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
-                            {t.date ? format(t.date, 'MMM dd') : 'Just now'}
+                            {t.date ? format(getDate(t.date), 'MMM dd') : 'Just now'}
                         </p>
                     </div>
                 </div>
@@ -68,8 +83,9 @@ const SwipeableExpenseItem = React.memo(({ t, getCategoryIcon, onDelete, classNa
                     <span className="font-bold text-gray-900 dark:text-white block text-sm">
                         {formatCurrency(t.amount)}
                     </span>
-                    {t.note && (
-                        <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">{t.note}</span>
+                    {t.description && (
+                        // Using description as fallback for note if it exists/matches
+                        <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">{t.description}</span>
                     )}
                 </div>
             </motion.div>

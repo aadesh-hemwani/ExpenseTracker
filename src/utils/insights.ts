@@ -1,9 +1,21 @@
-import { format, endOfMonth, subMonths } from 'date-fns';
-import { TrendingUp, TrendingDown, Target, AlertCircle, Sparkles, PieChart, AlertTriangle } from 'lucide-react';
+import { endOfMonth } from 'date-fns';
+import { TrendingUp, TrendingDown, Target, Sparkles, PieChart, AlertTriangle, LucideIcon } from 'lucide-react';
+import { Expense } from '../types';
+import { MonthlyData } from './analyticsHelpers';
 
-export const generateInsights = (stats, monthlyExpenses, currentMonthTotal, budget) => {
+export interface Insight {
+    id: string;
+    priority: number;
+    icon: LucideIcon;
+    title: string;
+    text: string;
+    color: string;
+    bg: string;
+}
+
+export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[], currentMonthTotal: number, budget: number): Insight[] => {
     // List to hold all potential insights
-    const insights = [];
+    const insights: Insight[] = [];
     const today = new Date();
 
     // --------------------------------------------------------------------------
@@ -83,12 +95,12 @@ export const generateInsights = (stats, monthlyExpenses, currentMonthTotal, budg
     // 4. CATEGORY DOMINANCE (Priority: 4 - Informational)
     // --------------------------------------------------------------------------
     if (monthlyExpenses.length > 0) {
-        const categoryTotals = {};
+        const categoryTotals: Record<string, number> = {};
         monthlyExpenses.forEach(e => {
             categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
         });
 
-        let topCat = null;
+        let topCat: string | null = null;
         let maxVal = 0;
         Object.entries(categoryTotals).forEach(([cat, val]) => {
             if (val > maxVal) {

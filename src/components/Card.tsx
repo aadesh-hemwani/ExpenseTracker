@@ -1,7 +1,14 @@
-import { motion } from 'framer-motion';
-import { useMemo } from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
+import { useMemo, ElementType, ReactNode } from 'react';
 
-const Card = ({ children, className = '', as: Component = 'div', ...props }) => {
+interface CardProps extends HTMLMotionProps<"div"> {
+    children?: ReactNode;
+    className?: string;
+    as?: ElementType;
+}
+
+const Card = ({ children, className = '', as: Component = 'div', ...props }: CardProps) => {
+    // @ts-ignore - Dynamic motion component creation is tricky to type strictly without casting
     const MotionComponent = useMemo(() => motion(Component), [Component]);
 
     return (

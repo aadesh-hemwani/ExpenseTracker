@@ -1,7 +1,13 @@
-import { motion, useSpring, useTransform, useMotionValue, animate } from 'framer-motion';
+import { motion, useTransform, useMotionValue, animate } from 'framer-motion';
 import { useEffect } from 'react';
 
-const CountUp = ({ value, duration = 1.5, className }) => {
+interface CountUpProps {
+    value: number | string;
+    duration?: number;
+    className?: string;
+}
+
+const CountUp = ({ value, duration = 1.5, className }: CountUpProps) => {
     // 1. Create a MotionValue for the count
     const count = useMotionValue(0);
 

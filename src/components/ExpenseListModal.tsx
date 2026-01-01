@@ -1,13 +1,27 @@
-import React from 'react';
 import { X } from 'lucide-react';
-import { useExpenses } from '../hooks/useExpenses';
 import { getCategoryIcon, CATEGORIES } from '../utils/uiUtils';
 import { formatCurrency } from '../utils/formatUtils';
 import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { Expense } from '../types';
+import { Timestamp } from 'firebase/firestore';
 
-const ExpenseListModal = ({ title, onClose, expenses = [] }) => {
+interface ExpenseListModalProps {
+    title: string;
+    onClose: () => void;
+    expenses?: Expense[];
+}
+
+const ExpenseListModal = ({ title, onClose, expenses = [] }: ExpenseListModalProps) => {
     const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+    const getDate = (date: any): Date => {
+        if (date instanceof Timestamp) return date.toDate();
+        if (date instanceof Date) return date;
+        // Fallback for string dates if they exist, or return new Date()
+        if (typeof date === 'string') return new Date(date);
+        return new Date();
+    };
 
     return (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center pointer-events-none">
@@ -60,10 +74,10 @@ const ExpenseListModal = ({ title, onClose, expenses = [] }) => {
                                 >
                                     <div className="flex flex-col gap-1">
                                         <span className="text-gray-900 dark:text-white font-medium text-[15px]">
-                                            {expense.note || 'Unknown Expense'}
+                                            {expense.note || expense.description || 'Unknown Expense'}
                                         </span>
                                         <span className="text-xs text-gray-400 font-medium">
-                                            {format(new Date(expense.date), 'MMM dd')}
+                                            {format(getDate(expense.date), 'MMM dd')}
                                         </span>
                                     </div>
                                     <span className="text-gray-900 dark:text-white font-bold">

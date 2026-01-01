@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
     TrendingUp,
     TrendingDown,
@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { format, subMonths } from 'date-fns';
 import { useExpenses, useRecentExpenses, useMonthlyStats } from '../hooks/useExpenses';
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
-import { formatCurrency } from '../utils/formatUtils';
 import { getCategoryIcon } from '../utils/uiUtils';
 
 import CountUp from '../components/CountUp';
@@ -40,7 +39,9 @@ const Home = () => {
         const lastMonthDate = subMonths(now, 1);
         const lastMonthKey = format(lastMonthDate, 'yyyy-MM');
 
+        // @ts-ignore
         const thisMonthStat = stats.find(s => s.monthKey === currentMonthKey);
+        // @ts-ignore
         const lastMonthStat = stats.find(s => s.monthKey === lastMonthKey);
 
         const thisMonthSum = thisMonthStat ? Number(thisMonthStat.total) : 0;
@@ -57,9 +58,6 @@ const Home = () => {
             trendDirection: thisMonthSum > lastMonthSum ? 'up' : 'down'
         };
     }, [stats]);
-
-
-
 
 
     if (loadingRecent || loadingStats) {

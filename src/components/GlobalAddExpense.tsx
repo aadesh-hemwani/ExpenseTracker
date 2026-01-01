@@ -17,7 +17,7 @@ const GlobalAddExpense = memo(() => {
         setIsAddModalOpen(false);
     };
 
-    const handleSave = async (e) => {
+    const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!amount) return;
 

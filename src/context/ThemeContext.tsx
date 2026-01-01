@@ -1,13 +1,18 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { ThemeContextType, Theme } from '../types';
 
-const ThemeContext = createContext();
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-export const ThemeProvider = ({ children }) => {
-    const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-    const [accentColor, setAccentColor] = useState(() => localStorage.getItem('accentColor') || 'indigo');
+interface ThemeProviderProps {
+    children: ReactNode;
+}
+
+export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
+    const [theme, setTheme] = useState<Theme>(() => (localStorage.getItem('theme') as Theme) || 'light');
+    const [accentColor, setAccentColor] = useState<string>(() => localStorage.getItem('accentColor') || 'indigo');
 
     // Define accent colors map - using Tailwind colors for reference
-    const accentColors = {
+    const accentColors: Record<string, { default: string; hover: string }> = {
         indigo: { default: '#6366f1', hover: '#4f46e5' },
         emerald: { default: '#10b981', hover: '#059669' },
         rose: { default: '#f43f5e', hover: '#e11d48' },
@@ -43,7 +48,7 @@ export const ThemeProvider = ({ children }) => {
     );
 };
 
-export const useTheme = () => {
+export const useTheme = (): ThemeContextType => {
     const context = useContext(ThemeContext);
     if (!context) {
         throw new Error('useTheme must be used within a ThemeProvider');

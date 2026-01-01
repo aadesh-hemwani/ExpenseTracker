@@ -1,10 +1,15 @@
-import React from 'react';
+import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, BrainCircuit } from 'lucide-react';
+import { Insight } from '../utils/insights';
 
-const AiInsights = ({ insights = [] }) => {
-    const [activeIndex, setActiveIndex] = React.useState(0);
-    const containerRef = React.useRef(null);
+interface AiInsightsProps {
+    insights?: Insight[];
+}
+
+const AiInsights = ({ insights = [] }: AiInsightsProps) => {
+    const [activeIndex, setActiveIndex] = useState(0);
+    const containerRef = useRef<HTMLDivElement>(null);
 
     if (!insights.length) return null;
 
@@ -36,7 +41,7 @@ const AiInsights = ({ insights = [] }) => {
                 onScroll={handleScroll}
                 className="flex overflow-x-auto gap-4 py-4 -mx-5 px-5 md:mx-0 md:px-0 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']"
             >
-                {insights.map((insight, idx) => (
+                {insights.map((insight) => (
                     <motion.div
                         whileTap={{ scale: 0.98 }}
                         transition={{ type: "spring", stiffness: 300, damping: 15, duration: 0.5 }}
