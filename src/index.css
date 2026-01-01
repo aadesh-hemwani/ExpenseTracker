@@ -17,6 +17,8 @@ body {
   user-select: none;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 html {
@@ -29,6 +31,12 @@ body {
 
 .dark body {
   @apply bg-black text-gray-100;
+}
+
+/* Global tactile feedback */
+button:active {
+  transform: scale(0.96);
+  transition: transform 0.1s;
 }
 
 /* Custom Scrollbar Hiding for "no-scrollbar" class */
