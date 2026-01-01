@@ -5,7 +5,6 @@ import {
   onSnapshot,
   query,
   orderBy,
-  limit,
   serverTimestamp,
   Timestamp,
   doc,
@@ -67,16 +66,17 @@ export const useMonthlyStats = () => {
 export const useExpensesForMonth = (
   date: Date | null,
   allStats: MonthlyStat[] = [],
-  statsLoaded: boolean = false
+  statsLoaded: boolean = false,
+  subscribe: boolean = true
 ) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuth();
 
     // EFFECT 1: Current Month (Real-time updates)
-    // Dependencies must be STABLE. Do not include 'stats' or 'loadingStats' here.
+    // Only runs if 'subscribe' is TRUE
     useEffect(() => {
-        if (!user || !date) return;
+        if (!user || !date || !subscribe) return;
 
         const monthKey = format(date, "yyyy-MM");
         const currentMonthKey = format(new Date(), "yyyy-MM");
@@ -115,17 +115,18 @@ export const useExpensesForMonth = (
             );
             return unsubscribe;
         }
-    }, [user, date]); // Minimal dependencies for real-time listener
+    }, [user, date, subscribe]);
 
-    // EFFECT 2: Past Months (Cached / On-Demand)
+    // EFFECT 2: Cached / On-Demand (Past Months OR Current Month if !subscribe)
     useEffect(() => {
         if (!user || !date) return;
 
         const monthKey = format(date, "yyyy-MM");
         const currentMonthKey = format(new Date(), "yyyy-MM");
 
-        // Skip if it's current month (handled by Effect 1)
-        if (monthKey === currentMonthKey) return;
+        // If we want real-time (subscribe=true) and it IS the current month,
+        // Effect 1 handles it. Skip this.
+        if (subscribe && monthKey === currentMonthKey) return;
 
         // OPTIMIZATION 1: Wait for stats to load
         if (!statsLoaded) {
