@@ -42,11 +42,16 @@ const Home = () => {
 
   const { expenses: lastMonthExpenses } = useExpensesForMonth(
     lastMonthDate,
-    stats
+    stats,
+    !loadingStats
   );
 
   // Fetch FULL current month expenses (real-time) for the graph
-  const { expenses: thisMonthFullExpenses } = useExpensesForMonth(now, stats);
+  const { expenses: thisMonthFullExpenses } = useExpensesForMonth(
+    now,
+    stats,
+    !loadingStats
+  );
 
   // Derived State (Calculations)
   const {
