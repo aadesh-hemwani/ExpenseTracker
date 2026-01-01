@@ -1,7 +1,7 @@
 import React, { useState, memo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES } from "../utils/uiUtils";
 import { LiquidFAB } from "./ui/LiquidFAB";
@@ -67,7 +67,7 @@ const GlobalAddExpense = memo(() => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="absolute inset-0 bg-gray-900/50 backdrop-blur-[5px] pointer-events-auto"
+              className="absolute inset-0 bg-gray-900/50 dark:bg-white/10 backdrop-blur-[5px] pointer-events-auto"
               onClick={handleCloseModal}
               style={{ willChange: "opacity" }}
             />

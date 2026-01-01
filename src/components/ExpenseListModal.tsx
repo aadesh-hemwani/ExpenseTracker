@@ -35,7 +35,7 @@ const ExpenseListModal = ({
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="absolute inset-0 bg-gray-900/30 backdrop-blur-sm pointer-events-auto"
+        className="absolute inset-0 bg-gray-900/30 dark:bg-white/10 backdrop-blur-sm pointer-events-auto"
         onClick={onClose}
       />
 

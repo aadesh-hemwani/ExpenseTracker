@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
 import TrajectoryChart from "./TrajectoryChart";
 import { LiquidClose } from "./ui/LiquidClose";
@@ -42,7 +42,7 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="absolute inset-0 bg-gray-900/50 backdrop-blur-[5px] pointer-events-auto"
+            className="absolute inset-0 bg-gray-900/50 dark:bg-white/10 backdrop-blur-[5px] pointer-events-auto"
             onClick={onClose}
           />
 
