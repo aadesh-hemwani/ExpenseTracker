@@ -36,6 +36,22 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable'
           }
+        ],
+        shortcuts: [
+          {
+            name: "Add Expense",
+            short_name: "Add",
+            description: "Log a new expense quickly",
+            url: "/?action=add",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192", type: "image/png" }]
+          },
+          {
+            name: "View Insights",
+            short_name: "Insights",
+            description: "Check your spending trends",
+            url: "/analytics",
+            icons: [{ src: "pwa-192x192.png", sizes: "192x192", type: "image/png" }]
+          }
         ]
       },
       workbox: {

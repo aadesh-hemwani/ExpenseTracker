@@ -15,8 +15,14 @@ const NotificationManager = () => {
   const { stats } = useMonthlyStats();
   const [budgetCap, setBudgetCap] = useState<number | null>(null);
 
-  const getDate = (date: any): Date => {
-    return date instanceof Date ? date : date.toDate();
+  const getDate = (date: any): Date | null => {
+    if (!date) return null;
+    try {
+      return date instanceof Date ? date : date.toDate();
+    } catch (e) {
+      console.error("Invalid date object:", date, e);
+      return null;
+    }
   };
 
   // Initial Permission Request
@@ -100,31 +106,43 @@ const NotificationManager = () => {
 
       // Calculate Streak
       // Sort expenses just in case, though hook usually returns sorted
-      const sorted = [...expenses].sort((a, b) => {
-        return getDate(b.date).getTime() - getDate(a.date).getTime();
+      // Filter out invalid expenses first
+      const validExpenses = expenses.filter((e) => getDate(e.date) !== null);
+
+      const sorted = [...validExpenses].sort((a, b) => {
+        const dateA = getDate(a.date);
+        const dateB = getDate(b.date);
+        if (!dateA || !dateB) return 0; // Should not happen due to filter
+        return dateB.getTime() - dateA.getTime();
       });
 
       let streak = 0;
       let checkDate = new Date();
 
       // Check if we logged today?
-      const mostRecentStr = format(getDate(sorted[0].date), "yyyy-MM-dd");
+      // Check if we logged today?
+      const mostRecentDate = sorted[0] ? getDate(sorted[0].date) : null;
+      const mostRecentStr = mostRecentDate
+        ? format(mostRecentDate, "yyyy-MM-dd")
+        : "";
+
       if (mostRecentStr === todayKey) {
         streak = 1;
       } else if (
         mostRecentStr === format(subDays(checkDate, 1), "yyyy-MM-dd")
       ) {
-        // If we haven't logged today, but logged yesterday, streak is alive but '1' effectively for calculation
-        // Actually complex to calc strict streak from loose list.
-        // Simplified: Just check if we have data for Today, Yesterday, Day Before...
+        // ...
       }
 
-      // Simplified Streak Logic: Count how many consecutive days back we have data for
+      // Simplified Streak Logic
       let currentDay = new Date();
       let streakCount = 0;
-      const expenseDates = new Set(
-        sorted.map((e) => format(getDate(e.date), "yyyy-MM-dd"))
-      );
+      const expenseDates = new Set();
+
+      sorted.forEach((e) => {
+        const d = getDate(e.date);
+        if (d) expenseDates.add(format(d, "yyyy-MM-dd"));
+      });
 
       // Check up to 30 days back
       for (let i = 0; i < 30; i++) {
@@ -165,7 +183,10 @@ const NotificationManager = () => {
         // Generate Report
         const oneWeekAgo = subDays(new Date(), 7);
         const recentTotal = expenses
-          .filter((e) => getDate(e.date) >= oneWeekAgo)
+          .filter((e) => {
+            const date = getDate(e.date);
+            return date && date >= oneWeekAgo;
+          })
           .reduce((sum, e) => sum + Number(e.amount), 0);
 
         if (recentTotal > 0) {
