@@ -81,7 +81,7 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-black transition-colors duration-200 overscroll-contain">
-        <div className="max-w-2xl mx-auto p-5 md:p-10 pb-24 md:pb-10">
+        <div className="max-w-2xl mx-auto p-5 pt-12 md:p-10 pb-24 md:pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
