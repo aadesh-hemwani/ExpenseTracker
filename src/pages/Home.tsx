@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
     TrendingUp,
     TrendingDown,
@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subMonths } from 'date-fns';
-import { useExpenses, useRecentExpenses, useMonthlyStats } from '../hooks/useExpenses';
+import { useExpenses, useRecentExpenses, useMonthlyStats, useExpensesForMonth } from '../hooks/useExpenses';
+import { Timestamp } from 'firebase/firestore';
 import SwipeableExpenseItem from '../components/SwipeableExpenseItem';
 import { getCategoryIcon } from '../utils/uiUtils';
 
@@ -31,33 +32,48 @@ const Home = () => {
     const { expenses, loading: loadingRecent } = useRecentExpenses();
     const { stats, loading: loadingStats } = useMonthlyStats();
     const { deleteExpense } = useExpenses();
+    const [showTooltip, setShowTooltip] = useState(false);
+
+    const lastMonthDate = subMonths(new Date(), 1);
+    const { expenses: lastMonthExpenses } = useExpensesForMonth(lastMonthDate, stats);
 
     // Derived State (Calculations)
-    const { currentMonthTotal, percentageChange, trendDirection } = useMemo(() => {
+    const { currentMonthTotal, percentageChange, trendDirection, lastMonthPartialSum, diff } = useMemo(() => {
         const now = new Date();
         const currentMonthKey = format(now, 'yyyy-MM');
-        const lastMonthDate = subMonths(now, 1);
-        const lastMonthKey = format(lastMonthDate, 'yyyy-MM');
 
         // @ts-ignore
         const thisMonthStat = stats.find(s => s.monthKey === currentMonthKey);
-        // @ts-ignore
-        const lastMonthStat = stats.find(s => s.monthKey === lastMonthKey);
 
         const thisMonthSum = thisMonthStat ? Number(thisMonthStat.total) : 0;
-        const lastMonthSum = lastMonthStat ? Number(lastMonthStat.total) : 0;
+
+        // Calculate "Last Month to Same Date"
+        const currentDay = now.getDate();
+        const lastMonthPartialSum = lastMonthExpenses.reduce((acc, expense) => {
+            const expenseDate = expense.date instanceof Timestamp ? expense.date.toDate() : expense.date;
+            // @ts-ignore - Handle potential date type issues safely
+            if (expenseDate && expenseDate.getDate() <= currentDay) {
+                return acc + Number(expense.amount);
+            }
+            return acc;
+        }, 0);
 
         let pctChange = 0;
-        if (lastMonthSum > 0) {
-            pctChange = ((thisMonthSum - lastMonthSum) / lastMonthSum) * 100;
+        if (lastMonthPartialSum > 0) {
+            pctChange = ((thisMonthSum - lastMonthPartialSum) / lastMonthPartialSum) * 100;
         }
+
+        const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
         return {
             currentMonthTotal: thisMonthSum,
             percentageChange: Math.abs(pctChange).toFixed(0),
-            trendDirection: thisMonthSum > lastMonthSum ? 'up' : 'down'
+            trendDirection: isTrendingUp ? 'up' : 'down',
+            lastMonthPartialSum,
+            lastMonthDate,
+            diff: Math.abs(thisMonthSum - lastMonthPartialSum)
         };
-    }, [stats]);
+    }, [stats, lastMonthExpenses]);
 
 
     if (loadingRecent || loadingStats) {
@@ -85,11 +101,64 @@ const Home = () => {
                 </div>
 
                 <div className="flex items-center space-x-2 pt-2">
-                    <div className={`flex items-center justify-center px-2 py-1 rounded-full ${trendDirection === 'down' ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}>
-                        {trendDirection === 'down' ? <TrendingDown className="w-4 h-4 mr-1" /> : <TrendingUp className="w-4 h-4 mr-1" />}
-                        <span className="text-xs font-semibold">
-                            {percentageChange}% {trendDirection === 'down' ? 'less' : 'more'} than last month
-                        </span>
+                    <div 
+                        className="relative flex items-center"
+                        onMouseEnter={() => setShowTooltip(true)}
+                        onMouseLeave={() => setShowTooltip(false)}
+                        onClick={() => setShowTooltip(!showTooltip)}
+                    >
+                        <motion.div
+                            className={`absolute inset-0 rounded-full border ${trendDirection === 'down' ? 'border-green-400' : 'border-red-400'}`}
+                            initial={{ opacity: 0.2, scale: 1 }}
+                            animate={{ 
+                                opacity: 0,
+                                scale: 1.3
+                            }}
+                            transition={{
+                                duration:  2,
+                                repeat: Infinity,
+                                ease: "easeOut"
+                            }}
+                        />
+                         <motion.div
+                            className={`absolute inset-0 rounded-full border ${trendDirection === 'down' ? 'border-green-400' : 'border-red-400'}`}
+                            initial={{ opacity: 0.2, scale: 1 }}
+                            animate={{ 
+                                opacity: 0,
+                                scale: 1.3
+                            }}
+                            transition={{
+                                duration: 2,
+                                repeat: Infinity,
+                                ease: "easeOut",
+                                delay: 1
+                            }}
+                        />
+                        <div className={`cursor-pointer relative z-10 flex items-center justify-center px-2 py-1 rounded-full ${trendDirection === 'down' ? 'bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400'}`}>
+                            {trendDirection === 'down' ? <TrendingDown className="w-4 h-4 mr-1" /> : <TrendingUp className="w-4 h-4 mr-1" />}
+                            <span className="text-xs font-semibold">
+                                {percentageChange}% {trendDirection === 'down' ? 'less' : 'more'} than last month
+                            </span>
+                        </div>
+                        <AnimatePresence>
+                            {showTooltip && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 10 }}
+                                    className="absolute top-full left-0 mt-2 z-50 w-64 p-3 bg-white dark:bg-zinc-800 rounded-xl shadow-xl border border-gray-100 dark:border-zinc-700/50"
+                                >
+                                    <p className="text-xs text-gray-600 dark:text-gray-300">
+                                        You had spent <span className="font-bold text-gray-900 dark:text-white">₹{lastMonthPartialSum.toLocaleString()}</span> till {format(lastMonthDate, 'do')} of last month.
+                                        <br/>
+                                        <span className="mt-1 block">
+                                            That's <span className={trendDirection === 'down' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>₹{diff.toLocaleString()} {trendDirection === 'down' ? 'less' : 'more'}</span> than your current spend.
+                                        </span>
+                                    </p>
+                                    <div className="absolute -top-1 left-4 w-2 h-2 bg-white dark:bg-zinc-800 border-l border-t border-gray-100 dark:border-zinc-700/50 transform rotate-45"></div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </div>
             </header>
