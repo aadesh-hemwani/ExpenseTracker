@@ -1,20 +1,39 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../firebase";
-import { useRecentExpenses, useMonthlyStats } from "../hooks/useExpenses";
+import { useMonthlyStats, useExpensesForMonth } from "../hooks/useExpenses";
 import {
   requestNotificationPermission,
   sendNotification,
 } from "../utils/notificationUtils";
-import { format, differenceInCalendarDays, subDays } from "date-fns";
+import { format, subDays, subMonths } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell } from "lucide-react";
 
 const NotificationManager = () => {
   const { user } = useAuth();
-  const { expenses } = useRecentExpenses();
-  const { stats } = useMonthlyStats();
+  /* Replaced useRecentExpenses with combined monthly fetching */
+  const { stats, loading: loadingStats } = useMonthlyStats();
+
+  const now = useMemo(() => new Date(), []);
+  const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
+
+  const { expenses: lastMonthExpenses } = useExpensesForMonth(
+    lastMonthDate,
+    stats,
+    !loadingStats
+  );
+
+  const { expenses: thisMonthExpenses } = useExpensesForMonth(
+    now,
+    stats,
+    !loadingStats
+  );
+
+  const expenses = useMemo(() => {
+    return [...thisMonthExpenses, ...lastMonthExpenses];
+  }, [thisMonthExpenses, lastMonthExpenses]);
   const [budgetCap, setBudgetCap] = useState<number | null>(null);
   const [isPermissionModalOpen, setIsPermissionModalOpen] = useState(false);
 

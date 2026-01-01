@@ -4,11 +4,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
 import {
   useExpenses,
-  useRecentExpenses,
   useMonthlyStats,
   useExpensesForMonth,
 } from "../hooks/useExpenses";
 import { Timestamp } from "firebase/firestore";
+import { Expense } from "../types";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 
@@ -31,7 +31,7 @@ const item = {
 };
 
 const Home = () => {
-  const { expenses, loading: loadingRecent } = useRecentExpenses();
+  // const { expenses, loading: loadingRecent } = useRecentExpenses(); // Removed for optimization
   const { stats, loading: loadingStats } = useMonthlyStats();
   const { deleteExpense } = useExpenses();
   const [showInsightSheet, setShowInsightSheet] = useState(false);
@@ -47,11 +47,23 @@ const Home = () => {
   );
 
   // Fetch FULL current month expenses (real-time) for the graph
-  const { expenses: thisMonthFullExpenses } = useExpensesForMonth(
-    now,
-    stats,
-    !loadingStats
-  );
+  const { expenses: thisMonthFullExpenses, loading: loadingCurrent } =
+    useExpensesForMonth(now, stats, !loadingStats);
+
+  // DERIVED: Recent Expenses (Strategy 1: Consolidate Listeners)
+  // Combine This Month + Last Month -> Sort Desc -> Top 20
+  const recentExpenses = useMemo(() => {
+    const all = [...thisMonthFullExpenses, ...lastMonthExpenses];
+    return all
+      .sort((a, b) => {
+        // @ts-ignore
+        const dateA = a.date instanceof Timestamp ? a.date.toDate() : a.date;
+        // @ts-ignore
+        const dateB = b.date instanceof Timestamp ? b.date.toDate() : b.date;
+        return Number(dateB) - Number(dateA);
+      })
+      .slice(0, 20);
+  }, [thisMonthFullExpenses, lastMonthExpenses]);
 
   // Derived State (Calculations)
   const {
@@ -94,10 +106,7 @@ const Home = () => {
     const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
     // --- Graph Data Prep ---
-    const getCumulativeData = (
-      expensesList: typeof expenses,
-      daysInMonth = 31
-    ) => {
+    const getCumulativeData = (expensesList: Expense[], daysInMonth = 31) => {
       // 1. Initialize array of 0s for each day
       const dailyTotals = new Array(daysInMonth).fill(0);
 
@@ -140,7 +149,7 @@ const Home = () => {
     return {
       currentMonthTotal: thisMonthSum,
       percentageChange: Math.abs(pctChange).toFixed(0),
-      trendDirection: isTrendingUp ? "up" : "down",
+      trendDirection: (isTrendingUp ? "up" : "down") as "up" | "down",
       lastMonthPartialSum,
       lastMonthDate,
       diff: Math.abs(thisMonthSum - lastMonthPartialSum),
@@ -149,7 +158,7 @@ const Home = () => {
     };
   }, [stats, lastMonthExpenses, thisMonthFullExpenses]);
 
-  if (loadingRecent || loadingStats) {
+  if (loadingCurrent || loadingStats) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
         <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
@@ -207,7 +216,7 @@ const Home = () => {
         </div>
 
         <div className="space-y-4">
-          {expenses.length === 0 ? (
+          {recentExpenses.length === 0 ? (
             <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl">
               <p className="text-gray-400 text-sm">No expenses yet.</p>
               <p className="text-gray-300 text-xs mt-1">Tap + to add one.</p>
@@ -218,9 +227,10 @@ const Home = () => {
               initial="hidden"
               animate="show"
               className="space-y-4"
+              layout
             >
-              <AnimatePresence mode="popLayout">
-                {expenses.map((t) => (
+              <AnimatePresence mode="popLayout" initial={false}>
+                {recentExpenses.map((t) => (
                   <motion.div key={t.id} variants={item} layout>
                     <SwipeableExpenseItem
                       t={t}

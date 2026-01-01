@@ -20,13 +20,9 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import { Expense } from "../types";
+import { getMonthFromCache, saveMonthToCache } from "../utils/indexedDB";
 
-// --- FILE LEVEL CACHE ---
-interface CacheData {
-  data: Expense[];
-  validation: { total: number; count: number };
-}
-const expensesCache: Record<string, CacheData> = {}; // Format: { "yyyy-MM": { data: [], validation: { total: 0, count: 0 } } }
+
 
 export interface MonthlyStat {
   monthKey: string;
@@ -36,40 +32,7 @@ export interface MonthlyStat {
 
 // --- HUB FOR ALL EXPENSE LOGIC ---
 
-// 1. Hook for Home Screen (Limit to recent 20)
-export const useRecentExpenses = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user) {
-      setExpenses([]);
-      return;
-    }
-
-    const collectionRef = collection(db, "users", user.uid, "expenses");
-    // Limit to 20 for performance on home screen
-    const q = query(collectionRef, orderBy("date", "desc"), limit(20));
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot: QuerySnapshot<DocumentData>) => {
-        const docs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date?.toDate(),
-        })) as Expense[];
-        setExpenses(docs);
-        setLoading(false);
-      }
-    );
-
-    return unsubscribe;
-  }, [user]);
-
-  return { expenses, loading };
-};
 
 // 2. Hook for History Screen (Fetch Aggregated Stats)
 export const useMonthlyStats = () => {
@@ -110,139 +73,147 @@ export const useExpensesForMonth = (
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user || !date) {
-      setExpenses([]);
-      return;
-    }
+    // EFFECT 1: Current Month (Real-time updates)
+    // Dependencies must be STABLE. Do not include 'stats' or 'loadingStats' here.
+    useEffect(() => {
+        if (!user || !date) return;
 
-    const monthKey = format(date, "yyyy-MM");
-    const currentMonthKey = format(new Date(), "yyyy-MM");
+        const monthKey = format(date, "yyyy-MM");
+        const currentMonthKey = format(new Date(), "yyyy-MM");
 
-    // If it's the CURRENT month, we want REAL-TIME updates (onSnapshot) always.
-    if (monthKey === currentMonthKey) {
-      setLoading(true);
-      const start = new Date(date.getFullYear(), date.getMonth(), 1);
-      const end = new Date(
-        date.getFullYear(),
-        date.getMonth() + 1,
-        0,
-        23,
-        59,
-        59
-      );
+        if (monthKey === currentMonthKey) {
+            setLoading(true);
+            const start = new Date(date.getFullYear(), date.getMonth(), 1);
+            const end = new Date(
+                date.getFullYear(),
+                date.getMonth() + 1,
+                0,
+                23,
+                59,
+                59
+            );
 
-      const collectionRef = collection(db, "users", user.uid, "expenses");
-      const q = query(
-        collectionRef,
-        where("date", ">=", Timestamp.fromDate(start)),
-        where("date", "<=", Timestamp.fromDate(end)),
-        orderBy("date", "desc")
-      );
+            const collectionRef = collection(db, "users", user.uid, "expenses");
+            const q = query(
+                collectionRef,
+                where("date", ">=", Timestamp.fromDate(start)),
+                where("date", "<=", Timestamp.fromDate(end)),
+                orderBy("date", "desc")
+            );
 
-      const unsubscribe = onSnapshot(
-        q,
-        (snapshot: QuerySnapshot<DocumentData>) => {
-          const docs = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            date: doc.data().date?.toDate(),
-          })) as Expense[];
-          setExpenses(docs);
-          setLoading(false);
+            const unsubscribe = onSnapshot(
+                q,
+                (snapshot: QuerySnapshot<DocumentData>) => {
+                    const docs = snapshot.docs.map((doc) => ({
+                        id: doc.id,
+                        ...doc.data(),
+                        date: doc.data().date?.toDate(),
+                    })) as Expense[];
+                    setExpenses(docs);
+                    setLoading(false);
+                }
+            );
+            return unsubscribe;
         }
-      );
-      return unsubscribe;
-    } else {
-      // OPTIMIZATION 1: Wait for stats to load before deciding to fetch past months
-      if (!statsLoaded) {
-        // If stats aren't loaded yet, we can't efficiently decide if we should fetch.
-        // Keep loading state until stats arrive.
-        setLoading(true);
-        return;
-      }
+    }, [user, date]); // Minimal dependencies for real-time listener
 
-      // PAST MONTHS: Attempt Cache with Validation
-      const cached = expensesCache[monthKey];
-      const matchingStat = allStats.find((s) => s.monthKey === monthKey);
+    // EFFECT 2: Past Months (Cached / On-Demand)
+    useEffect(() => {
+        if (!user || !date) return;
 
-      // OPTIMIZATION 2: If stats are loaded, but no stat exists for this month, it means 0 expenses.
-      if (!matchingStat) {
-        console.log(`[Optimization] No stats for ${monthKey}, skipping fetch.`);
-        setExpenses([]);
-        setLoading(false);
-        return;
-      }
+        const monthKey = format(date, "yyyy-MM");
+        const currentMonthKey = format(new Date(), "yyyy-MM");
 
-      // Validate Cache
-      let isValid = false;
-      if (cached) {
-        // Check if cached validation tokens match current real-time stats
-        // Since we KNOW matchingStat exists here (checked above), we can compare safely
-        if (
-          cached.validation.total === matchingStat.total &&
-          cached.validation.count === matchingStat.count
-        ) {
-          isValid = true;
+        // Skip if it's current month (handled by Effect 1)
+        if (monthKey === currentMonthKey) return;
+
+        // OPTIMIZATION 1: Wait for stats to load
+        if (!statsLoaded) {
+            setLoading(true);
+            return;
         }
-      }
 
-      if (isValid) {
-        console.log(`[Cache Hit] Serving ${monthKey} from memory.`);
-        setExpenses(cached!.data);
-        setLoading(false);
-        return; // No subscription needed
-      }
+        const fetchAndCache = async () => {
+            setLoading(true);
+            const matchingStat = allStats.find((s) => s.monthKey === monthKey);
 
-      // Cache Miss -> Fetch Once
-      console.log(`[Cache Miss] Fetching ${monthKey}...`);
-      setLoading(true);
+            // OPTIMIZATION 2: No stats = No expenses
+            if (!matchingStat) {
+                console.log(`[Optimization] No stats for ${monthKey}, skipping fetch.`);
+                setExpenses([]);
+                setLoading(false);
+                return;
+            }
 
-      const start = new Date(date.getFullYear(), date.getMonth(), 1);
-      const end = new Date(
-        date.getFullYear(),
-        date.getMonth() + 1,
-        0,
-        23,
-        59,
-        59
-      );
-      const collectionRef = collection(db, "users", user.uid, "expenses");
-      const q = query(
-        collectionRef,
-        where("date", ">=", Timestamp.fromDate(start)),
-        where("date", "<=", Timestamp.fromDate(end)),
-        orderBy("date", "desc")
-      );
+            try {
+                // Try Local Cache First
+                const cached = await getMonthFromCache(monthKey);
+                let isValid = false;
 
-      getDocs(q)
-        .then((snapshot) => {
-          const docs = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            date: doc.data().date?.toDate(),
-          })) as Expense[];
+                if (cached) {
+                    // Validate against real-time stats (the "hash")
+                    if (
+                        cached.total === matchingStat.total &&
+                        cached.count === matchingStat.count
+                    ) {
+                        isValid = true;
+                    }
+                }
 
-          // Update Cache (only if we have validation data to lock it)
-          if (matchingStat) {
-            expensesCache[monthKey] = {
-              data: docs,
-              validation: {
-                total: matchingStat.total,
-                count: matchingStat.count,
-              },
-            };
-          }
+                if (isValid && cached) {
+                    console.log(`[IDB Cache Hit] Serving ${monthKey} from disk.`);
+                    setExpenses(cached.data);
+                    setLoading(false);
+                    return;
+                }
 
-          setExpenses(docs);
-          setLoading(false);
-        })
-        .catch((e) => {
-          console.error("Fetch failed", e);
-          setLoading(false);
-        });
-    }
-  }, [user, date, allStats, statsLoaded]); // Re-run if stats change or load
+                // Cache Miss or Stale -> Fetch from Firestore
+                console.log(`[IDB Cache Miss] Fetching ${monthKey} from network...`);
+                
+                const start = new Date(date.getFullYear(), date.getMonth(), 1);
+                const end = new Date(
+                    date.getFullYear(),
+                    date.getMonth() + 1,
+                    0,
+                    23,
+                    59,
+                    59
+                );
+                const collectionRef = collection(db, "users", user.uid, "expenses");
+                const q = query(
+                    collectionRef,
+                    where("date", ">=", Timestamp.fromDate(start)),
+                    where("date", "<=", Timestamp.fromDate(end)),
+                    orderBy("date", "desc")
+                );
+
+                const snapshot = await getDocs(q);
+                const docs = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                    date: doc.data().date?.toDate(),
+                })) as Expense[];
+
+                // Update Local Cache
+                await saveMonthToCache(
+                    monthKey,
+                    docs,
+                    matchingStat.total,
+                    matchingStat.count
+                );
+                
+                setExpenses(docs);
+            } catch (e) {
+                console.error("Error fetching past month:", e);
+                // Fallback or error handling
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchAndCache();
+
+    }, [user, date, allStats, statsLoaded]); // Re-run if stats change or load
 
   return { expenses, loading };
 };
