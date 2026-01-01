@@ -119,48 +119,11 @@ const Home = () => {
             onMouseLeave={() => setShowTooltip(false)}
             onClick={() => setShowTooltip(!showTooltip)}
           >
-            <motion.div
-              key="ripple-1"
-              className={`absolute inset-0 rounded-full border ${
-                trendDirection === "down"
-                  ? "border-green-400"
-                  : "border-red-400"
-              }`}
-              initial={{ opacity: 0, scale: 1 }}
-              animate={{
-                opacity: [0.8, 0],
-                scale: [1, 1.5],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeOut",
-              }}
-            />
-            <motion.div
-              key="ripple-2"
-              className={`absolute inset-0 rounded-full border ${
-                trendDirection === "down"
-                  ? "border-green-400"
-                  : "border-red-400"
-              }`}
-              initial={{ opacity: 0, scale: 1 }}
-              animate={{
-                opacity: [0.8, 0],
-                scale: [1, 1.5],
-              }}
-              transition={{
-                duration: 2,
-                repeat: Infinity,
-                ease: "easeOut",
-                delay: 1,
-              }}
-            />
             <div
-              className={`cursor-pointer relative z-10 flex items-center justify-center px-2 py-1 rounded-full ${
+              className={`cursor-pointer relative z-10 flex items-center justify-center px-2 py-1 rounded-full transition-shadow duration-300 ${
                 trendDirection === "down"
-                  ? "bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400"
-                  : "bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400"
+                  ? "bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400 animate-glow-green"
+                  : "bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400 animate-glow-red"
               }`}
             >
               {trendDirection === "down" ? (
