@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
 import TrajectoryChart from "./TrajectoryChart";
+import { LiquidClose } from "./ui/LiquidClose";
 
 interface InsightSheetProps {
   isOpen: boolean;
@@ -62,12 +63,7 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
               <h3 className="text-xl font-bold dark:text-white">
                 Spending Insight
               </h3>
-              <button
-                onClick={onClose}
-                className="p-2 bg-gray-100 dark:bg-zinc-800 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 transition-colors"
-              >
-                <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+              <LiquidClose onClick={onClose} />
             </div>
 
             <div className="space-y-8 pb-6">

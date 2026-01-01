@@ -36,17 +36,17 @@ const Home = () => {
   const { deleteExpense } = useExpenses();
   const [showInsightSheet, setShowInsightSheet] = useState(false);
 
-  const lastMonthDate = subMonths(new Date(), 1);
+  // Stabilize date references to prevent infinite hooks loops
+  const now = useMemo(() => new Date(), []);
+  const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
+
   const { expenses: lastMonthExpenses } = useExpensesForMonth(
     lastMonthDate,
     stats
   );
 
   // Fetch FULL current month expenses (real-time) for the graph
-  const { expenses: thisMonthFullExpenses } = useExpensesForMonth(
-    new Date(),
-    stats
-  );
+  const { expenses: thisMonthFullExpenses } = useExpensesForMonth(now, stats);
 
   // Derived State (Calculations)
   const {

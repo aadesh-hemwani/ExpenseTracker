@@ -1,9 +1,11 @@
 import React, { useState, memo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, X, Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { X, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES } from "../utils/uiUtils";
+import { LiquidFAB } from "./ui/LiquidFAB";
+import { LiquidClose } from "./ui/LiquidClose";
 
 const GlobalAddExpense = memo(() => {
   const { addExpense } = useExpenses();
@@ -54,17 +56,7 @@ const GlobalAddExpense = memo(() => {
 
   return (
     <>
-      <motion.button
-        layoutId="fab-button"
-        onClick={() => setIsAddModalOpen(true)}
-        className="fixed bottom-6 right-4 w-[4.5rem] h-[4.5rem] bg-[color-mix(in_srgb,var(--color-accent),transparent_30%)] backdrop-blur-[5px] text-white rounded-full shadow-2xl hover:bg-accent-hover active:scale-95 hover:scale-105 z-40 flex items-center justify-center shadow-accent/30 border border-white/20 will-change-transform"
-        aria-label="Add Expense"
-        whileTap={{ scale: 0.95 }}
-        whileHover={{ scale: 1.05 }}
-        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      >
-        <Plus className="w-8 h-8" />
-      </motion.button>
+      <LiquidFAB onClick={() => setIsAddModalOpen(true)} />
 
       <AnimatePresence>
         {isAddModalOpen && (
@@ -98,12 +90,7 @@ const GlobalAddExpense = memo(() => {
                 <h3 className="text-xl font-bold dark:text-white">
                   New Expense
                 </h3>
-                <button
-                  onClick={handleCloseModal}
-                  className="p-2 bg-gray-100 dark:bg-gray-900 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                </button>
+                <LiquidClose onClick={handleCloseModal} />
               </div>
 
               <div className="overflow-y-auto no-scrollbar">
