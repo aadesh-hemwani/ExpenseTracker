@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import { ThemeProvider } from "./context/ThemeContext";
 
 import ReloadPrompt from "./components/ReloadPrompt";
+import NotificationManager from "./components/NotificationManager";
 
 function App() {
   // Prevent Zoom on iOS
@@ -30,6 +31,7 @@ function App() {
     <ThemeProvider>
       <ReloadPrompt />
       <AuthProvider>
+        <NotificationManager />
         <BrowserRouter>
           <Routes>
             <Route path="/login" element={<Login />} />
