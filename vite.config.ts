@@ -13,8 +13,6 @@ export default defineConfig({
         name: 'Minimalist Expense Tracker',
         short_name: 'Expenses',
         description: 'Track your daily expenses with function and form.',
-        theme_color: '#ffffff',
-        background_color: '#ffffff',
         display: 'standalone', // Removes browser UI for native feel
         scope: '/',
         start_url: '/',
@@ -60,5 +58,19 @@ export default defineConfig({
         skipWaiting: true
       },
     })
-  ]
+  ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics'],
+          'framer': ['framer-motion'],
+          'charts': ['recharts'],
+          'ui': ['lucide-react', 'clsx', 'tailwind-merge']
+        }
+      }
+    },
+    chunkSizeWarningLimit: 1000
+  }
 });
