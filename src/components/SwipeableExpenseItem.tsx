@@ -12,6 +12,7 @@ interface SwipeableExpenseItemProps {
   onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
   className?: string;
   cardClassName?: string;
+  readOnly?: boolean;
 }
 
 const SwipeableExpenseItem = memo(
@@ -21,6 +22,7 @@ const SwipeableExpenseItem = memo(
     onDelete,
     className = "",
     cardClassName = "",
+    readOnly = false,
   }: SwipeableExpenseItemProps) => {
     const controls = useAnimation();
     const x = useMotionValue(0);
@@ -60,21 +62,23 @@ const SwipeableExpenseItem = memo(
         exit={{ opacity: 0, height: 0, marginBottom: 0 }}
       >
         {/* Delete Background Layer (The Button) */}
-        <div className="absolute top-1/2 -translate-y-1/2 right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center z-0">
-          <button
-            onClick={() => onDelete(t.id, t.amount, t.date)}
-            className="w-full h-full flex items-center justify-center text-white"
-            aria-label="Delete"
-          >
-            <Trash2 className="w-6 h-6" />
-          </button>
-        </div>
+        {!readOnly && (
+          <div className="absolute top-1/2 -translate-y-1/2 right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center z-0">
+            <button
+              onClick={() => onDelete(t.id, t.amount, t.date)}
+              className="w-full h-full flex items-center justify-center text-white"
+              aria-label="Delete"
+            >
+              <Trash2 className="w-6 h-6" />
+            </button>
+          </div>
+        )}
 
         {/* Foreground Card */}
         <motion.div
           style={{ x }}
           animate={controls}
-          drag="x"
+          drag={readOnly ? false : "x"}
           dragConstraints={{ left: -80, right: 0 }}
           dragElastic={0.1}
           onDragEnd={handleDragEnd}

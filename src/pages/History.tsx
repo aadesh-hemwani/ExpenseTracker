@@ -68,6 +68,7 @@ interface CalendarViewProps {
   selectedDate: Date | null;
   expenses: Expense[];
   calendarDays: Date[];
+  readOnly?: boolean;
 }
 
 const CalendarView = memo(
@@ -78,6 +79,7 @@ const CalendarView = memo(
     selectedDate,
     expenses = [],
     calendarDays,
+    readOnly = false,
   }: CalendarViewProps) => {
     // Expenses are now passed down!
     const { deleteExpense } = useExpenses();
@@ -118,9 +120,9 @@ const CalendarView = memo(
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1 md:gap-2">
-          {["S", "M", "T", "W", "T", "F", "S"].map((day) => (
+          {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
             <div
-              key={day}
+              key={i}
               className="text-center text-xs font-semibold text-gray-300 py-2"
             >
               {day}
@@ -192,6 +194,7 @@ const CalendarView = memo(
                   t={expense}
                   getCategoryIcon={getCategoryIcon}
                   onDelete={deleteExpense}
+                  readOnly={readOnly}
                   // Use default wrapper style for list consistency
                 />
               ))
@@ -207,10 +210,15 @@ const CalendarView = memo(
   }
 );
 
+interface HistoryProps {
+  userId?: string;
+  readOnly?: boolean;
+}
+
 // --- Main Component ---
-const History = () => {
+const History = ({ userId, readOnly = false }: HistoryProps) => {
   // Use Optimized Hook: Fetches only tiny stats docs
-  const { stats, loading: statsLoading } = useMonthlyStats();
+  const { stats, loading: statsLoading } = useMonthlyStats(userId);
 
   const [view, setView] = useState<"list" | "calendar">("list"); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
@@ -224,7 +232,9 @@ const History = () => {
   const { expenses: monthExpenses } = useExpensesForMonth(
     view === "calendar" ? currentMonth : null,
     stats,
-    !statsLoading
+    !statsLoading,
+    true,
+    userId
   );
 
   // 1. Group Data for the "Month Grid" View
@@ -303,6 +313,7 @@ const History = () => {
           selectedDate={selectedDate}
           expenses={monthExpenses}
           calendarDays={calendarDays}
+          readOnly={readOnly}
         />
       )}
 

@@ -34,15 +34,16 @@ export interface MonthlyStat {
 
 
 // 2. Hook for History Screen (Fetch Aggregated Stats)
-export const useMonthlyStats = () => {
+export const useMonthlyStats = (userId?: string) => {
   const [stats, setStats] = useState<MonthlyStat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const { user } = useAuth();
+  const targetUserId = userId || user?.uid;
 
   useEffect(() => {
-    if (!user) return;
+    if (!targetUserId) return;
 
-    const statsRef = collection(db, "users", user.uid, "stats");
+    const statsRef = collection(db, "users", targetUserId, "stats");
     // Listen to the stats collection (small docs, very cheap)
     const unsubscribe = onSnapshot(
       statsRef,
@@ -57,7 +58,7 @@ export const useMonthlyStats = () => {
     );
 
     return unsubscribe;
-  }, [user]);
+  }, [targetUserId]);
 
   return { stats, loading };
 };
@@ -67,16 +68,18 @@ export const useExpensesForMonth = (
   date: Date | null,
   allStats: MonthlyStat[] = [],
   statsLoaded: boolean = false,
-  subscribe: boolean = true
+  subscribe: boolean = true,
+  userId?: string
 ) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const { user } = useAuth();
+  const targetUserId = userId || user?.uid;
 
     // EFFECT 1: Current Month (Real-time updates)
     // Only runs if 'subscribe' is TRUE
     useEffect(() => {
-        if (!user || !date || !subscribe) return;
+        if (!targetUserId || !date || !subscribe) return;
 
         const monthKey = format(date, "yyyy-MM");
         const currentMonthKey = format(new Date(), "yyyy-MM");
@@ -93,7 +96,7 @@ export const useExpensesForMonth = (
                 59
             );
 
-            const collectionRef = collection(db, "users", user.uid, "expenses");
+            const collectionRef = collection(db, "users", targetUserId, "expenses");
             const q = query(
                 collectionRef,
                 where("date", ">=", Timestamp.fromDate(start)),
@@ -119,7 +122,7 @@ export const useExpensesForMonth = (
 
     // EFFECT 2: Cached / On-Demand (Past Months OR Current Month if !subscribe)
     useEffect(() => {
-        if (!user || !date) return;
+        if (!targetUserId || !date) return;
 
         const monthKey = format(date, "yyyy-MM");
         const currentMonthKey = format(new Date(), "yyyy-MM");
@@ -141,14 +144,23 @@ export const useExpensesForMonth = (
             // OPTIMIZATION 2: No stats = No expenses
             if (!matchingStat) {
                 console.log(`[Optimization] No stats for ${monthKey}, skipping fetch.`);
+                console.log("Target User:", targetUserId, "All Stats:", allStats);
                 setExpenses([]);
                 setLoading(false);
                 return;
             }
 
+            // Only use Cache if it's the Logged In user (targetUserId === user.uid)
+            // If admin viewing another user, skip cache to be safe/simple, or cache separately
+            const isSelf = targetUserId === user?.uid;
+
             try {
-                // Try Local Cache First
-                const cached = await getMonthFromCache(monthKey);
+                // Try Local Cache First (Only for self)
+                let cached = null;
+                if (isSelf) {
+                    cached = await getMonthFromCache(monthKey);
+                }
+                
                 let isValid = false;
 
                 if (cached) {
@@ -180,7 +192,7 @@ export const useExpensesForMonth = (
                     59,
                     59
                 );
-                const collectionRef = collection(db, "users", user.uid, "expenses");
+                const collectionRef = collection(db, "users", targetUserId, "expenses");
                 const q = query(
                     collectionRef,
                     where("date", ">=", Timestamp.fromDate(start)),
@@ -195,13 +207,15 @@ export const useExpensesForMonth = (
                     date: doc.data().date?.toDate(),
                 })) as Expense[];
 
-                // Update Local Cache
-                await saveMonthToCache(
-                    monthKey,
-                    docs,
-                    matchingStat.total,
-                    matchingStat.count
-                );
+                // Update Local Cache (Only if self)
+                if (isSelf) {
+                    await saveMonthToCache(
+                        monthKey,
+                        docs,
+                        matchingStat.total,
+                        matchingStat.count
+                    );
+                }
                 
                 setExpenses(docs);
             } catch (e) {
@@ -214,7 +228,7 @@ export const useExpensesForMonth = (
 
         fetchAndCache();
 
-    }, [user, date, allStats, statsLoaded]); // Re-run if stats change or load
+    }, [targetUserId, date, allStats, statsLoaded]); // Re-run if stats change or load
 
   return { expenses, loading };
 };
@@ -332,9 +346,16 @@ export const useExpenses = () => {
   );
 
   const updateMonthlyStat = useCallback(
-    async (monthKey: string, total: number, count: number) => {
-      if (!user) return;
-      const statsRef = collection(db, "users", user.uid, "stats");
+    async (
+      monthKey: string,
+      total: number,
+      count: number,
+      targetUserId?: string
+    ) => {
+      const uid = targetUserId || user?.uid;
+      if (!uid) return;
+      
+      const statsRef = collection(db, "users", uid, "stats");
       const statDocRef = doc(statsRef, monthKey);
       try {
         await setDoc(statDocRef, { total, count }, { merge: true });

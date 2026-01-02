@@ -66,10 +66,15 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
-const Analytics = () => {
+interface AnalyticsProps {
+  userId?: string;
+  readOnly?: boolean;
+}
+
+const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
   const { user } = useAuth();
   // 1. Get High-Level Stats for Trend Chart
-  const { stats } = useMonthlyStats();
+  const { stats } = useMonthlyStats(userId);
 
   // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
   // We default to the current month for the "Insight" view
@@ -79,7 +84,8 @@ const Analytics = () => {
     targetDate,
     stats,
     true,
-    false
+    false,
+    userId
   );
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -97,8 +103,9 @@ const Analytics = () => {
 
   useEffect(() => {
     const fetchBudget = async () => {
-      if (user?.uid) {
-        const userRef = doc(db, "users", user.uid);
+      const targetUid = userId || user?.uid;
+      if (targetUid) {
+        const userRef = doc(db, "users", targetUid);
         const docSnap = await getDoc(userRef);
         if (docSnap.exists()) {
           setBudget(docSnap.data().monthlyBudgetCap || 0);
@@ -111,7 +118,7 @@ const Analytics = () => {
   // AUTO-SYNC STATS Logic
   const { updateMonthlyStat } = useExpenses();
   useEffect(() => {
-    if (loading) return; // Wait for expenses to load
+    if (loading || userId) return; // Wait for expenses to load, and skip if Admin View (userId present)
 
     const currentMonthKey = format(targetDate, "yyyy-MM");
     // Calculate true totals from actual expenses
@@ -132,7 +139,7 @@ const Analytics = () => {
     ) {
       console.log(`Auto-Syncing Stats for ${currentMonthKey}...`);
       console.log(`Cached: ${cachedStat?.total}, True: ${trueTotal}`);
-      updateMonthlyStat(currentMonthKey, trueTotal, trueCount);
+      updateMonthlyStat(currentMonthKey, trueTotal, trueCount, userId);
     }
   }, [monthlyExpenses, stats, loading, targetDate, updateMonthlyStat]);
 

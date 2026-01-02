@@ -42,8 +42,8 @@
   background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
 
   /* The Magic Filter */
-  backdrop-filter: blur(8px) url(#liquid-filter) saturate(var(--saturation));
-  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  backdrop-filter: blur(2px) url(#liquid-filter) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
 
   /* Complex Glass Shadows */
   box-shadow: inset 0 0 0 1px
@@ -215,11 +215,11 @@
 
   background-color: color-mix(
     in srgb,
-    var(--c-action) 35%,
+    var(--c-action) 60%,
     color-mix(in srgb, var(--c-glass) 12%, transparent)
   );
-  backdrop-filter: blur(8px) url(#liquid-filter) saturate(var(--saturation));
-  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  backdrop-filter: blur(2px) url(#liquid-filter) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
 
   /* FAB Shadows - Stronger? */
   box-shadow: inset 0 0 0 1px
@@ -272,8 +272,8 @@
 
   /* Glass Material */
   background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-  backdrop-filter: blur(8px) url(#liquid-filter) saturate(var(--saturation));
-  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  backdrop-filter: blur(2px) url(#liquid-filter) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
 
   /* Shadows matching Navbar/FAB */
   box-shadow: inset 0 0 0 1px

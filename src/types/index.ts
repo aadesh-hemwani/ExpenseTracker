@@ -33,4 +33,5 @@ export interface AuthContextType {
 export interface User extends FirebaseUser {
     // Add any custom user properties if we extend the firebase user
     monthlyBudgetCap?: number;
+    isAdmin?: boolean;
 }

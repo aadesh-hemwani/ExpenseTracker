@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import {
@@ -36,6 +37,7 @@ const Profile = () => {
   const { user, logOut } = useAuth();
   const { theme, toggleTheme, accentColor, setAccentColor, accentColors } =
     useTheme();
+  const navigate = useNavigate();
   const [budget, setBudget] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -126,6 +128,15 @@ const Profile = () => {
           <p className="text-gray-500 dark:text-gray-400 text-sm">
             {user?.email}
           </p>
+
+          {user?.isAdmin && (
+            <button
+              onClick={() => navigate("/admin")}
+              className="mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-accent text-white rounded-full text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+            >
+              Admin Dashboard
+            </button>
+          )}
 
           <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full border border-green-100 dark:border-green-900/30">
             <ShieldCheck className="w-3 h-3" />
