@@ -22,20 +22,34 @@ body {
 }
 
 html {
-  height: 100dvh;
+  height: 100%;
+  width: 100%;
+  position: fixed; /* Lock viewport */
   overflow: hidden;
   /* Ensure background matches theme to hide safe area gaps */
-  @apply bg-white dark:bg-black transition-colors duration-200;
+  background-color: #ffffff;
+  transition: background-color 200ms;
+}
+
+html.dark {
+  background-color: #000000;
 }
 
 body {
-  height: 100dvh;
+  height: 100%;
+  width: 100%;
+  position: fixed; /* Lock viewport */
   overflow: hidden;
-  @apply bg-white dark:bg-black transition-colors duration-200;
+  background-color: #ffffff;
+  transition: background-color 200ms;
+}
+
+.dark body {
+  background-color: #000000;
 }
 
 #root {
-  height: 100dvh;
+  height: 100%;
   width: 100%;
 }
 

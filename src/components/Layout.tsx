@@ -63,7 +63,7 @@ const Layout = () => {
   const location = useLocation();
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 font-sans md:flex-row transition-colors duration-200 overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 font-sans md:flex-row transition-colors duration-200 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-gray-50 dark:bg-black border-r border-gray-100 dark:border-white/10 h-full p-8 transition-colors duration-200">
         <h1 className="text-2xl font-bold tracking-tight mb-10 text-gray-900 dark:text-white">
@@ -81,7 +81,7 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-black transition-colors duration-200 overscroll-contain">
-        <div className="max-w-2xl mx-auto p-5 pt-12 md:p-10 pb-24 md:pb-10">
+        <div className="max-w-2xl mx-auto p-5 pt-5 md:p-10 pb-24 md:pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
