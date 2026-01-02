@@ -203,7 +203,7 @@
 /* Liquid FAB */
 .liquid-fab {
   position: fixed;
-  bottom: 8px; /* bottom-2 */
+  bottom: 24px; /* Matches bottom-6 */
   right: 16px; /* right-4 */
   width: 4.5rem;
   height: 4.5rem;

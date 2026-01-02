@@ -81,7 +81,7 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-black transition-colors duration-200 overscroll-contain">
-        <div className="max-w-2xl mx-auto p-5 pt-12 md:p-10 pb-32 md:pb-10">
+        <div className="max-w-2xl mx-auto p-5 pt-12 md:p-10 pb-24 md:pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -101,7 +101,7 @@ const Layout = () => {
       {!location.pathname.startsWith("/admin") && <GlobalAddExpense />}
 
       {/* Mobile Bottom Navigation - Liquid Glass Style */}
-      <div className="md:hidden fixed bottom-2 left-4 right-24 z-50">
+      <div className="md:hidden fixed bottom-6 left-4 right-24 z-50">
         <LiquidNavBar
           items={[
             {

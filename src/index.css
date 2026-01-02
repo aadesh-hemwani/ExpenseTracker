@@ -24,12 +24,14 @@ body {
 html {
   height: 100dvh;
   overflow: hidden;
-  @apply bg-white transition-colors duration-200;
+  /* Ensure background matches theme to hide safe area gaps */
+  @apply bg-white dark:bg-black transition-colors duration-200;
 }
 
 body {
   height: 100dvh;
   overflow: hidden;
+  @apply bg-white dark:bg-black transition-colors duration-200;
 }
 
 #root {
