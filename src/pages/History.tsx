@@ -23,6 +23,7 @@ import ExpenseListModal from "../components/ExpenseListModal";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
+import CategoryDonutChart from "../components/CategoryDonutChart";
 
 interface MonthCardProps {
   monthKey: string;
@@ -183,6 +184,11 @@ const CalendarView = memo(
 
         {/* Monthly Expenses List */}
         <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+          {/* Chart Section */}
+          <div className="mb-8">
+            <CategoryDonutChart expenses={expenses} />
+          </div>
+
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             All Expenses in {format(currentMonth, "MMMM")}
           </h3>

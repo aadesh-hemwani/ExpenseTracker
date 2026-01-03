@@ -49,6 +49,25 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     root.style.setProperty("--color-accent", colors.default);
     root.style.setProperty("--color-accent-hover", colors.hover);
     localStorage.setItem("accentColor", accentColor);
+
+    // Update PWA Theme Color
+    // Remove existing meta tags to prevent conflict with media queries
+    const metaTags = document.querySelectorAll('meta[name="theme-color"]');
+    metaTags.forEach((tag) => tag.remove());
+
+    // Create and append a new one
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = theme === "dark" ? "#000000" : "#ffffff";
+    document.head.appendChild(meta);
+
+    // Update iOS Status Bar Style
+    const iosMeta = document.querySelector(
+      'meta[name="apple-mobile-web-app-status-bar-style"]'
+    );
+    if (iosMeta) {
+      iosMeta.setAttribute("content", theme === "dark" ? "black" : "default");
+    }
   }, [theme, accentColor]);
 
   const toggleTheme = () => {
