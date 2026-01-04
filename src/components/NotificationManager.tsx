@@ -9,7 +9,7 @@ import {
 } from "../utils/notificationUtils";
 import { format, subDays, subMonths } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell } from "lucide-react";
+import { Notifications } from "react-ionicons";
 
 const NotificationManager = () => {
   const { user } = useAuth();
@@ -167,24 +167,6 @@ const NotificationManager = () => {
         return dateB.getTime() - dateA.getTime();
       });
 
-      let streak = 0;
-      let checkDate = new Date();
-
-      // Check if we logged today?
-      // Check if we logged today?
-      const mostRecentDate = sorted[0] ? getDate(sorted[0].date) : null;
-      const mostRecentStr = mostRecentDate
-        ? format(mostRecentDate, "yyyy-MM-dd")
-        : "";
-
-      if (mostRecentStr === todayKey) {
-        streak = 1;
-      } else if (
-        mostRecentStr === format(subDays(checkDate, 1), "yyyy-MM-dd")
-      ) {
-        // ...
-      }
-
       // Simplified Streak Logic
       let currentDay = new Date();
       let streakCount = 0;
@@ -281,7 +263,7 @@ const NotificationManager = () => {
             className="relative z-10 bg-white dark:bg-black w-[90%] md:w-[28rem] max-w-full rounded-[40px] md:rounded-3xl p-6 md:p-8 shadow-2xl mx-auto mb-6 md:mb-0 border border-gray-200 dark:border-white/10 pointer-events-auto flex flex-col items-center text-center"
           >
             <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mb-6 text-accent">
-              <Bell className="w-8 h-8 fill-current" />
+              <Notifications color="#6366f1" height="32px" width="32px" />
             </div>
 
             <h3 className="text-xl font-bold dark:text-white mb-2">

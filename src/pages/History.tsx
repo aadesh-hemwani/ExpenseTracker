@@ -11,7 +11,7 @@ import {
   isToday,
   parseISO,
 } from "date-fns";
-import { ArrowLeft, Calendar as CalendarIcon } from "lucide-react";
+import { ArrowBackOutline, CalendarOutline } from "react-ionicons";
 import { AnimatePresence } from "framer-motion";
 import Card from "../components/Card";
 import {
@@ -112,7 +112,12 @@ const CalendarView = memo(
             onClick={onBack}
             className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <ArrowBackOutline
+              color="inherit"
+              height="20px"
+              width="20px"
+              cssClasses="text-gray-600 dark:text-gray-400"
+            />
           </button>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
             {format(currentMonth, "MMMM yyyy")}
@@ -292,7 +297,12 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
 
           {monthGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <CalendarIcon className="w-12 h-12 mb-4 opacity-20" />
+              <CalendarOutline
+                color="inherit"
+                height="48px"
+                width="48px"
+                cssClasses="mb-4 opacity-20"
+              />
               <p>No history yet.</p>
             </div>
           ) : (

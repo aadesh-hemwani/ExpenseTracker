@@ -4,7 +4,12 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
-import { ArrowLeft, User as UserIcon, Calendar, BarChart2 } from "lucide-react";
+import {
+  ArrowBackOutline,
+  Person,
+  CalendarOutline,
+  BarChartOutline,
+} from "react-ionicons";
 import Analytics from "./Analytics";
 import History from "./History";
 
@@ -77,7 +82,12 @@ const Admin = () => {
               onClick={handleBack}
               className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
             >
-              <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+              <ArrowBackOutline
+                color="inherit"
+                height="20px"
+                width="20px"
+                cssClasses="text-gray-600 dark:text-gray-400"
+              />
             </button>
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -97,7 +107,7 @@ const Admin = () => {
                   : "text-gray-400"
               }`}
             >
-              <BarChart2 className="w-5 h-5" />
+              <BarChartOutline height="20px" width="20px" />
             </button>
             <button
               onClick={() => setViewMode("history")}
@@ -107,7 +117,7 @@ const Admin = () => {
                   : "text-gray-400"
               }`}
             >
-              <Calendar className="w-5 h-5" />
+              <CalendarOutline height="20px" width="20px" />
             </button>
           </div>
         </div>
@@ -165,7 +175,7 @@ const Admin = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <UserIcon className="w-6 h-6" />
+                    <Person height="24px" width="24px" />
                   )}
                 </div>
                 <div className="text-left">

@@ -1,12 +1,19 @@
-import { endOfMonth, differenceInDays } from 'date-fns';
-import { TrendingUp, TrendingDown, Target, Sparkles, PieChart, AlertTriangle, LucideIcon, CheckCircle } from 'lucide-react';
+import { endOfMonth } from 'date-fns';
+import { 
+    TrendingUpOutline, 
+    DiscOutline, 
+    BulbOutline, 
+    PieChartOutline, 
+    WarningOutline, 
+    CheckmarkCircleOutline 
+} from 'react-ionicons';
 import { Expense } from '../types';
 import { MonthlyData } from './analyticsHelpers';
 
 export interface Insight {
     id: string;
     priority: number;
-    icon: LucideIcon;
+    icon: any;
     title: string;
     text: string;
     color: string;
@@ -52,7 +59,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
             insights.push({
                 id: 'budget-exceeded',
                 priority: 1,
-                icon: AlertTriangle,
+                icon: WarningOutline,
                 title: 'Budget Exceeded',
                 text: `You've exceeded your budget by ₹${Math.abs(remaining).toLocaleString()}. Review your ${topCategory?.name || 'recent'} expenses immediately.`,
                 color: 'text-red-600 dark:text-red-400',
@@ -74,7 +81,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
             insights.push({
                 id: 'budget-warning',
                 priority: 1,
-                icon: AlertTriangle,
+                icon: WarningOutline,
                 title: 'Budget Alert',
                 text: `You have ₹${remaining.toLocaleString()} left. Limit spending to ₹${Math.round(dailyBudgetLeft).toLocaleString()}/day to stay on track.`,
                 color: 'text-orange-600 dark:text-orange-400',
@@ -98,7 +105,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
              insights.push({
                 id: 'forecast-exceed',
                 priority: 2,
-                icon: TrendingUp,
+                icon: TrendingUpOutline,
                 title: 'Pace Warning',
                 text: `At this pace, you'll exceed budget by ₹${Math.round(excess).toLocaleString()}. Reduce ${topCategory?.name ? topCategory.name : 'spending'} by ₹${reduceAmount}/day.`,
                 color: 'text-amber-600 dark:text-amber-400',
@@ -109,7 +116,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
              insights.push({
                 id: 'forecast-info',
                 priority: 4,
-                icon: Target,
+                icon: DiscOutline,
                 title: 'Forecast',
                 text: `On track to spend ≈₹${Math.round(projectedTotal / 100) * 100} by month end.`,
                 color: 'text-blue-600 dark:text-blue-400',
@@ -126,7 +133,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
             insights.push({
                 id: 'top-cat',
                 priority: 3,
-                icon: PieChart,
+                icon: PieChartOutline,
                 title: 'Spending Pattern',
                 text: `${topCategory.name} makes up ${Math.round((topCategory.value / currentMonthTotal) * 100)}% of costs. Consider setting a limit for this category.`,
                 color: 'text-purple-600 dark:text-purple-400',
@@ -148,7 +155,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
                 insights.push({
                     id: 'low-spend',
                     priority: 5,
-                    icon: CheckCircle,
+                    icon: CheckmarkCircleOutline,
                     title: 'Great Job',
                     text: `You're on track to save ₹${Math.round(savings).toLocaleString()} compared to your average month!`,
                     color: 'text-emerald-600 dark:text-emerald-400',
@@ -165,7 +172,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
         insights.push({
             id: 'generic',
             priority: 99,
-            icon: Sparkles,
+            icon: BulbOutline,
             title: 'Insights',
             text: "Your spending is balanced. Continue tracking to get smarter recommendations.",
             color: 'text-indigo-600 dark:text-indigo-400',

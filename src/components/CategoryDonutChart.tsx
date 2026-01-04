@@ -32,19 +32,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-// Premium Palette matching the new vibe (Slightly softer)
-const COLORS = [
-  "#6366f1", // Indigo
-  "#10b981", // Emerald
-  "#f43f5e", // Rose
-  "#f59e0b", // Amber
-  "#8b5cf6", // Violet
-  "#06b6d4", // Cyan
-  "#ec4899", // Pink
-  "#14b8a6", // Teal
-  "#f97316", // Orange
-  "#64748b", // Slate
-];
+import { CATEGORY_COLORS } from "../utils/uiUtils";
 
 const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
   const data = useMemo(() => {
@@ -84,10 +72,10 @@ const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
               stroke="none"
               cornerRadius={6}
             >
-              {data.map((_, index) => (
+              {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={COLORS[index % COLORS.length]}
+                  fill={CATEGORY_COLORS[entry.name] || "#64748b"}
                   className="stroke-transparent outline-none"
                 />
               ))}

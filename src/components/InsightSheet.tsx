@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUpOutline, TrendingDownOutline } from "react-ionicons";
 import { format } from "date-fns";
 import TrajectoryChart from "./TrajectoryChart";
 import { LiquidClose } from "./ui/LiquidClose";
@@ -97,9 +97,9 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                           }`}
                         >
                           {data.trendDirection === "down" ? (
-                            <TrendingDown className="w-6 h-6" />
+                            <TrendingDownOutline height="24px" width="24px" />
                           ) : (
-                            <TrendingUp className="w-6 h-6" />
+                            <TrendingUpOutline height="24px" width="24px" />
                           )}
                         </div>
                         <div>

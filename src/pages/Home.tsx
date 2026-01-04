@@ -1,5 +1,10 @@
 import { useMemo, useState } from "react";
-import { TrendingUp, TrendingDown, Loader2, ArrowRight } from "lucide-react";
+import {
+  TrendingUpOutline,
+  TrendingDownOutline,
+  RefreshCircleOutline,
+  ArrowForwardOutline,
+} from "react-ionicons";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
 import {
@@ -145,7 +150,12 @@ const Home = () => {
   if (loadingCurrent || loadingStats) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <Loader2 className="w-6 h-6 animate-spin text-tertiary" />
+        <RefreshCircleOutline
+          color="inherit"
+          height="32px"
+          width="32px"
+          cssClasses="animate-spin text-tertiary"
+        />
       </div>
     );
   }
@@ -191,9 +201,19 @@ const Home = () => {
              `}
             >
               {trendDirection === "down" ? (
-                <TrendingDown className="w-5 h-5" />
+                <TrendingDownOutline
+                  color="inherit"
+                  height="20px"
+                  width="20px"
+                  cssClasses="text-current"
+                />
               ) : (
-                <TrendingUp className="w-5 h-5" />
+                <TrendingUpOutline
+                  color="inherit"
+                  height="20px"
+                  width="20px"
+                  cssClasses="text-current"
+                />
               )}
             </div>
             <div className="text-left">
@@ -212,7 +232,12 @@ const Home = () => {
               </p>
             </div>
           </div>
-          <ArrowRight className="w-4 h-4 text-tertiary group-hover:text-primary transition-colors" />
+          <ArrowForwardOutline
+            color="inherit"
+            height="16px"
+            width="16px"
+            cssClasses="text-tertiary group-hover:text-primary transition-colors"
+          />
         </button>
       </header>
 

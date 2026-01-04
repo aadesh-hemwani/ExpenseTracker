@@ -1,5 +1,5 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { RefreshCw, X } from "lucide-react";
+import { RefreshOutline, CloseOutline } from "react-ionicons";
 
 function ReloadPrompt() {
   const {
@@ -45,7 +45,7 @@ function ReloadPrompt() {
             onClick={close}
             className="p-1 hover:bg-white/10 dark:hover:bg-zinc-900/10 rounded-full transition-colors"
           >
-            <X size={16} />
+            <CloseOutline height="16px" width="16px" />
           </button>
         </div>
 
@@ -54,7 +54,7 @@ function ReloadPrompt() {
             onClick={() => updateServiceWorker(true)}
             className="w-full flex items-center justify-center gap-2 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white py-2.5 rounded-xl text-sm font-bold active:scale-95 transition-transform"
           >
-            <RefreshCw size={16} />
+            <RefreshOutline height="16px" width="16px" />
             Reload & Update
           </button>
         )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 import "./LiquidGlass.css";
 
 // SVG Filter Component
@@ -45,7 +46,7 @@ const LiquidFilter = () => (
 );
 
 interface LiquidNavBarProps {
-  items: { icon: React.ElementType; path: string; label?: string }[];
+  items: { icon: any; activeIcon?: any; path: string; label?: string }[];
 }
 
 export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
@@ -54,6 +55,10 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [animClass, setAnimClass] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const { accentColor, accentColors } = useTheme();
+  // @ts-ignore
+  const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
   // Update active index based on route
   useEffect(() => {
@@ -75,71 +80,49 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
     }
   }, [animClass]);
 
-  // Calculate translate position
-  // Assuming 84px width for blob and even distribution, but simpler:
-  // If items are evenly distributed flex items, we can calculate based on width / count
-  // Or closer to CodePen: Fixed width blob, moving by explicit offsets?
-  // CodePen moves 0, 76px, 152px. (84px width, 70px height container? CodePen container 244px, 3 items. 76px is approx 1/3 but slightly overlap?)
-  // Our Navbar is full width.
-
-  // Strategy: We need to position the blob under the active item.
-  // If we make the navbar 100% width, items flex:1.
-  // Blob width should probably match the item width or be a fixed pill.
-  // CodePen: Fixed sizes.
-  // Our App: Mobile Nav.
-  // Let's assume 4 items (Home, Analytics, Add (handled separately?), History, Profile).
-  // Actually, Add is a FAB ABOVE the nav usually.
-  // Let's look at Layout.tsx to see the current nav items.
-
-  // For now, I will implement dynamic calculation.
-
   const count = items.length;
 
   return (
     <>
       <LiquidFilter />
-      <nav
-        className={`liquid-nav ${animClass}`}
-        ref={containerRef}
-        style={
-          {
-            // Pass CSS variables or basic style for translate
-            // We can use a CSS variable for the translation X
-            // But the CSS uses `::after` with `translate`.
-            // We can manipulate the style tag injected into ::after via a CSS Variable on the container?
-            // No, pseudo-elements can't be styled directly via inline styles.
-            // But they can read Custom Properties.
-            // So we set --translate-x on the container.
-          } as React.CSSProperties
-        }
-      >
-        {/* We need to inject a style block or use a more clever way to move the ::after element 
-                    OR, we simply use a real DIV instead of ::after for the blob.
-                    Real DIV is easier to control in React!
-                    But the CodePen uses ::after inside the filter context.
-                    Actually, if we use a real div inside .liquid-nav with absolute position and z-index 1, it matches ::after behavior.
-                    AND we can control it with `style={{ transform: ... }}` easily.
-                */}
-
+      <nav className={`liquid-nav ${animClass}`} ref={containerRef}>
         <div
           className={`liquid-blob ${animClass}`}
           style={{
             width: `calc(((100% - 24px) / ${count}) + 12px)`,
-            left: `calc(6px + (${activeIndex} * ((100% - 24px) / ${count})))`, // 12px container pad + 4px blob pad + step offset
+            left: `calc(6px + (${activeIndex} * ((100% - 24px) / ${count})))`,
           }}
         />
 
         {items.map((item, index) => {
           const Icon = item.icon;
+          const ActiveIcon = item.activeIcon || Icon;
+          const isActive = index === activeIndex;
+
           return (
             <div
               key={item.path}
-              className={`liquid-nav__item ${
-                index === activeIndex ? "active" : ""
-              }`}
+              className={`liquid-nav__item ${isActive ? "active" : ""}`}
               onClick={() => navigate(item.path)}
+              style={{
+                color: isActive ? "var(--c-action)" : "var(--text-tertiary)",
+              }}
             >
-              <Icon size={24} strokeWidth={2.5} fill="none" />
+              {isActive ? (
+                <ActiveIcon
+                  color={activeColor}
+                  height="26px"
+                  width="26px"
+                  cssClasses="liquid-nav__icon"
+                />
+              ) : (
+                <Icon
+                  color="inherit"
+                  height="26px"
+                  width="26px"
+                  cssClasses="liquid-nav__icon"
+                />
+              )}
             </div>
           );
         })}

@@ -62,11 +62,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     document.head.appendChild(meta);
 
     // Update iOS Status Bar Style
+    // iOS (15+) also respects theme-color, but for older support:
     const iosMeta = document.querySelector(
       'meta[name="apple-mobile-web-app-status-bar-style"]'
     );
     if (iosMeta) {
-      iosMeta.setAttribute("content", theme === "dark" ? "black" : "default");
+      iosMeta.setAttribute(
+        "content",
+        theme === "dark" ? "black-translucent" : "default"
+      );
     }
   }, [theme, accentColor]);
 

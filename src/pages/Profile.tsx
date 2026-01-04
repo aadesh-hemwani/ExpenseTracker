@@ -5,16 +5,16 @@ import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import {
-  LogOut,
-  Save,
-  User as UserIcon,
-  ShieldCheck,
-  Wallet,
-  Moon,
-  Sun,
-  Palette,
-  Check,
-} from "lucide-react";
+  LogOutOutline,
+  SaveOutline,
+  Person,
+  WalletOutline,
+  ColorPaletteOutline,
+  Checkmark,
+  ShieldCheckmarkOutline,
+  MoonOutline,
+  SunnyOutline,
+} from "react-ionicons";
 import { motion } from "framer-motion";
 import Card from "../components/Card";
 
@@ -116,7 +116,12 @@ const Profile = () => {
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-lg">
-                <UserIcon className="w-10 h-10 text-accent" />
+                <Person
+                  color="var(--color-accent)"
+                  height="40px"
+                  width="40px"
+                  cssClasses="text-accent"
+                />
               </div>
             )}
             <div className="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900"></div>
@@ -139,7 +144,7 @@ const Profile = () => {
           )}
 
           <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full border border-green-100 dark:border-green-900/30">
-            <ShieldCheck className="w-3 h-3" />
+            <ShieldCheckmarkOutline height="16px" width="16px" />
             <span>Google Verified</span>
           </div>
         </Card>
@@ -151,7 +156,7 @@ const Profile = () => {
         <Card>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-indigo-50 dark:bg-gray-900 rounded-lg text-accent">
-              <Palette className="w-5 h-5" />
+              <ColorPaletteOutline height="20px" width="20px" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               Appearance
@@ -169,9 +174,9 @@ const Profile = () => {
                 }`}
               >
                 {theme === "dark" ? (
-                  <Moon className="w-5 h-5" />
+                  <MoonOutline height="20px" width="20px" />
                 ) : (
-                  <Sun className="w-5 h-5" />
+                  <SunnyOutline height="20px" width="20px" />
                 )}
               </div>
               <div>
@@ -218,7 +223,7 @@ const Profile = () => {
                   aria-label={`Select ${key} accent color`}
                 >
                   {accentColor === key && (
-                    <Check className="w-5 h-5 text-white" />
+                    <Checkmark color="#ffffff" height="20px" width="20px" />
                   )}
                 </button>
               ))}
@@ -230,7 +235,7 @@ const Profile = () => {
         <Card>
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-accent/10 rounded-lg text-accent">
-              <Wallet className="w-5 h-5" />
+              <WalletOutline height="20px" width="20px" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               Monthly Budget
@@ -254,7 +259,7 @@ const Profile = () => {
                 disabled={loading}
                 className="bg-black dark:bg-white text-white dark:text-black px-6 rounded-xl font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {loading ? "..." : <Save className="w-4 h-4" />}
+                {loading ? "..." : <SaveOutline height="16px" width="16px" />}
                 {loading ? "" : "Save"}
               </button>
             </div>
@@ -275,7 +280,7 @@ const Profile = () => {
           onClick={handleLogout}
           className="w-full p-4 flex items-center justify-center gap-2 text-red-600 font-bold bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOutOutline height="20px" width="20px" />
           Sign Out
         </button>
       </motion.div>

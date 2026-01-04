@@ -1,6 +1,6 @@
 import { ReactNode, memo } from "react";
 import { motion, useMotionValue, useAnimation, PanInfo } from "framer-motion";
-import { Trash2 } from "lucide-react";
+import { TrashOutline } from "react-ionicons";
 import { format } from "date-fns";
 import { formatCurrency } from "../utils/formatUtils";
 import { Expense } from "../types";
@@ -69,7 +69,7 @@ const SwipeableExpenseItem = memo(
               className="w-full h-full flex items-center justify-center text-white"
               aria-label="Delete"
             >
-              <Trash2 className="w-6 h-6" />
+              <TrashOutline color="#ffffff" height="24px" width="24px" />
             </button>
           </div>
         )}

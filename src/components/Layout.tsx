@@ -1,23 +1,36 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 import {
+  HomeOutline,
   Home,
+  CalendarOutline,
   Calendar,
-  BarChart2,
-  Sparkles,
-  LucideIcon,
-  User,
-} from "lucide-react";
+  BarChartOutline,
+  BarChart,
+  PersonOutline,
+  Person,
+  BulbOutline,
+  Bulb,
+} from "react-ionicons";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface NavItemProps {
   to: string;
-  icon: LucideIcon;
+  icon: any;
+  activeIcon: any;
   label: string;
+  activeColor: string;
 }
 
-const NavItem = ({ to, icon: Icon, label }: NavItemProps) => (
+const NavItem = ({
+  to,
+  icon: Icon,
+  activeIcon: ActiveIcon,
+  label,
+  activeColor,
+}: NavItemProps) => (
   <NavLink to={to} className="relative flex items-center justify-center group">
     {({ isActive }) => (
       <div className="flex flex-col items-center">
@@ -32,12 +45,27 @@ const NavItem = ({ to, icon: Icon, label }: NavItemProps) => (
             }
           `}
         >
-          <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+          {isActive ? (
+            <ActiveIcon
+              color={activeColor}
+              height="20px"
+              width="20px"
+              cssClasses="text-current"
+            />
+          ) : (
+            <Icon
+              color="inherit"
+              height="20px"
+              width="20px"
+              cssClasses="text-current"
+            />
+          )}
         </motion.div>
         <span
           className={`text-[10px] font-medium mt-1 transition-colors ${
-            isActive ? "text-primary dark:text-white" : "text-tertiary"
+            isActive ? "" : "text-tertiary"
           }`}
+          style={isActive ? { color: activeColor } : {}}
         >
           {label}
         </span>
@@ -48,6 +76,9 @@ const NavItem = ({ to, icon: Icon, label }: NavItemProps) => (
 
 const Layout = () => {
   const location = useLocation();
+  const { accentColor, accentColors } = useTheme();
+  // @ts-ignore
+  const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
   return (
     <div className="flex flex-col h-full w-full bg-body text-primary font-sans md:flex-row transition-colors duration-300 overflow-hidden">
@@ -60,10 +91,34 @@ const Layout = () => {
         </div>
 
         <nav className="flex flex-col space-y-6">
-          <NavItem to="/" icon={Home} label="Dashboard" />
-          <NavItem to="/history" icon={Calendar} label="History" />
-          <NavItem to="/analytics" icon={BarChart2} label="Insights" />
-          <NavItem to="/profile" icon={User} label="Profile" />
+          <NavItem
+            to="/"
+            icon={HomeOutline}
+            activeIcon={Home}
+            label="Dashboard"
+            activeColor={activeColor}
+          />
+          <NavItem
+            to="/history"
+            icon={CalendarOutline}
+            activeIcon={Calendar}
+            label="History"
+            activeColor={activeColor}
+          />
+          <NavItem
+            to="/analytics"
+            icon={BarChartOutline}
+            activeIcon={BarChart}
+            label="Insights"
+            activeColor={activeColor}
+          />
+          <NavItem
+            to="/profile"
+            icon={PersonOutline}
+            activeIcon={Person}
+            label="Profile"
+            activeColor={activeColor}
+          />
         </nav>
       </aside>
 
@@ -94,10 +149,25 @@ const Layout = () => {
       <div className="md:hidden fixed bottom-6 left-4 right-[6rem] z-50">
         <LiquidNavBar
           items={[
-            { path: "/", icon: Home, label: "Home" },
-            { path: "/history", icon: Calendar, label: "History" },
-            { path: "/analytics", icon: Sparkles, label: "Insights" },
-            { path: "/profile", icon: User, label: "Profile" },
+            { path: "/", icon: HomeOutline, activeIcon: Home, label: "Home" },
+            {
+              path: "/history",
+              icon: CalendarOutline,
+              activeIcon: Calendar,
+              label: "History",
+            },
+            {
+              path: "/analytics",
+              icon: BulbOutline,
+              activeIcon: Bulb,
+              label: "Insights",
+            },
+            {
+              path: "/profile",
+              icon: PersonOutline,
+              activeIcon: Person,
+              label: "Profile",
+            },
           ]}
         />
       </div>

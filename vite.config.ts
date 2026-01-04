@@ -69,7 +69,7 @@ export default defineConfig({
           'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics'],
           'framer': ['framer-motion'],
           'charts': ['recharts'],
-          'ui': ['lucide-react', 'clsx', 'tailwind-merge']
+          'ui': ['react-ionicons', 'clsx', 'tailwind-merge']
         }
       }
     },

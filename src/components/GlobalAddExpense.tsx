@@ -2,7 +2,7 @@ import React, { useState, memo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { RefreshCircleOutline, CalendarOutline } from "react-ionicons";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES } from "../utils/uiUtils";
 import { LiquidFAB } from "./ui/LiquidFAB";
@@ -109,7 +109,12 @@ const GlobalAddExpense = memo(() => {
                           className="w-full min-w-0 appearance-none bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-3 pl-10 text-base font-semibold text-gray-900 dark:text-white focus:ring-0 focus:border-white/20 focus:outline-none transition-colors"
                           required
                         />
-                        <CalendarIcon className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                        <CalendarOutline
+                          color="#9ca3af"
+                          height="16px"
+                          width="16px"
+                          cssClasses="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                        />
                       </div>
                     </div>
 
@@ -176,7 +181,12 @@ const GlobalAddExpense = memo(() => {
                       className="w-full bg-accent text-white py-4 rounded-xl font-bold text-lg hover:bg-accent-hover transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-xl shadow-accent/20"
                     >
                       {isSubmitting && (
-                        <Loader2 className="w-5 h-5 animate-spin" />
+                        <RefreshCircleOutline
+                          color="#ffffff"
+                          height="20px"
+                          width="20px"
+                          cssClasses="animate-spin"
+                        />
                       )}
                       Save Expense
                     </button>

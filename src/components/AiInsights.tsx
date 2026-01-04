@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, BrainCircuit } from "lucide-react";
+import { HardwareChipOutline } from "react-ionicons";
 import { Insight } from "../utils/insights";
 
 interface AiInsightsProps {
@@ -28,7 +28,12 @@ const AiInsights = ({ insights = [] }: AiInsightsProps) => {
     <div className="pt-2">
       <div className="flex items-center gap-2">
         <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-          <BrainCircuit className="w-5 h-5 text-accent" />
+          <HardwareChipOutline
+            color="var(--color-accent)"
+            height="20px"
+            width="20px"
+            cssClasses="text-accent"
+          />
         </div>
         <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-purple-600 bg-clip-text text-transparent">
           AI Insights
@@ -67,8 +72,10 @@ const AiInsights = ({ insights = [] }: AiInsightsProps) => {
                 className={`p-2 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-sm`}
               >
                 <insight.icon
-                  className={`w-5 h-5 ${insight.color}`}
-                  strokeWidth={2.5}
+                  color="inherit"
+                  height="20px"
+                  width="20px"
+                  cssClasses={insight.color}
                 />
               </div>
 

@@ -17,7 +17,11 @@ import {
 import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { format, subMonths } from "date-fns";
-import { ArrowUpRight, PieChart, BarChart2Icon } from "lucide-react";
+import {
+  ArrowForwardOutline,
+  PieChartOutline,
+  BarChartOutline,
+} from "react-ionicons";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import CountUp from "../components/CountUp";
@@ -71,7 +75,7 @@ interface AnalyticsProps {
   readOnly?: boolean;
 }
 
-const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
+const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const { user } = useAuth();
   // 1. Get High-Level Stats for Trend Chart
   const { stats } = useMonthlyStats(userId);
@@ -215,7 +219,12 @@ const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
             <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
               This Month
             </span>
-            <ArrowUpRight className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
+            <ArrowForwardOutline
+              color="rgba(255,255,255,0.6)"
+              height="14px"
+              width="14px"
+              cssClasses="-rotate-45 stroke-[1.5]"
+            />
           </div>
           <div className="text-4xl font-bold">
             <CountUp value={currentMonthTotal} />
@@ -227,7 +236,12 @@ const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               Top Category
             </span>
-            <PieChart className="w-4 h-4 text-accent" />
+            <PieChartOutline
+              color="var(--color-accent)"
+              height="16px"
+              width="16px"
+              cssClasses="text-accent"
+            />
           </div>
           <div className="text-xl font-bold text-gray-900 dark:text-white truncate">
             {topCategory ? topCategory.name : "—"}
@@ -314,7 +328,12 @@ const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
         {/* Monthly Trend Chart */}
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-            <BarChart2Icon className="w-5 h-5 text-accent" />
+            <BarChartOutline
+              color="var(--color-accent)"
+              height="20px"
+              width="20px"
+              cssClasses="text-accent"
+            />
           </div>
           <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-purple-600 bg-clip-text text-transparent">
             Monthly Trend
