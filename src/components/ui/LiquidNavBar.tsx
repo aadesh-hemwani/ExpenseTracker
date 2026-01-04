@@ -67,7 +67,7 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
       setActiveIndex(index);
       // Trigger animation
       setAnimClass("liquid-move-anim");
-      const timer = setTimeout(() => setAnimClass(""), 440); // Match CSS duration
+      const timer = setTimeout(() => setAnimClass(""), 500); // 500ms match css
       return () => clearTimeout(timer);
     }
   }, [location.pathname, items, activeIndex]);
@@ -75,7 +75,7 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
   // Cleanup animation class if double triggered
   useEffect(() => {
     if (animClass) {
-      const timer = setTimeout(() => setAnimClass(""), 440);
+      const timer = setTimeout(() => setAnimClass(""), 500);
       return () => clearTimeout(timer);
     }
   }, [animClass]);
@@ -104,25 +104,30 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
               key={item.path}
               className={`liquid-nav__item ${isActive ? "active" : ""}`}
               onClick={() => navigate(item.path)}
-              style={{
-                color: isActive ? "var(--c-action)" : "var(--text-tertiary)",
-              }}
+              style={
+                {
+                  // Overriding local color style to rely on CSS class for transition
+                  // but keeping variable for active color reference if needed
+                  "--c-action": activeColor,
+                } as React.CSSProperties
+              }
             >
               {isActive ? (
                 <ActiveIcon
                   color={activeColor}
-                  height="26px"
-                  width="26px"
+                  height="28px"
+                  width="28px"
                   cssClasses="liquid-nav__icon"
                 />
               ) : (
                 <Icon
-                  color="inherit"
-                  height="26px"
-                  width="26px"
+                  color="currentColor"
+                  height="28px"
+                  width="28px"
                   cssClasses="liquid-nav__icon"
                 />
               )}
+              <span>{item.label}</span>
             </div>
           );
         })}

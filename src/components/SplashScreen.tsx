@@ -59,7 +59,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               Expenses<span className="text-accent">.</span>
             </h1>
             <p className="text-sm font-medium text-tertiary tracking-widest uppercase">
-              Minimalist Tracker
+              Where your money makes sense.
             </p>
           </motion.div>
         </motion.div>

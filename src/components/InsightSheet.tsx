@@ -6,6 +6,7 @@ import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
 import { format } from "date-fns";
 import TrajectoryChart from "./TrajectoryChart";
 import { LiquidClose } from "./ui/LiquidClose";
+import { formatCurrency } from "../utils/formatUtils";
 
 interface InsightSheetProps {
   isOpen: boolean;
@@ -33,6 +34,21 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
 
   // const currentHeight = Math.min(data.currentMonthTotal * scale, 100);
   // const lastHeight = Math.min(data.lastMonthPartialSum * scale, 100);
+
+  const renderAmount = (amount: number) => {
+    const formatted = formatCurrency(amount);
+    const [integer, decimal] = formatted.split(".");
+    return (
+      <>
+        {integer}
+        {decimal && (
+          <span className="text-[0.75em] opacity-60 font-medium">
+            .{decimal}
+          </span>
+        )}
+      </>
+    );
+  };
 
   return (
     <>
@@ -77,7 +93,7 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                       By this time last month (
                       {format(lastMonthDate, "MMMM do")}), you had spent{" "}
                       <span className="font-bold text-gray-900 dark:text-white">
-                        ₹{data.lastMonthPartialSum.toLocaleString()}
+                        {renderAmount(data.lastMonthPartialSum)}
                       </span>
                       .
                     </p>
@@ -108,7 +124,7 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                             Current Status
                           </p>
                           <p className="text-lg font-bold">
-                            ₹{data.diff.toLocaleString()}{" "}
+                            {renderAmount(data.diff)}{" "}
                             {data.trendDirection === "down"
                               ? "lower"
                               : "higher"}

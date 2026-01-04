@@ -203,7 +203,10 @@ const Profile = () => {
           {/* Accent Color Picker */}
           <div>
             <label className="block text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-              Accent Color
+              Accent Color{" "}
+              <span className="text-gray-900 dark:text-white ml-1">
+                • {accentColors[accentColor]?.name || "Custom"}
+              </span>
             </label>
             <div className="flex flex-wrap gap-3">
               {Object.entries(accentColors).map(([key, colors]) => (
@@ -218,7 +221,8 @@ const Profile = () => {
                   }`}
                   // @ts-ignore
                   style={{ backgroundColor: colors.default }}
-                  aria-label={`Select ${key} accent color`}
+                  aria-label={`Select ${colors.name} accent color`}
+                  title={colors.name}
                 >
                   {accentColor === key && (
                     <Checkmark color="#ffffff" height="20px" width="20px" />

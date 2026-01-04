@@ -20,7 +20,7 @@ export interface ThemeContextType {
     toggleTheme: () => void;
     accentColor: string;
     setAccentColor: (color: string) => void;
-    accentColors: Record<string, { default: string; hover: string }>;
+    accentColors: Record<string, { name: string; default: string; hover: string }>;
 }
 
 export interface AuthContextType {

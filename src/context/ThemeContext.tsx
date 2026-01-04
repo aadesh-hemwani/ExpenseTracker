@@ -22,18 +22,16 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   );
 
   // Define accent colors map - using Tailwind colors for reference
-  const accentColors: Record<string, { default: string; hover: string }> = {
-    indigo: { default: "#6366f1", hover: "#4f46e5" },
-    emerald: { default: "#10b981", hover: "#059669" },
-    rose: { default: "#f43f5e", hover: "#e11d48" },
-    amber: { default: "#f59e0b", hover: "#d97706" },
-    violet: { default: "#8b5cf6", hover: "#7c3aed" },
-    cyan: { default: "#06b6d4", hover: "#0891b2" },
-    mint: { default: "#6ee7b7", hover: "#34d399" },
-    lavender: { default: "#a78bfa", hover: "#8b5cf6" },
-    blush: { default: "#f9a8d4", hover: "#f472b6" },
-    sky: { default: "#7dd3fc", hover: "#38bdf8" },
-    apricot: { default: "#fdba74", hover: "#fb923c" },
+  const accentColors: Record<
+    string,
+    { name: string; default: string; hover: string }
+  > = {
+    indigo: { name: "Indigo", default: "#6366f1", hover: "#4f46e5" },
+    emerald: { name: "Emerald", default: "#10b981", hover: "#059669" },
+    rose: { name: "Rose", default: "#f43f5e", hover: "#e11d48" },
+    amber: { name: "Amber", default: "#f59e0b", hover: "#d97706" },
+    violet: { name: "Violet", default: "#8b5cf6", hover: "#7c3aed" },
+    cyan: { name: "Cyan", default: "#06b6d4", hover: "#0891b2" },
   };
 
   // Helper to convert hex to HSL
@@ -101,13 +99,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem("accentColor", accentColor);
 
     // Update PWA Theme Color
-    const metaTags = document.querySelectorAll('meta[name="theme-color"]');
-    metaTags.forEach((tag) => tag.remove());
-
-    const meta = document.createElement("meta");
-    meta.name = "theme-color";
-    meta.content = theme === "dark" ? "#000000" : "#ffffff";
-    document.head.appendChild(meta);
+    let meta = document.querySelector<HTMLMetaElement>(
+      'meta[name="theme-color"]'
+    );
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "theme-color";
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", theme === "dark" ? "#000000" : "#ffffff");
 
     // Update iOS Status Bar
     const iosMeta = document.querySelector(

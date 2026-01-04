@@ -8,7 +8,7 @@ import { Timestamp } from "firebase/firestore";
 
 interface SwipeableExpenseItemProps {
   t: Expense;
-  getCategoryIcon: (category: string) => ReactNode;
+  getCategoryIcon: (category: string, size?: string) => ReactNode;
   onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
   className?: string;
   cardClassName?: string;
@@ -88,8 +88,8 @@ const SwipeableExpenseItem = memo(
         >
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             {/* Icon */}
-            <div className="w-10 h-10 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/10 shrink-0">
-              {getCategoryIcon(t.category)}
+            <div className="shrink-0">
+              {getCategoryIcon(t.category, "28px")}
             </div>
 
             {/* Note & Date/Category */}
@@ -109,7 +109,7 @@ const SwipeableExpenseItem = memo(
 
           {/* Amount (Right Aligned) */}
           <div className="text-right shrink-0">
-            <span className="font-bold text-gray-900 dark:text-white block text-sm">
+            <span className="font-semibold text-gray-900 dark:text-white block text-lg">
               {formatCurrency(t.amount)}
             </span>
           </div>

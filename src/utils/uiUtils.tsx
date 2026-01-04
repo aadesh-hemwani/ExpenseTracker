@@ -28,12 +28,15 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Misc: "#6b7280", // gray-500
 };
 
-export const getCategoryIcon = (cat: string): ReactElement => {
+export const getCategoryIcon = (
+  cat: string,
+  size: string = "20px"
+): ReactElement => {
   const color = CATEGORY_COLORS[cat] || "#6b7280";
 
   const commonProps = {
-    height: "20px",
-    width: "20px",
+    height: size,
+    width: size,
     color: color,
   };
 

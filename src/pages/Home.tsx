@@ -170,7 +170,9 @@ const Home = () => {
             <span className="text-5xl font-semibold text-primary tracking-tight">
               <CountUp value={currentMonthTotal} />
             </span>
-            <span className="text-lg text-tertiary font-normal">.00</span>
+            <span className="text-lg text-tertiary font-normal">
+              .{currentMonthTotal.toFixed(2).split(".")[1]}
+            </span>
           </div>
         </div>
 
