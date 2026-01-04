@@ -155,7 +155,7 @@ const Home = () => {
       {/* Hero Section */}
       <header className="flex flex-col space-y-4 pt-4">
         <div>
-          <span className="text-sm font-normal text-tertiary uppercase tracking-wider">
+          <span className="text-sm font-semibold text-tertiary uppercase tracking-wider">
             {format(new Date(), "MMMM yyyy")}
           </span>
           <div className="flex items-baseline mt-1 space-x-1">
@@ -169,10 +169,15 @@ const Home = () => {
         {/* Intelligent Insight Pill */}
         <button
           onClick={() => setShowInsightSheet(true)}
-          className="group relative w-full sm:w-auto flex items-center justify-between p-3 pr-4 
-            bg-white dark:bg-white/5 border border-subtle
+          className={`group relative w-full sm:w-auto flex items-center justify-between p-3 pr-4 
+            bg-white dark:bg-white/5 border
             rounded-2xl shadow-sm hover:shadow-md transition-all duration-300
-            active:scale-[0.98]"
+            active:scale-[0.98]
+            ${
+              trendDirection === "down"
+                ? "animate-glow-green border-emerald-500/20"
+                : "animate-glow-red border-rose-500/20"
+            }`}
         >
           <div className="flex items-center space-x-3">
             <div
@@ -213,7 +218,7 @@ const Home = () => {
 
       {/* Grouped Transactions */}
       <section className="space-y-4">
-        <h3 className="text-sm font-normal text-tertiary px-1 uppercase tracking-wider">
+        <h3 className="text-sm font-semibold text-tertiary px-1 uppercase tracking-wider">
           Recent Transactions
         </h3>
 

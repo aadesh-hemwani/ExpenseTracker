@@ -141,3 +141,36 @@ body {
 .animate-pulse-soft {
   animation: pulse-soft 3s ease-in-out infinite;
 }
+
+/* Insight Glow Animations */
+@keyframes glow-pulse-green {
+  0%,
+  100% {
+    box-shadow: 0 0 0px rgba(16, 185, 129, 0);
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.6);
+  }
+}
+
+@keyframes glow-pulse-red {
+  0%,
+  100% {
+    box-shadow: 0 0 0px rgba(244, 63, 94, 0);
+    border-color: rgba(244, 63, 94, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
+    border-color: rgba(244, 63, 94, 0.6);
+  }
+}
+
+.animate-glow-green {
+  animation: glow-pulse-green 3s ease-in-out infinite;
+}
+
+.animate-glow-red {
+  animation: glow-pulse-red 3s ease-in-out infinite;
+}

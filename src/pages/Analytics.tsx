@@ -209,13 +209,13 @@ const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
         <motion.div
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-5 bg-gradient-to-br from-accent to-purple-900 dark:to-purple-400 text-white rounded-2xl shadow-lg"
+          className="p-5 bg-gradient-to-br from-accent to-purple-700/80 dark:from-indigo-500/60 dark:to-purple-900/60 text-white rounded-2xl shadow-sm backdrop-blur-md"
         >
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-medium dark:text-gray-950 uppercase tracking-wider">
+            <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
               This Month
             </span>
-            <ArrowUpRight className="w-4 h-4 dark:text-gray-950" />
+            <ArrowUpRight className="w-3.5 h-3.5 text-white/60 stroke-[1.5]" />
           </div>
           <div className="text-4xl font-bold">
             <CountUp value={currentMonthTotal} />

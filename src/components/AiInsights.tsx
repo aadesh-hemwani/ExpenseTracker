@@ -55,46 +55,34 @@ const AiInsights = ({ insights = [] }: AiInsightsProps) => {
             viewport={{ once: true }}
             className={`
                             min-w-full md:min-w-[320px] p-5
-                            bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md
+                            ${insight.bg} backdrop-blur-md
                             rounded-2xl border border-gray-100 dark:border-white/5
-                            dark:shadow-none shadow-[0_0_10px_rgba(70,70,70,0.15)]
-                            snap-center flex flex-col gap-4 relative overflow-hidden group
+                            dark:shadow-none shadow-sm
+                            snap-center flex flex-col gap-3 relative overflow-hidden group
                         `}
           >
-            {/* Subtle Gradient Mesh Background - More refined */}
-            <div
-              className={`absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px] opacity-20 dark:opacity-10 translate-x-1/3 -translate-y-1/3 ${insight.bg.replace(
-                "bg-",
-                "bg-"
-              )}`}
-            />
-
+            {/* Header: Icon + Title */}
             <div className="flex items-center gap-3 relative z-10">
-              {/* Icon Box - cleaner look */}
               <div
-                className={`p-2.5 rounded-2xl ${insight.bg} backdrop-blur-sm border border-white/10`}
+                className={`p-2 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-sm`}
               >
                 <insight.icon
                   className={`w-5 h-5 ${insight.color}`}
-                  strokeWidth={2}
+                  strokeWidth={2.5}
                 />
               </div>
 
-              {/* Title - nicer tracking and size */}
               <span
-                className={`text-[11px] font-bold uppercase tracking-widest ${insight.color} opacity-90`}
+                className={`text-xs font-bold uppercase tracking-wider ${insight.color} opacity-90`}
               >
                 {insight.title}
               </span>
             </div>
 
             {/* Text - Better readability */}
-            <p className="text-gray-800 dark:text-gray-200 font-medium text-[15px] leading-relaxed relative z-10 tracking-tight">
+            <p className="text-gray-900 dark:text-gray-100 font-medium text-[15px] leading-snug relative z-10">
               {insight.text}
             </p>
-
-            {/* Minimal Sparkle - cleaner placement */}
-            <Sparkles className="absolute bottom-4 right-4 w-4 h-4 text-indigo-400/20 group-hover:text-amber-300/60 transition-colors duration-700" />
           </motion.div>
         ))}
       </div>
