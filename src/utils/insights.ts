@@ -1,12 +1,10 @@
 import { endOfMonth } from 'date-fns';
-import { 
-    TrendingUpOutline, 
-    DiscOutline, 
-    BulbOutline, 
-    PieChartOutline, 
-    WarningOutline, 
-    CheckmarkCircleOutline 
-} from 'react-ionicons';
+import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
+import DiscOutline from "react-ionicons/lib/DiscOutline";
+import BulbOutline from "react-ionicons/lib/BulbOutline";
+import PieChartOutline from "react-ionicons/lib/PieChartOutline";
+import WarningOutline from "react-ionicons/lib/WarningOutline";
+import CheckmarkCircleOutline from "react-ionicons/lib/CheckmarkCircleOutline";
 import { Expense } from '../types';
 import { MonthlyData } from './analyticsHelpers';
 

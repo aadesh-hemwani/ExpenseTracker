@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { HardwareChipOutline } from "react-ionicons";
+import HardwareChipOutline from "react-ionicons/lib/HardwareChipOutline";
 import { Insight } from "../utils/insights";
 
 interface AiInsightsProps {
@@ -35,7 +35,7 @@ const AiInsights = ({ insights = [] }: AiInsightsProps) => {
             cssClasses="text-accent"
           />
         </div>
-        <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-purple-600 bg-clip-text text-transparent">
+        <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">
           AI Insights
         </h2>
       </div>

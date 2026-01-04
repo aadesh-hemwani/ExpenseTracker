@@ -4,12 +4,10 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
-import {
-  ArrowBackOutline,
-  Person,
-  CalendarOutline,
-  BarChartOutline,
-} from "react-ionicons";
+import ArrowBackOutline from "react-ionicons/lib/ArrowBackOutline";
+import Person from "react-ionicons/lib/Person";
+import CalendarOutline from "react-ionicons/lib/CalendarOutline";
+import BarChartOutline from "react-ionicons/lib/BarChartOutline";
 import Analytics from "./Analytics";
 import History from "./History";
 

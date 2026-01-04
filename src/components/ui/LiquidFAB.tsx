@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Add } from "react-ionicons";
+import Add from "react-ionicons/lib/Add";
 import "./LiquidGlass.css"; // Reusing the shared CSS
 
 interface LiquidFABProps {

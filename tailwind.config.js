@@ -29,7 +29,8 @@ export default {
 
         /* Accent */
         accent: {
-          DEFAULT: "var(--accent-exact)",
+          DEFAULT:
+            "hsl(var(--accent-h) var(--accent-s) var(--accent-l) / <alpha-value>)",
           hover: "var(--color-accent-hover)",
         },
 

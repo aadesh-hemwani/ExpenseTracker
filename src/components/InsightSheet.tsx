@@ -1,7 +1,8 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { TrendingUpOutline, TrendingDownOutline } from "react-ionicons";
+import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
+import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
 import { format } from "date-fns";
 import TrajectoryChart from "./TrajectoryChart";
 import { LiquidClose } from "./ui/LiquidClose";

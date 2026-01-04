@@ -9,7 +9,7 @@ import {
 } from "../utils/notificationUtils";
 import { format, subDays, subMonths } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
-import { Notifications } from "react-ionicons";
+import Notifications from "react-ionicons/lib/Notifications";
 
 const NotificationManager = () => {
   const { user } = useAuth();

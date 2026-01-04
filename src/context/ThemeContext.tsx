@@ -36,6 +36,46 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     apricot: { default: "#fdba74", hover: "#fb923c" },
   };
 
+  // Helper to convert hex to HSL
+  const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
+    let r = 0,
+      g = 0,
+      b = 0;
+    if (hex.length === 4) {
+      r = parseInt("0x" + hex[1] + hex[1]);
+      g = parseInt("0x" + hex[2] + hex[2]);
+      b = parseInt("0x" + hex[3] + hex[3]);
+    } else if (hex.length === 7) {
+      r = parseInt("0x" + hex[1] + hex[2]);
+      g = parseInt("0x" + hex[3] + hex[4]);
+      b = parseInt("0x" + hex[5] + hex[6]);
+    }
+    r /= 255;
+    g /= 255;
+    b /= 255;
+    const cmin = Math.min(r, g, b),
+      cmax = Math.max(r, g, b),
+      delta = cmax - cmin;
+    let h = 0,
+      s = 0,
+      l = 0;
+
+    if (delta === 0) h = 0;
+    else if (cmax === r) h = ((g - b) / delta) % 6;
+    else if (cmax === g) h = (b - r) / delta + 2;
+    else h = (r - g) / delta + 4;
+
+    h = Math.round(h * 60);
+    if (h < 0) h += 360;
+
+    l = (cmax + cmin) / 2;
+    s = delta === 0 ? 0 : delta / (1 - Math.abs(2 * l - 1));
+    s = +(s * 100).toFixed(1);
+    l = +(l * 100).toFixed(1);
+
+    return { h, s, l };
+  };
+
   useEffect(() => {
     const root = window.document.documentElement;
 
@@ -46,23 +86,30 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
 
     // Apply Accent Color
     const colors = accentColors[accentColor] || accentColors.indigo;
+    const { h, s, l } = hexToHSL(colors.default);
+
+    // Set CSS Variables
     root.style.setProperty("--color-accent", colors.default);
+    root.style.setProperty("--accent-exact", colors.default); // Fix mismatch
     root.style.setProperty("--color-accent-hover", colors.hover);
+
+    // Set HSL components for opacity support in Tailwind
+    root.style.setProperty("--accent-h", h.toString());
+    root.style.setProperty("--accent-s", s + "%");
+    root.style.setProperty("--accent-l", l + "%");
+
     localStorage.setItem("accentColor", accentColor);
 
     // Update PWA Theme Color
-    // Remove existing meta tags to prevent conflict with media queries
     const metaTags = document.querySelectorAll('meta[name="theme-color"]');
     metaTags.forEach((tag) => tag.remove());
 
-    // Create and append a new one
     const meta = document.createElement("meta");
     meta.name = "theme-color";
     meta.content = theme === "dark" ? "#000000" : "#ffffff";
     document.head.appendChild(meta);
 
-    // Update iOS Status Bar Style
-    // iOS (15+) also respects theme-color, but for older support:
+    // Update iOS Status Bar
     const iosMeta = document.querySelector(
       'meta[name="apple-mobile-web-app-status-bar-style"]'
     );

@@ -1,5 +1,6 @@
 import { useRegisterSW } from "virtual:pwa-register/react";
-import { RefreshOutline, CloseOutline } from "react-ionicons";
+import RefreshOutline from "react-ionicons/lib/RefreshOutline";
+import CloseOutline from "react-ionicons/lib/CloseOutline";
 
 function ReloadPrompt() {
   const {

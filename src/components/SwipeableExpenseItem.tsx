@@ -1,6 +1,6 @@
 import { ReactNode, memo } from "react";
 import { motion, useMotionValue, useAnimation, PanInfo } from "framer-motion";
-import { TrashOutline } from "react-ionicons";
+import TrashOutline from "react-ionicons/lib/TrashOutline";
 import { format } from "date-fns";
 import { formatCurrency } from "../utils/formatUtils";
 import { Expense } from "../types";

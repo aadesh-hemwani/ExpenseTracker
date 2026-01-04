@@ -17,11 +17,9 @@ import {
 import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { format, subMonths } from "date-fns";
-import {
-  ArrowForwardOutline,
-  PieChartOutline,
-  BarChartOutline,
-} from "react-ionicons";
+import ArrowForwardOutline from "react-ionicons/lib/ArrowForwardOutline";
+import PieChartOutline from "react-ionicons/lib/PieChartOutline";
+import BarChartOutline from "react-ionicons/lib/BarChartOutline";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import CountUp from "../components/CountUp";
@@ -213,7 +211,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
         <motion.div
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-5 bg-gradient-to-br from-accent to-purple-700/80 dark:from-indigo-500/60 dark:to-purple-900/60 text-white rounded-3xl shadow-sm backdrop-blur-md"
+          className="p-5 bg-gradient-to-br from-accent to-indigo-600 dark:from-accent dark:to-indigo-500 text-white rounded-3xl shadow-sm backdrop-blur-md"
         >
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
@@ -335,7 +333,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
               cssClasses="text-accent"
             />
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-purple-600 bg-clip-text text-transparent">
+          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">
             Monthly Trend
           </h2>
         </div>

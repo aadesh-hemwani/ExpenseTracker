@@ -11,7 +11,8 @@ import {
   isToday,
   parseISO,
 } from "date-fns";
-import { ArrowBackOutline, CalendarOutline } from "react-ionicons";
+import ArrowBackOutline from "react-ionicons/lib/ArrowBackOutline";
+import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import { AnimatePresence } from "framer-motion";
 import Card from "../components/Card";
 import {

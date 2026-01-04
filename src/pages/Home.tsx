@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
-import {
-  TrendingUpOutline,
-  TrendingDownOutline,
-  RefreshCircleOutline,
-  ArrowForwardOutline,
-} from "react-ionicons";
+import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
+import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
+import RefreshCircleOutline from "react-ionicons/lib/RefreshCircleOutline";
+import ArrowForwardOutline from "react-ionicons/lib/ArrowForwardOutline";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
 import {

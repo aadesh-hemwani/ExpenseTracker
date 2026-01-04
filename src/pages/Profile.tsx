@@ -4,17 +4,15 @@ import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import {
-  LogOutOutline,
-  SaveOutline,
-  Person,
-  WalletOutline,
-  ColorPaletteOutline,
-  Checkmark,
-  ShieldCheckmarkOutline,
-  MoonOutline,
-  SunnyOutline,
-} from "react-ionicons";
+import LogOutOutline from "react-ionicons/lib/LogOutOutline";
+import SaveOutline from "react-ionicons/lib/SaveOutline";
+import Person from "react-ionicons/lib/Person";
+import WalletOutline from "react-ionicons/lib/WalletOutline";
+import ColorPaletteOutline from "react-ionicons/lib/ColorPaletteOutline";
+import Checkmark from "react-ionicons/lib/Checkmark";
+import ShieldCheckmarkOutline from "react-ionicons/lib/ShieldCheckmarkOutline";
+import MoonOutline from "react-ionicons/lib/MoonOutline";
+import SunnyOutline from "react-ionicons/lib/SunnyOutline";
 import { motion } from "framer-motion";
 import Card from "../components/Card";
 
@@ -137,7 +135,7 @@ const Profile = () => {
           {user?.isAdmin && (
             <button
               onClick={() => navigate("/admin")}
-              className="mt-4 px-4 py-2 bg-gradient-to-r from-purple-600 to-accent text-white rounded-full text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              className="mt-4 px-4 py-2 bg-accent text-white rounded-full text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
             >
               Admin Dashboard
             </button>

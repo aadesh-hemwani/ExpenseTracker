@@ -1,14 +1,12 @@
 import { ReactElement } from "react";
-import {
-  FastFoodOutline,
-  CartOutline,
-  CarOutline,
-  TicketOutline,
-  CashOutline,
-  GridOutline,
-  MedkitOutline,
-  BriefcaseOutline,
-} from "react-ionicons";
+import FastFoodOutline from "react-ionicons/lib/FastFoodOutline";
+import CartOutline from "react-ionicons/lib/CartOutline";
+import CarOutline from "react-ionicons/lib/CarOutline";
+import TicketOutline from "react-ionicons/lib/TicketOutline";
+import CashOutline from "react-ionicons/lib/CashOutline";
+import GridOutline from "react-ionicons/lib/GridOutline";
+import MedkitOutline from "react-ionicons/lib/MedkitOutline";
+import BriefcaseOutline from "react-ionicons/lib/BriefcaseOutline";
 
 export const CATEGORIES = [
   "Food",

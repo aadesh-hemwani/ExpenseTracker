@@ -1,17 +1,15 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import {
-  HomeOutline,
-  Home,
-  CalendarOutline,
-  Calendar,
-  BarChartOutline,
-  BarChart,
-  PersonOutline,
-  Person,
-  BulbOutline,
-  Bulb,
-} from "react-ionicons";
+import HomeOutline from "react-ionicons/lib/HomeOutline";
+import Home from "react-ionicons/lib/Home";
+import CalendarOutline from "react-ionicons/lib/CalendarOutline";
+import Calendar from "react-ionicons/lib/Calendar";
+import BarChartOutline from "react-ionicons/lib/BarChartOutline";
+import BarChart from "react-ionicons/lib/BarChart";
+import PersonOutline from "react-ionicons/lib/PersonOutline";
+import Person from "react-ionicons/lib/Person";
+import BulbOutline from "react-ionicons/lib/BulbOutline";
+import Bulb from "react-ionicons/lib/Bulb";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -127,7 +125,7 @@ const Layout = () => {
         {/* Mobile Header Gradient (Optional background flair) */}
         <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-surface/50 to-transparent pointer-events-none z-0" />
 
-        <div className="relative z-10 max-w-2xl mx-auto p-5 pt-safe md:p-10 pb-32 md:pb-10">
+        <div className="relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -146,7 +144,7 @@ const Layout = () => {
       {!location.pathname.startsWith("/admin") && <GlobalAddExpense />}
 
       {/* Mobile Bottom Navigation - Liquid Glass Style */}
-      <div className="md:hidden fixed bottom-6 left-4 right-[6rem] z-50">
+      <div className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-4 right-[6rem] z-50">
         <LiquidNavBar
           items={[
             { path: "/", icon: HomeOutline, activeIcon: Home, label: "Home" },

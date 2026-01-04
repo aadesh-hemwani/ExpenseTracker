@@ -1,4 +1,4 @@
-import { CloseOutline } from "react-ionicons";
+import CloseOutline from "react-ionicons/lib/CloseOutline";
 import "./LiquidGlass.css";
 
 interface LiquidCloseProps {
