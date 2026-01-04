@@ -84,7 +84,7 @@ const SwipeableExpenseItem = memo(
           dragMomentum={false}
           onDragEnd={handleDragEnd}
           whileTap={{ scale: 0.98 }}
-          className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.5px] border-gray-200/20 dark:border-white/10 dark:shadow-none shadow-[0_0_10px_rgba(70,70,70,0.15)] ${cardClassName}`}
+          className={`relative z-10 flex items-center justify-between p-4 bg-surface rounded-3xl border border-subtle shadow-sm ${cardClassName}`}
         >
           <div className="flex items-center space-x-4 flex-1 min-w-0">
             {/* Icon */}

@@ -209,7 +209,7 @@ const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
         <motion.div
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-5 bg-gradient-to-br from-accent to-purple-700/80 dark:from-indigo-500/60 dark:to-purple-900/60 text-white rounded-2xl shadow-sm backdrop-blur-md"
+          className="p-5 bg-gradient-to-br from-accent to-purple-700/80 dark:from-indigo-500/60 dark:to-purple-900/60 text-white rounded-3xl shadow-sm backdrop-blur-md"
         >
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
@@ -222,12 +222,12 @@ const Analytics = ({ userId, readOnly = false }: AnalyticsProps) => {
           </div>
         </motion.div>
 
-        <Card className="rounded-2xl p-5">
+        <Card className="p-5">
           <div className="flex justify-between items-start mb-4">
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               Top Category
             </span>
-            <PieChart className="w-4 h-4 text-gray-400" />
+            <PieChart className="w-4 h-4 text-accent" />
           </div>
           <div className="text-xl font-bold text-gray-900 dark:text-white truncate">
             {topCategory ? topCategory.name : "—"}
