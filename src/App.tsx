@@ -16,7 +16,12 @@ import ReloadPrompt from "./components/ReloadPrompt";
 import NotificationManager from "./components/NotificationManager";
 import ErrorBoundary from "./components/ErrorBoundary";
 
+import SplashScreen from "./components/SplashScreen";
+import { useState } from "react";
+
 function App() {
+  const [loading, setLoading] = useState(true);
+
   // Prevent Zoom on iOS
   useEffect(() => {
     const handleGestureStart = (e: Event) => {
@@ -29,33 +34,38 @@ function App() {
       document.removeEventListener("gesturestart", handleGestureStart);
     };
   }, []);
+
   return (
     <ThemeProvider>
-      <ErrorBoundary>
-        <ReloadPrompt />
-        <BrowserRouter>
-          <AuthProvider>
-            <NotificationManager />
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              {/* Protected Routes */}
-              <Route
-                element={
-                  <ProtectedRoute>
-                    <Layout />
-                  </ProtectedRoute>
-                }
-              >
-                <Route path="/" element={<Home />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/admin" element={<Admin />} />
-              </Route>
-            </Routes>
-          </AuthProvider>
-        </BrowserRouter>
-      </ErrorBoundary>
+      {loading ? (
+        <SplashScreen onComplete={() => setLoading(false)} />
+      ) : (
+        <ErrorBoundary>
+          <ReloadPrompt />
+          <BrowserRouter>
+            <AuthProvider>
+              <NotificationManager />
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                {/* Protected Routes */}
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Home />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/admin" element={<Admin />} />
+                </Route>
+              </Routes>
+            </AuthProvider>
+          </BrowserRouter>
+        </ErrorBoundary>
+      )}
     </ThemeProvider>
   );
 }

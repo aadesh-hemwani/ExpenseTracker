@@ -59,6 +59,7 @@ body {
   width: 100vw;
   position: fixed;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top);
 }
 
 #root {
