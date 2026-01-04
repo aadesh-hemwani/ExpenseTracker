@@ -17,12 +17,12 @@ const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const { name, value } = payload[0];
     return (
-      <div className="backdrop-blur-xl bg-white/80 dark:bg-black/60 border border-white/20 dark:border-white/10 p-4 rounded-2xl shadow-2xl ring-1 ring-black/5">
+      <div className="glass p-4 rounded-2xl shadow-2xl ring-1 ring-black/5">
         <div className="flex flex-col gap-1">
-          <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          <span className="text-xs font-medium text-tertiary uppercase tracking-wider">
             {name}
           </span>
-          <span className="text-xl font-bold text-gray-900 dark:text-white">
+          <span className="text-xl font-bold text-primary">
             ₹{value.toLocaleString("en-IN")}
           </span>
         </div>
@@ -32,6 +32,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
+// Premium Palette matching the new vibe (Slightly softer)
 const COLORS = [
   "#6366f1", // Indigo
   "#10b981", // Emerald
@@ -65,8 +66,8 @@ const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
   if (data.length === 0) return null;
 
   return (
-    <div className="w-full h-80 bg-white dark:bg-black rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-sm mb-6">
-      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
+    <div className="w-full h-80 bg-surface rounded-3xl p-6 border border-subtle shadow-sm mb-6">
+      <h3 className="text-lg font-bold text-primary mb-4">
         Spending by Category
       </h3>
       <div className="h-64 w-full">
@@ -94,7 +95,7 @@ const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
             <Tooltip
               content={<CustomTooltip />}
               cursor={false}
-              animationDuration={200}
+              animationDuration={500}
             />
             <Legend
               verticalAlign="middle"
@@ -105,7 +106,7 @@ const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
               wrapperStyle={{
                 paddingLeft: "20px",
                 fontSize: "12px",
-                color: "#9ca3af",
+                color: "hsl(var(--text-tertiary))",
               }}
             />
           </PieChart>

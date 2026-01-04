@@ -1,4 +1,5 @@
 import { getCategoryIcon, CATEGORIES } from "../utils/uiUtils";
+import { createPortal } from "react-dom";
 import { formatCurrency } from "../utils/formatUtils";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
@@ -27,8 +28,8 @@ const ExpenseListModal = ({
     return new Date();
   };
 
-  return (
-    <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center pointer-events-none">
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none">
       {/* Backdrop (Click to close) */}
       <motion.div
         initial={{ opacity: 0 }}
@@ -102,7 +103,8 @@ const ExpenseListModal = ({
           )}
         </div>
       </motion.div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

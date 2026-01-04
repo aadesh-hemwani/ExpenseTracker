@@ -32,16 +32,16 @@ const SwipeableExpenseItem = memo(
       const velocity = info.velocity.x;
 
       // If swiped left enough, snap open to reveal button
-      if (offset < -50 || velocity < -500) {
+      if (offset < -60 || velocity < -500) {
         await controls.start({
           x: -80,
-          transition: { type: "spring", stiffness: 300, damping: 30 },
+          transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
         });
       } else {
         // Otherwise snap back to closed
         await controls.start({
           x: 0,
-          transition: { type: "spring", stiffness: 300, damping: 30 },
+          transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
         });
       }
     };
@@ -79,34 +79,39 @@ const SwipeableExpenseItem = memo(
           style={{ x }}
           animate={controls}
           drag={readOnly ? false : "x"}
-          dragConstraints={{ left: -80, right: 0 }}
-          dragElastic={0.1}
+          dragConstraints={{ left: -100, right: 0 }}
+          dragElastic={0.5}
+          dragMomentum={false}
           onDragEnd={handleDragEnd}
           whileTap={{ scale: 0.98 }}
-          className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.5px] border-gray-200/20 dark:border-white/10 dark:shadow-none shadow-[0_0_20px_rgba(70,70,70,0.15)] ${cardClassName}`}
+          className={`relative z-10 flex items-center justify-between p-4 bg-white dark:bg-dark-card rounded-2xl border-[0.5px] border-gray-200/20 dark:border-white/10 dark:shadow-none shadow-[0_0_10px_rgba(70,70,70,0.15)] ${cardClassName}`}
         >
-          <div className="flex items-center space-x-4">
-            <div className="w-10 h-10 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/10">
+          <div className="flex items-center space-x-4 flex-1 min-w-0">
+            {/* Icon */}
+            <div className="w-10 h-10 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/10 shrink-0">
               {getCategoryIcon(t.category)}
             </div>
-            <div className="text-left">
-              <p className="font-semibold text-gray-900 dark:text-white text-sm">
-                {t.category}
+
+            {/* Note & Date/Category */}
+            <div className="flex flex-col flex-1 min-w-0 pr-4">
+              <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+                {t.note || t.description || t.category}
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
-              </p>
+              <div className="flex items-center text-xs text-gray-400 mt-0.5 space-x-1 truncate">
+                <span>
+                  {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
+                </span>
+                <span>•</span>
+                <span>{t.category}</span>
+              </div>
             </div>
           </div>
-          <div className="text-right">
+
+          {/* Amount (Right Aligned) */}
+          <div className="text-right shrink-0">
             <span className="font-bold text-gray-900 dark:text-white block text-sm">
               {formatCurrency(t.amount)}
             </span>
-            {(t.note || t.description) && (
-              <span className="text-xs text-gray-400 truncate max-w-[12rem] md:max-w-xs block">
-                {t.note || t.description}
-              </span>
-            )}
           </div>
         </motion.div>
       </motion.div>

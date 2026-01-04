@@ -18,43 +18,30 @@ interface NavItemProps {
 }
 
 const NavItem = ({ to, icon: Icon, label }: NavItemProps) => (
-  <NavLink to={to} className="relative flex items-center justify-center">
+  <NavLink to={to} className="relative flex items-center justify-center group">
     {({ isActive }) => (
-      <motion.div
-        whileTap={{ scale: 0.8 }}
-        className={`
-        relative flex flex-col items-center justify-center rounded-full transition-all duration-300
-        ${isActive ? "px-6 py-3" : "w-12 h-12"}
-      `}
-      >
-        {isActive && (
-          <motion.div
-            layoutId="nav-pill"
-            className="absolute inset-0 bg-[color-mix(in_srgb,var(--color-accent),transparent_25%)] rounded-full shadow-[0_0_20px_rgba(99,102,241,0.3)] z-0"
-            transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
-          />
-        )}
-
-        <div
-          className={`relative z-10 flex flex-col items-center transition-colors duration-200 ${
-            isActive
-              ? "text-white"
-              : "text-gray-400 hover:text-gray-900 dark:hover:text-white"
+      <div className="flex flex-col items-center">
+        <motion.div
+          whileTap={{ scale: 0.9 }}
+          className={`
+            relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300
+            ${
+              isActive
+                ? "bg-primary text-white shadow-soft"
+                : "text-secondary hover:bg-black/5 dark:hover:bg-white/10"
+            }
+          `}
+        >
+          <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
+        </motion.div>
+        <span
+          className={`text-[10px] font-medium mt-1 transition-colors ${
+            isActive ? "text-primary dark:text-white" : "text-tertiary"
           }`}
         >
-          <Icon
-            className={`w-5 h-5 mb-0.5 ${isActive ? "scale-110" : ""}`}
-            strokeWidth={2.5}
-          />
-          <span
-            className={`text-[10px] font-medium leading-none whitespace-nowrap ${
-              isActive ? "block" : "hidden md:block"
-            }`}
-          >
-            {label}
-          </span>
-        </div>
-      </motion.div>
+          {label}
+        </span>
+      </div>
     )}
   </NavLink>
 );
@@ -63,32 +50,36 @@ const Layout = () => {
   const location = useLocation();
 
   return (
-    <div className="flex flex-col h-full w-full bg-white dark:bg-black text-gray-900 dark:text-gray-100 font-sans md:flex-row transition-colors duration-200 overflow-hidden">
-      {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-gray-50 dark:bg-black border-r border-gray-100 dark:border-white/10 h-full p-8 transition-colors duration-200">
-        <h1 className="text-2xl font-bold tracking-tight mb-10 text-gray-900 dark:text-white">
-          Expenses.
-        </h1>
-        <nav className="flex flex-col space-y-4 items-center flex-1">
+    <div className="flex flex-col h-full w-full bg-body text-primary font-sans md:flex-row transition-colors duration-300 overflow-hidden">
+      {/* Desktop Sidebar (Glass) */}
+      <aside className="hidden md:flex flex-col w-72 glass border-r border-subtle h-full p-6 z-20">
+        <div className="mb-12 px-2">
+          <h1 className="text-xl font-bold tracking-tight text-primary">
+            Expenses.
+          </h1>
+        </div>
+
+        <nav className="flex flex-col space-y-6">
           <NavItem to="/" icon={Home} label="Dashboard" />
           <NavItem to="/history" icon={Calendar} label="History" />
           <NavItem to="/analytics" icon={BarChart2} label="Insights" />
-          <div className="mt-auto w-full flex justify-center">
-            <NavItem to="/profile" icon={User} label="Profile" />
-          </div>
+          <NavItem to="/profile" icon={User} label="Profile" />
         </nav>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto relative no-scrollbar bg-white dark:bg-black transition-colors duration-200 overscroll-contain">
-        <div className="max-w-2xl mx-auto p-5 pt-5 md:p-10 pb-24 md:pb-10">
+      <main className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain">
+        {/* Mobile Header Gradient (Optional background flair) */}
+        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-surface/50 to-transparent pointer-events-none z-0" />
+
+        <div className="relative z-10 max-w-2xl mx-auto p-5 pt-safe md:p-10 pb-32 md:pb-10">
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 8, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -8, scale: 0.98 }}
+              transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             >
               <Outlet />
             </motion.div>
@@ -97,33 +88,16 @@ const Layout = () => {
       </main>
 
       {/* Global Add Expense FAB & Modal */}
-      {/* Only show if NOT view only */}
       {!location.pathname.startsWith("/admin") && <GlobalAddExpense />}
 
       {/* Mobile Bottom Navigation - Liquid Glass Style */}
-      <div className="md:hidden fixed bottom-6 left-4 right-24 z-50">
+      <div className="md:hidden fixed bottom-6 left-4 right-[6rem] z-50">
         <LiquidNavBar
           items={[
-            {
-              path: "/",
-              icon: Home,
-              label: "Home",
-            },
-            {
-              path: "/history",
-              icon: Calendar,
-              label: "History",
-            },
-            {
-              path: "/analytics",
-              icon: Sparkles,
-              label: "Insights",
-            },
-            {
-              path: "/profile",
-              icon: User,
-              label: "Profile",
-            },
+            { path: "/", icon: Home, label: "Home" },
+            { path: "/history", icon: Calendar, label: "History" },
+            { path: "/analytics", icon: Sparkles, label: "Insights" },
+            { path: "/profile", icon: User, label: "Profile" },
           ]}
         />
       </div>

@@ -3,19 +3,43 @@
 @tailwind utilities;
 
 :root {
-  --color-accent: #6366f1;
-  /* default indigo */
-  --color-accent-hover: #4f46e5;
+  /* HSL Values for semantic manipulation */
+  --base-h: 0;
+  --base-s: 0%;
+  --base-l: 100%;
+
+  /* Semantic Colors (Light Mode) */
+  --bg-body: 0 0% 100%; /* Pure White body for cleaner look */
+  --bg-surface: 0 0% 98%; /* Slightly off-white surface */
+  --bg-elevated: 0 0% 100%;
+
+  /* Premium "Ink" Grays (Less Blue, More Neutral) */
+  --text-primary: 0 0% 9%; /* #171717 - Sharp Black */
+  --text-secondary: 0 0% 40%; /* Neutral Gray */
+  --text-tertiary: 0 0% 64%; /* Lighter Gray */
+
+  --border-subtle: 0 0% 90%; /* Neutral Border */
+
+  /* Accent Colors - Indigo default */
+  --accent-h: 239;
+  --accent-s: 84%;
+  --accent-l: 67%;
+  --accent-exact: #6366f1;
 }
 
+/* SF Pro Font Stack */
 body {
-  @apply bg-white text-gray-900 transition-colors duration-200;
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
-    Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol";
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+    "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: hsl(var(--bg-body));
+  color: hsl(var(--text-primary));
+  transition: background-color 0.3s ease, color 0.3s ease;
+
+  /* iOS Mobile Behaviors */
   touch-action: manipulation;
   user-select: none;
-  -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
@@ -24,28 +48,15 @@ body {
 html {
   height: 100%;
   width: 100%;
-  position: fixed; /* Lock viewport */
+  position: fixed;
   overflow: hidden;
-  /* Ensure background matches theme to hide safe area gaps */
-  background-color: #ffffff;
-  transition: background-color 200ms;
-}
-
-html.dark {
-  background-color: #000000;
 }
 
 body {
   height: 100%;
   width: 100%;
-  position: fixed; /* Lock viewport */
+  position: fixed;
   overflow: hidden;
-  background-color: #ffffff;
-  transition: background-color 200ms;
-}
-
-.dark body {
-  background-color: #000000;
 }
 
 #root {
@@ -53,58 +64,80 @@ body {
   width: 100%;
 }
 
-.dark html,
+/* Dark Mode Overrides */
+.dark {
+  /* OLED Friendly but with depth */
+  --bg-body: 0 0% 0%; /* True Black */
+  --bg-surface: 0 0% 10%; /* Dark Neutral */
+  --bg-elevated: 0 0% 14%;
+
+  --text-primary: 0 0% 98%; /* White */
+  --text-secondary: 0 0% 60%; /* Neutral Light Gray */
+  --text-tertiary: 0 0% 40%; /* Darker Gray */
+
+  --border-subtle: 0 0% 16%;
+}
+
 .dark body {
-  @apply bg-black text-gray-100;
+  background-color: hsl(var(--bg-body));
 }
 
-/* Global tactile feedback */
-button:active {
-  transform: scale(0.96);
-  transition: transform 0.1s;
-}
-
-/* Custom Scrollbar Hiding for "no-scrollbar" class */
+/* Utilities */
 @layer utilities {
+  .glass {
+    @apply backdrop-blur-xl bg-white/70 dark:bg-neutral-900/70 border border-white/20 dark:border-white/10;
+  }
+
+  .glass-card {
+    @apply backdrop-blur-lg bg-surface/80 dark:bg-surface/60 border border-black/5 dark:border-white/10 shadow-sm;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
-
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-
-  /* Safe area padding for iPhones with notches */
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top);
+  }
 }
 
-@keyframes pulse-glow-green {
+/* Animations */
+@keyframes slide-up-fade {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-enter {
+  animation: slide-up-fade 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Glows (More subtle now) */
+@keyframes pulse-soft {
   0%,
   100% {
-    box-shadow: 0 0 0px rgba(74, 222, 128, 0.2);
+    opacity: 1;
   }
   50% {
-    box-shadow: 0 0 12px rgba(74, 222, 128, 0.6);
+    opacity: 0.7;
   }
 }
 
-@keyframes pulse-glow-red {
-  0%,
-  100% {
-    box-shadow: 0 0 0px rgba(248, 113, 113, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 12px rgba(248, 113, 113, 0.6);
-  }
-}
-
-.animate-glow-green {
-  animation: pulse-glow-green 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-glow-red {
-  animation: pulse-glow-red 6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-pulse-soft {
+  animation: pulse-soft 3s ease-in-out infinite;
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { TrendingUp, TrendingDown, Loader2 } from "lucide-react";
+import { TrendingUp, TrendingDown, Loader2, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
 import {
@@ -20,23 +20,21 @@ const container = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.05,
     },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 20 },
+  hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0 },
 };
 
 const Home = () => {
-  // const { expenses, loading: loadingRecent } = useRecentExpenses(); // Removed for optimization
   const { stats, loading: loadingStats } = useMonthlyStats();
   const { deleteExpense } = useExpenses();
   const [showInsightSheet, setShowInsightSheet] = useState(false);
 
-  // Stabilize date references to prevent infinite hooks loops
   const now = useMemo(() => new Date(), []);
   const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
 
@@ -46,12 +44,9 @@ const Home = () => {
     !loadingStats
   );
 
-  // Fetch FULL current month expenses (real-time) for the graph
   const { expenses: thisMonthFullExpenses, loading: loadingCurrent } =
     useExpensesForMonth(now, stats, !loadingStats);
 
-  // DERIVED: Recent Expenses (Strategy 1: Consolidate Listeners)
-  // Combine This Month + Last Month -> Sort Desc -> Top 20
   const recentExpenses = useMemo(() => {
     const all = [...thisMonthFullExpenses, ...lastMonthExpenses];
     return all
@@ -65,7 +60,6 @@ const Home = () => {
       .slice(0, 20);
   }, [thisMonthFullExpenses, lastMonthExpenses]);
 
-  // Derived State (Calculations)
   const {
     currentMonthTotal,
     percentageChange,
@@ -80,17 +74,15 @@ const Home = () => {
 
     // @ts-ignore
     const thisMonthStat = stats.find((s) => s.monthKey === currentMonthKey);
-
     const thisMonthSum = thisMonthStat ? Number(thisMonthStat.total) : 0;
 
-    // Calculate "Last Month to Same Date"
     const currentDay = now.getDate();
     const lastMonthPartialSum = lastMonthExpenses.reduce((acc, expense) => {
       const expenseDate =
         expense.date instanceof Timestamp
           ? expense.date.toDate()
           : expense.date;
-      // @ts-ignore - Handle potential date type issues safely
+      // @ts-ignore
       if (expenseDate && expenseDate.getDate() <= currentDay) {
         return acc + Number(expense.amount);
       }
@@ -105,12 +97,8 @@ const Home = () => {
 
     const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
-    // --- Graph Data Prep ---
     const getCumulativeData = (expensesList: Expense[], daysInMonth = 31) => {
-      // 1. Initialize array of 0s for each day
       const dailyTotals = new Array(daysInMonth).fill(0);
-
-      // 2. Sum up expenses per day
       expensesList.forEach((expense) => {
         // @ts-ignore
         const d =
@@ -118,14 +106,13 @@ const Home = () => {
             ? expense.date.toDate()
             : expense.date;
         if (d) {
-          const dayIndex = d.getDate() - 1; // 0-indexed
+          const dayIndex = d.getDate() - 1;
           if (dayIndex >= 0 && dayIndex < daysInMonth) {
             dailyTotals[dayIndex] += Number(expense.amount);
           }
         }
       });
 
-      // 3. Convert to cumulative
       const cumulative = [];
       let runningTotal = 0;
       for (let i = 0; i < daysInMonth; i++) {
@@ -135,14 +122,10 @@ const Home = () => {
       return cumulative;
     };
 
-    // For This Month: Only go up to TODAY (don't show flat line for future)
     const currentDayIndex = now.getDate();
-
-    // For Last Month: Use 31 days but only slice up to current day for comparison
     const fullLastMonthData = getCumulativeData(lastMonthExpenses, 31);
     const lastMonthGraphData = fullLastMonthData.slice(0, currentDayIndex);
 
-    // We calculate full array for this month first to be safe, then slice
     const fullCurrentMonthData = getCumulativeData(thisMonthFullExpenses, 31);
     const thisMonthGraphData = fullCurrentMonthData.slice(0, currentDayIndex);
 
@@ -158,75 +141,93 @@ const Home = () => {
     };
   }, [stats, lastMonthExpenses, thisMonthFullExpenses]);
 
+  // Loading State
   if (loadingCurrent || loadingStats) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+        <Loader2 className="w-6 h-6 animate-spin text-tertiary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in pt-4">
+    <div className="space-y-10 animate-fade-in">
       {/* Hero Section */}
-      <header className="flex flex-col space-y-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <span className="text-sm font-semibold text-gray-400 uppercase tracking-wide">
-              {format(new Date(), "MMMM yyyy")}
-            </span>
-            <h1 className="text-5xl font-bold text-gray-900 dark:text-white mt-2 tracking-tight">
+      <header className="flex flex-col space-y-4 pt-4">
+        <div>
+          <span className="text-sm font-normal text-tertiary uppercase tracking-wider">
+            {format(new Date(), "MMMM yyyy")}
+          </span>
+          <div className="flex items-baseline mt-1 space-x-1">
+            <span className="text-5xl font-semibold text-primary tracking-tight">
               <CountUp value={currentMonthTotal} />
-            </h1>
+            </span>
+            <span className="text-lg text-tertiary font-normal">.00</span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 pt-2">
-          <div
-            className="relative flex items-center"
-            onClick={() => setShowInsightSheet(true)}
-          >
+        {/* Intelligent Insight Pill */}
+        <button
+          onClick={() => setShowInsightSheet(true)}
+          className="group relative w-full sm:w-auto flex items-center justify-between p-3 pr-4 
+            bg-white dark:bg-white/5 border border-subtle
+            rounded-2xl shadow-sm hover:shadow-md transition-all duration-300
+            active:scale-[0.98]"
+        >
+          <div className="flex items-center space-x-3">
             <div
-              className={`cursor-pointer relative z-10 flex items-center justify-center px-2 py-1 rounded-full transition-shadow duration-300 ${
-                trendDirection === "down"
-                  ? "bg-green-50 dark:bg-green-500/20 text-green-700 dark:text-green-400 animate-glow-green"
-                  : "bg-red-50 dark:bg-red-500/20 text-red-700 dark:text-red-400 animate-glow-red"
-              }`}
+              className={`
+               w-10 h-10 rounded-full flex items-center justify-center
+               ${
+                 trendDirection === "down"
+                   ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
+                   : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
+               }
+             `}
             >
               {trendDirection === "down" ? (
-                <TrendingDown className="w-4 h-4 mr-1" />
+                <TrendingDown className="w-5 h-5" />
               ) : (
-                <TrendingUp className="w-4 h-4 mr-1" />
+                <TrendingUp className="w-5 h-5" />
               )}
-              <span className="text-xs font-semibold">
+            </div>
+            <div className="text-left">
+              <p
+                className={`text-sm font-semibold ${
+                  trendDirection === "down"
+                    ? "text-emerald-700 dark:text-emerald-400"
+                    : "text-rose-700 dark:text-rose-400"
+                }`}
+              >
+                {trendDirection === "down" ? "Under Budget" : "Spending High"}
+              </p>
+              <p className="text-xs text-tertiary">
                 {percentageChange}%{" "}
                 {trendDirection === "down" ? "less" : "more"} than last month
-              </span>
+              </p>
             </div>
           </div>
-        </div>
+          <ArrowRight className="w-4 h-4 text-tertiary group-hover:text-primary transition-colors" />
+        </button>
       </header>
 
-      {/* Transaction List */}
-      <section className="pb-32 md:pb-0">
-        <div className="flex justify-between items-end mb-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">
-            Recent
-          </h3>
-        </div>
+      {/* Grouped Transactions */}
+      <section className="space-y-4">
+        <h3 className="text-sm font-normal text-tertiary px-1 uppercase tracking-wider">
+          Recent Transactions
+        </h3>
 
-        <div className="space-y-4">
+        <div className="space-y-2">
           {recentExpenses.length === 0 ? (
-            <div className="text-center py-10 border-2 border-dashed border-gray-100 rounded-2xl">
-              <p className="text-gray-400 text-sm">No expenses yet.</p>
-              <p className="text-gray-300 text-xs mt-1">Tap + to add one.</p>
+            <div className="text-center py-12 border border-dashed border-subtle rounded-3xl">
+              <p className="text-tertiary text-sm">No expenses yet.</p>
             </div>
           ) : (
             <motion.div
               variants={container}
               initial="hidden"
               animate="show"
-              className="space-y-4"
+              className="flex flex-col space-y-[2px]" // Tight spacing for list
               layout
             >
               <AnimatePresence mode="popLayout" initial={false}>
