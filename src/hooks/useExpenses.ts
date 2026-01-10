@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "../firebase";
 import {
   collection,
@@ -369,11 +369,11 @@ export const useExpenses = () => {
     [user]
   );
 
-  return {
+  return useMemo(() => ({
     addExpense,
     deleteExpense,
     updateMonthlyStat,
     expenses: [],
     loading: false,
-  };
+  }), [addExpense, deleteExpense, updateMonthlyStat]);
 };

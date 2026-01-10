@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 import "./LiquidGlass.css";
@@ -49,89 +49,91 @@ interface LiquidNavBarProps {
   items: { icon: any; activeIcon?: any; path: string; label?: string }[];
 }
 
-export const LiquidNavBar: React.FC<LiquidNavBarProps> = ({ items }) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const [animClass, setAnimClass] = useState("");
-  const containerRef = useRef<HTMLDivElement>(null);
+export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
+  ({ items }) => {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [activeIndex, setActiveIndex] = useState(0);
+    const [animClass, setAnimClass] = useState("");
+    const containerRef = useRef<HTMLDivElement>(null);
 
-  const { accentColor, accentColors } = useTheme();
-  // @ts-ignore
-  const activeColor = accentColors[accentColor]?.default || "#6366f1";
+    const { accentColor, accentColors } = useTheme();
+    // @ts-ignore
+    const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
-  // Update active index based on route
-  useEffect(() => {
-    const index = items.findIndex((item) => item.path === location.pathname);
-    if (index !== -1 && index !== activeIndex) {
-      setActiveIndex(index);
-      // Trigger animation
-      setAnimClass("liquid-move-anim");
-      const timer = setTimeout(() => setAnimClass(""), 500); // 500ms match css
-      return () => clearTimeout(timer);
-    }
-  }, [location.pathname, items, activeIndex]);
+    // Update active index based on route
+    useLayoutEffect(() => {
+      const index = items.findIndex((item) => item.path === location.pathname);
+      if (index !== -1 && index !== activeIndex) {
+        setActiveIndex(index);
+        // Trigger animation
+        setAnimClass("liquid-move-anim");
+        const timer = setTimeout(() => setAnimClass(""), 500); // 500ms match css
+        return () => clearTimeout(timer);
+      }
+    }, [location.pathname, items, activeIndex]);
 
-  // Cleanup animation class if double triggered
-  useEffect(() => {
-    if (animClass) {
-      const timer = setTimeout(() => setAnimClass(""), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [animClass]);
+    // Cleanup animation class if double triggered
+    useEffect(() => {
+      if (animClass) {
+        const timer = setTimeout(() => setAnimClass(""), 500);
+        return () => clearTimeout(timer);
+      }
+    }, [animClass]);
 
-  const count = items.length;
+    const count = items.length;
 
-  return (
-    <>
-      <LiquidFilter />
-      <nav className={`liquid-nav ${animClass}`} ref={containerRef}>
-        <div
-          className={`liquid-blob ${animClass}`}
-          style={{
-            width: `calc(((100% - 24px) / ${count}) + 12px)`,
-            left: `calc(6px + (${activeIndex} * ((100% - 24px) / ${count})))`,
-          }}
-        />
+    return (
+      <>
+        <LiquidFilter />
+        <nav className={`liquid-nav ${animClass}`} ref={containerRef}>
+          <div
+            className={`liquid-blob ${animClass}`}
+            style={{
+              width: `calc(((100% - 24px) / ${count}) + 12px)`,
+              left: `calc(6px + (${activeIndex} * ((100% - 24px) / ${count})))`,
+            }}
+          />
 
-        {items.map((item, index) => {
-          const Icon = item.icon;
-          const ActiveIcon = item.activeIcon || Icon;
-          const isActive = index === activeIndex;
+          {items.map((item, index) => {
+            const Icon = item.icon;
+            const ActiveIcon = item.activeIcon || Icon;
+            const isActive = index === activeIndex;
 
-          return (
-            <div
-              key={item.path}
-              className={`liquid-nav__item ${isActive ? "active" : ""}`}
-              onClick={() => navigate(item.path)}
-              style={
-                {
-                  // Overriding local color style to rely on CSS class for transition
-                  // but keeping variable for active color reference if needed
-                  "--c-action": activeColor,
-                } as React.CSSProperties
-              }
-            >
-              {isActive ? (
-                <ActiveIcon
-                  color={activeColor}
-                  height="28px"
-                  width="28px"
-                  cssClasses="liquid-nav__icon"
-                />
-              ) : (
-                <Icon
-                  color="currentColor"
-                  height="28px"
-                  width="28px"
-                  cssClasses="liquid-nav__icon"
-                />
-              )}
-              <span>{item.label}</span>
-            </div>
-          );
-        })}
-      </nav>
-    </>
-  );
-};
+            return (
+              <div
+                key={item.path}
+                className={`liquid-nav__item ${isActive ? "active" : ""}`}
+                onClick={() => navigate(item.path)}
+                style={
+                  {
+                    // Overriding local color style to rely on CSS class for transition
+                    // but keeping variable for active color reference if needed
+                    "--c-action": activeColor,
+                  } as React.CSSProperties
+                }
+              >
+                {isActive ? (
+                  <ActiveIcon
+                    color={activeColor}
+                    height="28px"
+                    width="28px"
+                    cssClasses="liquid-nav__icon"
+                  />
+                ) : (
+                  <Icon
+                    color="currentColor"
+                    height="28px"
+                    width="28px"
+                    cssClasses="liquid-nav__icon"
+                  />
+                )}
+                <span>{item.label}</span>
+              </div>
+            );
+          })}
+        </nav>
+      </>
+    );
+  }
+);

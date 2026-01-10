@@ -4,6 +4,8 @@ import React, {
   useEffect,
   useState,
   ReactNode,
+  useCallback,
+  useMemo,
 } from "react";
 import {
   signInWithPopup,
@@ -35,7 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState<boolean>(true);
 
   // Login Function
-  const googleSignIn = async (): Promise<void> => {
+  const googleSignIn = useCallback(async (): Promise<void> => {
     try {
       const result: UserCredential = await signInWithPopup(
         auth,
@@ -65,12 +67,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error("Error signing in: ", error);
     }
-  };
+  }, []);
 
   // Logout Function
-  const logOut = async (): Promise<void> => {
+  const logOut = useCallback(async (): Promise<void> => {
     return signOut(auth);
-  };
+  }, []);
 
   // CACHE HELPER FUNCTIONS
   const CACHE_EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -184,8 +186,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return () => unsubscribe();
   }, []);
 
+  const value = useMemo(
+    () => ({ user, googleSignIn, logOut }),
+    [user, googleSignIn, logOut]
+  );
+
   return (
-    <AuthContext.Provider value={{ user, googleSignIn, logOut }}>
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );

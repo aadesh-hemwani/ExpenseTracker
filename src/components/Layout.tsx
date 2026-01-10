@@ -72,6 +72,28 @@ const NavItem = ({
   </NavLink>
 );
 
+const NAV_ITEMS = [
+  { path: "/", icon: HomeOutline, activeIcon: Home, label: "Home" },
+  {
+    path: "/history",
+    icon: CalendarOutline,
+    activeIcon: Calendar,
+    label: "History",
+  },
+  {
+    path: "/analytics",
+    icon: BulbOutline,
+    activeIcon: Bulb,
+    label: "Insights",
+  },
+  {
+    path: "/profile",
+    icon: PersonOutline,
+    activeIcon: Person,
+    label: "Profile",
+  },
+];
+
 const Layout = () => {
   const location = useLocation();
   const { accentColor, accentColors } = useTheme();
@@ -122,9 +144,6 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain">
-        {/* Mobile Header Gradient (Optional background flair) */}
-        <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-surface/50 to-transparent pointer-events-none z-0" />
-
         <div className="relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
           <AnimatePresence mode="wait">
             <motion.div
@@ -145,29 +164,7 @@ const Layout = () => {
 
       {/* Mobile Bottom Navigation - Liquid Glass Style */}
       <div className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-4 right-[6rem] z-50">
-        <LiquidNavBar
-          items={[
-            { path: "/", icon: HomeOutline, activeIcon: Home, label: "Home" },
-            {
-              path: "/history",
-              icon: CalendarOutline,
-              activeIcon: Calendar,
-              label: "History",
-            },
-            {
-              path: "/analytics",
-              icon: BulbOutline,
-              activeIcon: Bulb,
-              label: "Insights",
-            },
-            {
-              path: "/profile",
-              icon: PersonOutline,
-              activeIcon: Person,
-              label: "Profile",
-            },
-          ]}
-        />
+        <LiquidNavBar items={NAV_ITEMS} />
       </div>
     </div>
   );

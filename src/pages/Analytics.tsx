@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   BarChart,
   Bar,
@@ -92,13 +92,13 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const handleCategoryClick = (category: string) => {
+  const handleCategoryClick = useCallback((category: string) => {
     setSelectedCategory(category);
-  };
+  }, []);
 
-  const handleCloseModal = () => {
+  const handleCloseModal = useCallback(() => {
     setSelectedCategory(null);
-  };
+  }, []);
 
   const { theme, accentColor, accentColors } = useTheme();
   const [budget, setBudget] = useState(0);
