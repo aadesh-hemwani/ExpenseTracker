@@ -177,7 +177,7 @@ const GlobalAddExpense = memo(() => {
         val === "DONE" ? handleSave() : handleNumpadPress(val);
       }}
       className={`
-        relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
+        relative h-20 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
         ${
           primary
             ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 active:shadow-none"
@@ -213,9 +213,7 @@ const GlobalAddExpense = memo(() => {
         <AnimatePresence>
           {isAddModalOpen && (
             <div
-              className={`fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 ${
-                isInputFocused ? "items-start pt-4" : "items-end"
-              }`}
+              className={`fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 items-end`}
             >
               {/* Backdrop */}
               <motion.div
