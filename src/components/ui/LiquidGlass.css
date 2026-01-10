@@ -311,3 +311,10 @@
 .liquid-close-btn svg {
   color: var(--c-action, #000);
 }
+
+.liquid-sticky-header {
+  background-color: transparent;
+  backdrop-filter: blur(8px) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  transition: all 0.3s ease;
+}

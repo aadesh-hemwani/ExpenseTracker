@@ -11,7 +11,7 @@ import {
   isToday,
   parseISO,
 } from "date-fns";
-import { Timestamp } from "firebase/firestore";
+import "../components/ui/LiquidGlass.css";
 import { LiquidBack } from "../components/ui/LiquidBack";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import { AnimatePresence } from "framer-motion";
@@ -32,6 +32,7 @@ import { generateMonthlyReport } from "../utils/reportGenerator";
 import { useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import IOSSpinner from "../components/ui/IOSSpinner";
+import { Timestamp } from "firebase/firestore";
 
 interface MonthCardProps {
   monthKey: string;
@@ -186,10 +187,10 @@ const CalendarView = ({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="sticky top-0 z-30 pt-[calc(env(safe-area-inset-top)+1rem)] md:pt-4 pb-4 -mx-5 px-5 md:mx-0 md:px-0 liquid-sticky-header flex items-center justify-between mb-6 transition-all">
         <div className="flex items-center gap-3">
           <LiquidBack onClick={onBack} />
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+          <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
             {format(currentMonth, "MMMM yyyy")}
           </h2>
         </div>
@@ -198,15 +199,15 @@ const CalendarView = ({
         <button
           onClick={handleDownloadPDF}
           disabled={isGeneratingPDF || isLoading}
-          className="p-2.5 rounded-2xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-all disabled:opacity-50 active:scale-95"
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-900 dark:text-gray-100 transition-all disabled:opacity-50 active:scale-95 shadow-sm"
           title="Download Statement"
         >
           {isGeneratingPDF ? (
             <IOSSpinner size={20} />
           ) : (
             <CloudDownloadOutline
-              height="22px"
-              width="22px"
+              height="24px"
+              width="24px"
               color="currentColor"
             />
           )}
@@ -328,7 +329,7 @@ const CalendarView = ({
                   key={label}
                   className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
                 >
-                  <h4 className="sticky top-0 z-20 py-2 bg-body/95 backdrop-blur-xl text-xs font-bold text-tertiary/80 uppercase tracking-widest px-1 transition-colors">
+                  <h4 className="sticky top-[calc(env(safe-area-inset-top)+4.9rem)] z-20 pt-0 pb-2 -mx-5 px-5 liquid-sticky-header flex items-center justify-between transition-all">
                     {label}
                   </h4>
                   <div className="space-y-2">

@@ -144,7 +144,13 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain">
-        <div className="relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 pt-[calc(env(safe-area-inset-top)+1.5rem)]">
+        <div
+          className={`relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 ${
+            location.pathname === "/history"
+              ? "pt-0"
+              : "pt-[calc(env(safe-area-inset-top)+1.5rem)]"
+          }`}
+        >
           <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
