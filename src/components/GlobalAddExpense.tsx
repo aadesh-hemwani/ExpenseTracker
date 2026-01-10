@@ -6,8 +6,10 @@ import RefreshCircleOutline from "react-ionicons/lib/RefreshCircleOutline";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
 import CheckmarkOutline from "react-ionicons/lib/CheckmarkOutline";
+import ColorWandOutline from "react-ionicons/lib/ColorWandOutline";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
+import { parseTransactionText } from "../utils/smsParser";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { LiquidClose } from "./ui/LiquidClose";
 import { format } from "date-fns";
@@ -24,11 +26,55 @@ const GlobalAddExpense = memo(() => {
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [hasClipboard, setHasClipboard] = useState(false);
+
+  // Check clipboard permission/content when modal opens
+  useEffect(() => {
+    if (isAddModalOpen) {
+      // Small delay to allow focus transition
+      const checkClipboard = async () => {
+        try {
+          // We only check if we CAN read, or just try reading if permission is granted.
+          // Note: Browser might block this without user gesture.
+          // We use a try-catch to allow silent failure.
+          const permission = await navigator.permissions.query({
+            name: "clipboard-read" as PermissionName,
+          });
+          if (permission.state === "granted" || permission.state === "prompt") {
+            const text = await navigator.clipboard.readText();
+            if (parseTransactionText(text)) {
+              setHasClipboard(true);
+            } else {
+              setHasClipboard(false);
+            }
+          }
+        } catch (err) {
+          // Clipboard access denied or not supported
+          setHasClipboard(false);
+        }
+      };
+      checkClipboard();
+    }
+  }, [isAddModalOpen]);
 
   // Check for deep link to open modal
+  // Check for deep link to open modal
   useEffect(() => {
-    if (searchParams.get("action") === "add") {
+    const action = searchParams.get("action");
+    const text = searchParams.get("text");
+
+    if (action === "add") {
       setIsAddModalOpen(true);
+
+      // Handle shared text (from SMS/Share Target)
+      if (text) {
+        const parsed = parseTransactionText(text);
+        if (parsed) {
+          setAmountStr(parsed.amount);
+          if (parsed.note) setNote(parsed.note);
+          if (parsed.category) setCategory(parsed.category);
+        }
+      }
     }
   }, [searchParams]);
 
@@ -52,6 +98,25 @@ const GlobalAddExpense = memo(() => {
       setIsSubmitting(false);
     }
   }, [isAddModalOpen]);
+
+  const handleSmartPaste = useCallback(async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const parsed = parseTransactionText(text);
+      if (parsed) {
+        setAmountStr(parsed.amount);
+        if (parsed.note) setNote(parsed.note);
+        if (parsed.category) setCategory(parsed.category);
+        // Haptic feedback for success
+        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
+      } else {
+        // Haptic feedback for failure
+        if (navigator.vibrate) navigator.vibrate(50);
+      }
+    } catch (err) {
+      console.error("Failed to read clipboard", err);
+    }
+  }, []);
 
   const handleNumpadPress = useCallback(
     (val: string) => {
@@ -112,15 +177,36 @@ const GlobalAddExpense = memo(() => {
         val === "DONE" ? handleSave() : handleNumpadPress(val);
       }}
       className={`
-        relative h-16 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
+        relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
         ${
           primary
             ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 active:shadow-none"
-            : "bg-white/40 dark:bg-white/5 backdrop-blur-md border border-white/40 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-white/60 dark:hover:bg-white/10 active:scale-95 active:bg-white/80 dark:active:bg-white/20"
+            : "bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
         }
       `}
     >
       {label || val}
+    </motion.button>
+  );
+
+  // Submit Button Component
+  const SubmitButton = ({ rowSpan }: { rowSpan: string }) => (
+    <motion.button
+      whileTap={{ scale: 0.95 }}
+      onClick={handleSave}
+      className={`${rowSpan} bg-accent rounded-3xl flex items-center justify-center text-white shadow-xl shadow-accent/25 active:brightness-110`}
+      disabled={isSubmitting || amountStr === "0"}
+    >
+      {isSubmitting ? (
+        <RefreshCircleOutline
+          height="32px"
+          width="32px"
+          color="#fff"
+          cssClasses="animate-spin"
+        />
+      ) : (
+        <CheckmarkOutline height="32px" width="32px" color="#fff" />
+      )}
     </motion.button>
   );
 
@@ -133,7 +219,7 @@ const GlobalAddExpense = memo(() => {
           {isAddModalOpen && (
             <div
               className={`fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 ${
-                isInputFocused ? "items-start pt-20" : "items-end"
+                isInputFocused ? "items-start pt-4" : "items-end"
               }`}
             >
               {/* Backdrop */}
@@ -164,7 +250,7 @@ const GlobalAddExpense = memo(() => {
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full" />
                 </div>
 
-                <div className="px-6 pb-6 pt-2 flex flex-col h-full space-y-6">
+                <div className="px-6 pb-4 pt-2 flex flex-col h-full space-y-4">
                   {/* Top Bar: Date & Close */}
                   <div className="flex justify-between items-center">
                     <div className="relative">
@@ -192,7 +278,7 @@ const GlobalAddExpense = memo(() => {
                   </div>
 
                   {/* Main Amount Display */}
-                  <div className="flex flex-col items-center justify-center py-4">
+                  <div className="flex flex-col items-center justify-center py-2">
                     <span className="text-gray-400 dark:text-gray-500 text-sm font-medium tracking-widest uppercase mb-1">
                       {category}
                     </span>
@@ -206,7 +292,7 @@ const GlobalAddExpense = memo(() => {
                   </div>
 
                   {/* Categories Horizontal Scroll */}
-                  <div className="w-full overflow-x-auto no-scrollbar py-2 pl-4">
+                  <div className="w-full overflow-x-auto no-scrollbar py-3 pl-4">
                     <div className="flex space-x-4 pr-4">
                       {CATEGORIES.map((cat) => {
                         const isSelected = category === cat;
@@ -271,7 +357,7 @@ const GlobalAddExpense = memo(() => {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="grid grid-cols-4 gap-3 mt-auto"
+                      className="grid grid-cols-4 gap-2 mt-auto"
                     >
                       <NumKey val="1" />
                       <NumKey val="2" />
@@ -290,32 +376,33 @@ const GlobalAddExpense = memo(() => {
                       <NumKey val="4" />
                       <NumKey val="5" />
                       <NumKey val="6" />
-                      {/* Submit Button spanning 2 rows vertically */}
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={handleSave}
-                        className="row-span-3 bg-accent rounded-3xl flex items-center justify-center text-white shadow-xl shadow-accent/25 active:brightness-110"
-                        disabled={isSubmitting || amountStr === "0"}
-                      >
-                        {isSubmitting ? (
-                          <RefreshCircleOutline
-                            height="32px"
-                            width="32px"
-                            color="#fff"
-                            cssClasses="animate-spin"
+
+                      {/* Conditional Magic Wand or Submit */}
+                      {hasClipboard ? (
+                        <motion.button
+                          whileTap={{ scale: 0.92 }}
+                          onClick={() => {
+                            if (navigator.vibrate) navigator.vibrate(10);
+                            handleSmartPaste();
+                          }}
+                          className="relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200 bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
+                        >
+                          <ColorWandOutline
+                            height="24px"
+                            width="24px"
+                            color="currentColor"
                           />
-                        ) : (
-                          <CheckmarkOutline
-                            height="32px"
-                            width="32px"
-                            color="#fff"
-                          />
-                        )}
-                      </motion.button>
+                        </motion.button>
+                      ) : (
+                        <SubmitButton rowSpan="row-span-3" />
+                      )}
 
                       <NumKey val="7" />
                       <NumKey val="8" />
                       <NumKey val="9" />
+
+                      {/* Submit Button (only if Magic Wand is present) */}
+                      {hasClipboard && <SubmitButton rowSpan="row-span-2" />}
 
                       <div className="col-span-1" />
                       {/* Empty spacer or custom key */}

@@ -52,7 +52,16 @@ export default defineConfig({
             url: "/analytics",
             icons: [{ src: "pwa-192x192.png", sizes: "192x192", type: "image/png" }]
           }
-        ]
+        ],
+        share_target: {
+          action: "/?action=add",
+          method: "GET",
+          params: {
+            title: "title",
+            text: "text",
+            url: "url"
+          }
+        }
       },
       workbox: {
         cleanupOutdatedCaches: true,

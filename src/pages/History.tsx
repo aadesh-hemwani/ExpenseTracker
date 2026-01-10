@@ -25,6 +25,11 @@ import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
 import CategoryDonutChart from "../components/CategoryDonutChart";
+import DownloadOutline from "react-ionicons/lib/DownloadOutline";
+import html2canvas from "html2canvas";
+import { generateMonthlyReport } from "../utils/reportGenerator";
+import { useRef } from "react";
+import { useAuth } from "../context/AuthContext";
 
 interface MonthCardProps {
   monthKey: string;
@@ -85,6 +90,7 @@ const CalendarView = memo(
   }: CalendarViewProps) => {
     // Expenses are now passed down!
     const { deleteExpense } = useExpenses();
+    const { user } = useAuth(); // Access user for PDF report
 
     // Optimized: Create a map of daily totals to avoid repeated filtering
     const dailyTotalsMap = useMemo(() => {
@@ -100,30 +106,89 @@ const CalendarView = memo(
       return map;
     }, [expenses]);
 
+    // PDF Export Logic
+    const chartContainerRef = useRef<HTMLDivElement>(null);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+
+    const handleDownloadPDF = async () => {
+      setIsGeneratingPDF(true);
+      try {
+        // Capture Chart if available
+        let chartImage = undefined;
+        if (chartContainerRef.current) {
+          // Wait for chart to render fully if needed
+          const canvas = await html2canvas(chartContainerRef.current, {
+            scale: 2, // Higher resolution
+            backgroundColor: null,
+          });
+          chartImage = canvas.toDataURL("image/png");
+        }
+
+        await generateMonthlyReport(
+          expenses,
+          {
+            userName: user?.displayName || "User",
+            email: user?.email || undefined,
+            generatedDate: new Date(),
+            period: format(currentMonth, "MMMM yyyy"),
+          },
+          chartImage
+        );
+      } catch (error) {
+        console.error("PDF Generation failed", error);
+      } finally {
+        setIsGeneratingPDF(false);
+      }
+    };
+
     const getDailyTotal = (date: Date) => {
       const key = format(date, "yyyy-MM-dd");
       return dailyTotalsMap[key] || 0;
     };
 
     return (
-      <div className="space-y-4 animate-in slide-in-from-right-10 duration-200 pb-20">
-        {/* Header with Back Button */}
-        <div className="flex items-center gap-4 mb-6">
+      <div className="h-full flex flex-col">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <button
             onClick={onBack}
-            className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 text-gray-900 dark:text-white transition-colors"
           >
-            <ArrowBackOutline
-              color="inherit"
-              height="20px"
-              width="20px"
-              cssClasses="text-gray-600 dark:text-gray-400"
-            />
+            <ArrowBackOutline height="24px" width="24px" color="currentColor" />
           </button>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-            {format(currentMonth, "MMMM yyyy")}
-          </h2>
+          <div className="flex items-center space-x-2">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+              {format(currentMonth, "MMMM yyyy")}
+            </h2>
+            {/* PDF Export Button */}
+            <button
+              onClick={handleDownloadPDF}
+              disabled={isGeneratingPDF}
+              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50"
+              title="Download Statement"
+            >
+              {isGeneratingPDF ? (
+                <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <DownloadOutline
+                  height="20px"
+                  width="20px"
+                  color="currentColor"
+                />
+              )}
+            </button>
+          </div>
         </div>
+
+        {/* Charts Section with Ref */}
+        <div
+          ref={chartContainerRef}
+          className="bg-white dark:bg-black rounded-xl p-2 mb-4"
+        >
+          <CategoryDonutChart expenses={expenses} />
+        </div>
+
+        {/* Legend/Info (Optional, if Chart component doesn't show it) */}
 
         {/* Calendar Grid */}
         <div className="grid grid-cols-7 gap-1 md:gap-2">
