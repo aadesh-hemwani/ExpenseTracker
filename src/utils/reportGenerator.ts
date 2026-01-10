@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { Expense } from "../types";
+import { CATEGORY_COLORS } from "./uiUtils";
 
 // User Metadata (Ideally passed from AuthContext, but hardcoded/mocked for now if not available)
 interface ReportMetadata {
@@ -127,10 +128,11 @@ export const generateMonthlyReport = async (
   doc.text(`${topCategory[0]} (${topCatPercent}%)`, boxX + 110, metricsY + 8);
 
 
-  // --- 3. Chart Visual (If present) ---
+  // --- 3. Chart Visual & Legend ---
   let tableStartY = 105; // Default if no chart
+  
   if (chartImage) {
-      // Calculate Aspect Ratio
+      // 3.1 Draw Chart Image
       const imgProps = doc.getImageProperties(chartImage);
       const pdfImgWidth = 100; // Fixed width
       const pdfImgHeight = (imgProps.height * pdfImgWidth) / imgProps.width; // Auto height
@@ -139,8 +141,51 @@ export const generateMonthlyReport = async (
       const yPos = 110; 
       
       doc.addImage(chartImage, "PNG", xPos, yPos, pdfImgWidth, pdfImgHeight);
+
+      // 3.2 Draw Native Legend
+      // Calculate category metrics again for the legend to ensure sync with report data
+      const legendData = Object.entries(catTotals)
+        .sort((a, b) => b[1] - a[1]) // Sort by amount desc
+        .map(([category, amount]) => ({
+            category,
+            amount,
+            percent: totalOutflow > 0 ? (amount / totalOutflow) * 100 : 0,
+            color: CATEGORY_COLORS[category] || "#6b7280"
+        }));
+
+      // Legend Position: Right side of the chart or below?
+      // Given the chart is centered, let's put it below the chart for clean layout
+      let legendY = yPos + pdfImgHeight + 10;
+      const dotSize = 3;
       
-      tableStartY = yPos + pdfImgHeight + 15; // Push table down dynamic amount
+      // Draw Legend Items
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      
+      const itemHeight = 6;
+      // Center the legend block roughly
+      const legendXStart = 80; 
+
+      legendData.forEach((item) => {
+          // Dot
+          doc.setFillColor(item.color);
+          // Text baseline is bottom-left by default? No, doc.text(x,y) in jsPDF places baseline at y.
+          // Circle is drawn at center (x,y).
+          // If font size is 9, approx height is ~3-4mm. 
+          // Center of text height (approx 1/3 of fontSize in mm above baseline) is roughly y - 1.
+          
+          doc.circle(legendXStart, legendY - 1.5, dotSize / 2, "F");
+          
+          // Text: Category (Purple) - 25%
+          doc.setTextColor(50, 50, 50);
+          const text = `${item.category} (${Math.round(item.percent)}%)`;
+          doc.text(text, legendXStart + 5, legendY);
+          
+          legendY += itemHeight;
+      });
+
+      // Update table start position
+      tableStartY = legendY + 10;
   }
 
   // --- 4. The Ledger (Table) ---

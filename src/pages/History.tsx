@@ -11,7 +11,7 @@ import {
   isToday,
   parseISO,
 } from "date-fns";
-import ArrowBackOutline from "react-ionicons/lib/ArrowBackOutline";
+import { LiquidBack } from "../components/ui/LiquidBack";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import { AnimatePresence } from "framer-motion";
 import Card from "../components/Card";
@@ -25,7 +25,7 @@ import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
 import CategoryDonutChart from "../components/CategoryDonutChart";
-import DownloadOutline from "react-ionicons/lib/DownloadOutline";
+import CloudDownloadOutline from "react-ionicons/lib/CloudDownloadOutline";
 import html2canvas from "html2canvas";
 import { generateMonthlyReport } from "../utils/reportGenerator";
 import { useRef } from "react";
@@ -119,7 +119,40 @@ const CalendarView = memo(
           // Wait for chart to render fully if needed
           const canvas = await html2canvas(chartContainerRef.current, {
             scale: 2, // Higher resolution
-            backgroundColor: null,
+            backgroundColor: "#ffffff", // Force white background
+            onclone: (clonedDoc) => {
+              // 1. Hide the Recharts Legend in the capture (we draw a native one)
+              const legend = clonedDoc.querySelector(
+                ".recharts-legend-wrapper"
+              );
+              if (legend) {
+                (legend as HTMLElement).style.display = "none";
+              }
+
+              // 2. Force White Background & Black Text on the Card
+              // Use a more specific selector or the captured element itself if possible.
+              // Since we are capturing chartContainerRef, we can target the wrapper div or its children.
+
+              const chartCard =
+                clonedDoc.querySelector(".bg-surface") ||
+                clonedDoc.querySelector(".bg-black") ||
+                clonedDoc.querySelector("[class*='bg-black']");
+              if (chartCard) {
+                const card = chartCard as HTMLElement;
+                card.style.backgroundColor = "#ffffff";
+                card.style.color = "#000000";
+                card.style.border = "none"; // Remove border if any
+                card.style.boxShadow = "none";
+              }
+
+              // 3. Center the Title
+              const title = clonedDoc.querySelector("h3");
+              if (title) {
+                title.style.color = "#000000";
+                title.style.textAlign = "center";
+                title.style.width = "100%";
+              }
+            },
           });
           chartImage = canvas.toDataURL("image/png");
         }
@@ -150,43 +183,34 @@ const CalendarView = memo(
       <div className="h-full flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <button
-            onClick={onBack}
-            className="p-2 -ml-2 rounded-full hover:bg-gray-100 dark:hover:bg-white/5 text-gray-900 dark:text-white transition-colors"
-          >
-            <ArrowBackOutline height="24px" width="24px" color="currentColor" />
-          </button>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-3">
+            <LiquidBack onClick={onBack} />
             <h2 className="text-xl font-bold text-gray-900 dark:text-white">
               {format(currentMonth, "MMMM yyyy")}
             </h2>
-            {/* PDF Export Button */}
-            <button
-              onClick={handleDownloadPDF}
-              disabled={isGeneratingPDF}
-              className="p-2 rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-colors disabled:opacity-50"
-              title="Download Statement"
-            >
-              {isGeneratingPDF ? (
-                <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-              ) : (
-                <DownloadOutline
-                  height="20px"
-                  width="20px"
-                  color="currentColor"
-                />
-              )}
-            </button>
           </div>
+
+          {/* PDF Export Button */}
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isGeneratingPDF}
+            className="p-2.5 rounded-2xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-all disabled:opacity-50 active:scale-95"
+            title="Download Statement"
+          >
+            {isGeneratingPDF ? (
+              <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <CloudDownloadOutline
+                height="22px"
+                width="22px"
+                color="currentColor"
+              />
+            )}
+          </button>
         </div>
 
-        {/* Charts Section with Ref */}
-        <div
-          ref={chartContainerRef}
-          className="bg-white dark:bg-black rounded-xl p-2 mb-4"
-        >
-          <CategoryDonutChart expenses={expenses} />
-        </div>
+        {/* Charts Section with Ref: REMOVED as per user request to avoid duplicate. 
+            Ref moved to the bottom chart. */}
 
         {/* Legend/Info (Optional, if Chart component doesn't show it) */}
 
@@ -256,7 +280,7 @@ const CalendarView = memo(
         {/* Monthly Expenses List */}
         <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
           {/* Chart Section */}
-          <div className="mb-8">
+          <div ref={chartContainerRef} className="mb-8">
             <CategoryDonutChart expenses={expenses} />
           </div>
 

@@ -4,7 +4,7 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import Card from "../components/Card";
-import ArrowBackOutline from "react-ionicons/lib/ArrowBackOutline";
+import { LiquidBack } from "../components/ui/LiquidBack";
 import Person from "react-ionicons/lib/Person";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import BarChartOutline from "react-ionicons/lib/BarChartOutline";
@@ -76,17 +76,7 @@ const Admin = () => {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <button
-              onClick={handleBack}
-              className="p-2 bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-full hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
-            >
-              <ArrowBackOutline
-                color="inherit"
-                height="20px"
-                width="20px"
-                cssClasses="text-gray-600 dark:text-gray-400"
-              />
-            </button>
+            <LiquidBack onClick={handleBack} />
             <div>
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Viewing: {selectedUser?.displayName || "User"}
