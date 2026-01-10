@@ -39,29 +39,29 @@ const NavItem = ({
             ${
               isActive
                 ? "bg-primary text-white shadow-soft"
-                : "text-secondary hover:bg-black/5 dark:hover:bg-white/10"
+                : "text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/10"
             }
           `}
         >
           {isActive ? (
             <ActiveIcon
               color={activeColor}
-              height="20px"
-              width="20px"
+              height="24px" // Slightly larger active
+              width="24px"
               cssClasses="text-current"
             />
           ) : (
             <Icon
               color="inherit"
-              height="20px"
-              width="20px"
-              cssClasses="text-current"
+              height="24px" // Larger inactive (was 20px)
+              width="24px"
+              cssClasses="text-current stroke-[2px]" // Try to enforce stroke width if possible, or just size
             />
           )}
         </motion.div>
         <span
-          className={`text-[10px] font-medium mt-1 transition-colors ${
-            isActive ? "" : "text-tertiary"
+          className={`text-[10px] font-bold mt-1 transition-colors ${
+            isActive ? "" : "text-gray-400 dark:text-gray-500"
           }`}
           style={isActive ? { color: activeColor } : {}}
         >

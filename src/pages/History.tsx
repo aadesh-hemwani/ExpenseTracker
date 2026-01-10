@@ -11,6 +11,7 @@ import {
   isToday,
   parseISO,
 } from "date-fns";
+import { Timestamp } from "firebase/firestore";
 import { LiquidBack } from "../components/ui/LiquidBack";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import { AnimatePresence } from "framer-motion";
@@ -291,22 +292,60 @@ const CalendarView = ({
           All Expenses in {format(currentMonth, "MMMM")}
         </h3>
         <div className="space-y-4">
-          {expenses.length > 0 ? (
-            expenses.map((expense) => (
-              <SwipeableExpenseItem
-                key={expense.id}
-                t={expense}
-                getCategoryIcon={getCategoryIcon}
-                onDelete={deleteExpense}
-                readOnly={readOnly}
-                // Use default wrapper style for list consistency
-              />
-            ))
-          ) : (
-            <p className="text-center text-gray-400 text-sm py-4">
-              No expenses recorded for this month.
-            </p>
-          )}
+          <div className="flex flex-col space-y-6">
+            {Object.entries(
+              expenses.reduce((acc, expense) => {
+                const date =
+                  expense.date instanceof Timestamp
+                    ? expense.date.toDate()
+                    : new Date(expense.date);
+
+                let dateLabel = format(date, "MMM dd");
+                if (
+                  format(date, "yyyy-MM-dd") ===
+                  format(new Date(), "yyyy-MM-dd")
+                ) {
+                  dateLabel = "Today";
+                } else if (
+                  format(date, "yyyy-MM-dd") ===
+                  format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
+                ) {
+                  dateLabel = "Yesterday";
+                }
+
+                if (!acc[dateLabel]) acc[dateLabel] = [];
+                acc[dateLabel].push(expense);
+                return acc;
+                // Sort keys so newest dates come first in the object iteration?
+                // Object.entries doesn't guarantee order, but usually follows insertion for strings.
+                // Ideally we map over sorted unique dates.
+              }, {} as Record<string, Expense[]>)
+            )
+              // We need to ensure sorting. The Home implementation relied on reduce insertion order of pre-sorted list.
+              // Since 'expenses' is already sorted by date desc in hook, we should be fine.
+              .map(([label, groupExpenses], index) => (
+                <div
+                  key={label}
+                  className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
+                >
+                  <h4 className="sticky top-0 z-20 py-2 bg-body/95 backdrop-blur-xl text-xs font-bold text-tertiary/80 uppercase tracking-widest px-1 transition-colors">
+                    {label}
+                  </h4>
+                  <div className="space-y-2">
+                    {groupExpenses.map((expense) => (
+                      <SwipeableExpenseItem
+                        key={expense.id}
+                        t={expense}
+                        getCategoryIcon={getCategoryIcon}
+                        onDelete={deleteExpense}
+                        readOnly={readOnly}
+                        hideDate={true}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
     </div>

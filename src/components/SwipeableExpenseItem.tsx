@@ -13,6 +13,7 @@ interface SwipeableExpenseItemProps {
   className?: string;
   cardClassName?: string;
   readOnly?: boolean;
+  hideDate?: boolean;
 }
 
 const SwipeableExpenseItem = memo(
@@ -23,6 +24,7 @@ const SwipeableExpenseItem = memo(
     className = "",
     cardClassName = "",
     readOnly = false,
+    hideDate = false,
   }: SwipeableExpenseItemProps) => {
     const controls = useAnimation();
     const x = useMotionValue(0);
@@ -55,7 +57,7 @@ const SwipeableExpenseItem = memo(
 
     return (
       <motion.div
-        className={`relative mb-4 ${className}`}
+        className={`relative ${className}`}
         layout
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -98,10 +100,14 @@ const SwipeableExpenseItem = memo(
                 {t.note || t.description || t.category}
               </p>
               <div className="flex items-center text-xs text-gray-400 mt-0.5 space-x-1 truncate">
-                <span>
-                  {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
-                </span>
-                <span>•</span>
+                {!hideDate && (
+                  <>
+                    <span>
+                      {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
+                    </span>
+                    <span>•</span>
+                  </>
+                )}
                 <span>{t.category}</span>
               </div>
             </div>

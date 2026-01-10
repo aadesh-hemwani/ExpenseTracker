@@ -135,26 +135,34 @@ const Profile = () => {
           {user?.isAdmin && (
             <button
               onClick={() => navigate("/admin")}
-              className="mt-4 px-4 py-2 bg-accent text-white rounded-full text-sm font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+              className="mt-4 px-4 py-1.5 bg-accent/20 text-gray-900 dark:text-white rounded-full text-xs font-bold border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-all"
             >
               Admin Dashboard
             </button>
           )}
 
-          <div className="mt-4 flex items-center gap-2 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 text-xs font-semibold rounded-full border border-green-100 dark:border-green-900/30">
-            <ShieldCheckmarkOutline height="16px" width="16px" />
+          <div className="mt-3 flex items-center gap-1.5 px-2.5 py-0.5 bg-green-500/20 dark:bg-green-900/40 text-green-800 dark:text-green-600 text-[10px] font-medium rounded-full border border-gray-100 dark:border-white/5">
+            <ShieldCheckmarkOutline
+              height="12px"
+              width="12px"
+              color="currentColor"
+            />
             <span>Google Verified</span>
           </div>
         </Card>
       </motion.div>
 
       {/* Settings Section */}
-      <motion.div variants={item} className="space-y-6">
+      <motion.div variants={item} className="space-y-6 pb-32">
         {/* Appearance Settings */}
         <Card>
           <div className="flex items-center gap-3 mb-6">
-            <div className="p-2 bg-indigo-50 dark:bg-gray-900 rounded-lg text-accent">
-              <ColorPaletteOutline height="20px" width="20px" />
+            <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
+              <ColorPaletteOutline
+                height="20px"
+                width="20px"
+                color="currentColor"
+              />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               Appearance
@@ -162,19 +170,27 @@ const Profile = () => {
           </div>
 
           {/* Dark Mode Toggle */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2 rounded-full ${
+                className={`p-2 rounded-full transition-colors ${
                   theme === "dark"
-                    ? "bg-gray-900 text-yellow-400"
+                    ? "bg-gray-800 text-yellow-400"
                     : "bg-yellow-100 text-yellow-600"
                 }`}
               >
                 {theme === "dark" ? (
-                  <MoonOutline height="20px" width="20px" />
+                  <MoonOutline
+                    height="20px"
+                    width="20px"
+                    color="currentColor"
+                  />
                 ) : (
-                  <SunnyOutline height="20px" width="20px" />
+                  <SunnyOutline
+                    height="20px"
+                    width="20px"
+                    color="currentColor"
+                  />
                 )}
               </div>
               <div>
@@ -202,22 +218,22 @@ const Profile = () => {
 
           {/* Accent Color Picker */}
           <div>
-            <label className="block text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+            <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
               Accent Color{" "}
-              <span className="text-gray-900 dark:text-white ml-1">
+              <span className="text-gray-900 dark:text-white ml-1 font-normal opacity-60">
                 • {accentColors[accentColor]?.name || "Custom"}
               </span>
             </label>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-4">
               {Object.entries(accentColors).map(([key, colors]) => (
                 <button
                   key={key}
                   // @ts-ignore
                   onClick={() => setAccentColor(key)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-transform hover:scale-110 ${
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
                     accentColor === key
-                      ? "ring-2 ring-offset-2 ring-gray-400 dark:ring-gray-500 scale-110"
-                      : ""
+                      ? "ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110 shadow-md"
+                      : "ring-1 ring-black/5 dark:ring-white/10"
                   }`}
                   // @ts-ignore
                   style={{ backgroundColor: colors.default }}

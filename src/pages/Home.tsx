@@ -154,9 +154,9 @@ const Home = () => {
   return (
     <div className="space-y-10 animate-fade-in">
       {/* Hero Section */}
-      <header className="flex flex-col space-y-4 pt-4">
+      <header className="flex flex-col space-y-2 pt-4">
         <div>
-          <span className="text-sm font-semibold text-tertiary uppercase tracking-wider">
+          <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
             {format(new Date(), "MMMM yyyy")}
           </span>
           <div className="flex items-baseline mt-1 space-x-1">
@@ -173,7 +173,7 @@ const Home = () => {
         <button
           onClick={() => setShowInsightSheet(true)}
           className={`group relative w-full sm:w-auto flex items-center justify-between p-3 pr-4 
-            bg-white dark:bg-white/5 border
+            bg-white dark:bg-white/5 bg-gradient-to-br from-white to-gray-50 dark:from-white/10 dark:to-white/5 border
             rounded-2xl shadow-sm hover:shadow-md transition-all duration-300
             active:scale-[0.98]
             ${
@@ -250,20 +250,57 @@ const Home = () => {
               variants={container}
               initial="hidden"
               animate="show"
-              className="flex flex-col space-y-[2px]" // Tight spacing for list
+              className="flex flex-col space-y-2"
               layout
             >
-              <AnimatePresence mode="popLayout" initial={false}>
-                {recentExpenses.map((t) => (
-                  <motion.div key={t.id} variants={item} layout>
-                    <SwipeableExpenseItem
-                      t={t}
-                      getCategoryIcon={getCategoryIcon}
-                      onDelete={deleteExpense}
-                    />
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+              {Object.entries(
+                recentExpenses.reduce((acc, expense) => {
+                  const date =
+                    expense.date instanceof Timestamp
+                      ? expense.date.toDate()
+                      : new Date(expense.date);
+
+                  let dateLabel = format(date, "MMM dd");
+                  if (
+                    format(date, "yyyy-MM-dd") ===
+                    format(new Date(), "yyyy-MM-dd")
+                  ) {
+                    dateLabel = "Today";
+                  } else if (
+                    format(date, "yyyy-MM-dd") ===
+                    format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
+                  ) {
+                    dateLabel = "Yesterday";
+                  }
+
+                  if (!acc[dateLabel]) acc[dateLabel] = [];
+                  acc[dateLabel].push(expense);
+                  return acc;
+                }, {} as Record<string, Expense[]>)
+              ).map(([label, expenses], index) => (
+                <div
+                  key={label}
+                  className={`space-y-2 ${index > 0 ? "pt-3" : ""}`}
+                >
+                  <h4 className="sticky top-0 z-20 py-2 bg-body/95 backdrop-blur-xl text-xs font-bold text-tertiary/80 uppercase tracking-widest px-1 transition-colors">
+                    {label}
+                  </h4>
+                  <div className="space-y-2">
+                    <AnimatePresence mode="popLayout" initial={false}>
+                      {expenses.map((t) => (
+                        <motion.div key={t.id} variants={item} layout>
+                          <SwipeableExpenseItem
+                            t={t}
+                            getCategoryIcon={getCategoryIcon}
+                            onDelete={deleteExpense}
+                            hideDate={true}
+                          />
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              ))}
             </motion.div>
           )}
         </div>
