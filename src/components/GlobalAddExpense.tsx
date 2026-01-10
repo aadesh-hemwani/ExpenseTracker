@@ -2,7 +2,6 @@ import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import RefreshCircleOutline from "react-ionicons/lib/RefreshCircleOutline";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
 import CheckmarkOutline from "react-ionicons/lib/CheckmarkOutline";
@@ -13,6 +12,7 @@ import { parseTransactionText } from "../utils/smsParser";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { LiquidClose } from "./ui/LiquidClose";
 import { format } from "date-fns";
+import IOSSpinner from "./ui/IOSSpinner";
 
 const GlobalAddExpense = memo(() => {
   const { addExpense } = useExpenses();
@@ -198,12 +198,7 @@ const GlobalAddExpense = memo(() => {
       disabled={isSubmitting || amountStr === "0"}
     >
       {isSubmitting ? (
-        <RefreshCircleOutline
-          height="32px"
-          width="32px"
-          color="#fff"
-          cssClasses="animate-spin"
-        />
+        <IOSSpinner size={32} color="#fff" />
       ) : (
         <CheckmarkOutline height="32px" width="32px" color="#fff" />
       )}

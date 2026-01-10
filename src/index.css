@@ -177,3 +177,17 @@ body {
 .animate-glow-red {
   animation: glow-pulse-red 3s ease-in-out infinite;
 }
+
+/* iOS Spinner Animation */
+@keyframes spinner-fade {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.animate-spinner-fade {
+  animation: spinner-fade 1.2s linear infinite;
+}

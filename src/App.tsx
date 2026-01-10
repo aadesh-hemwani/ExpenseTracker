@@ -12,7 +12,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 import SplashScreen from "./components/SplashScreen";
 import { useState } from "react";
-import RefreshCircleOutline from "react-ionicons/lib/RefreshCircleOutline";
+import IOSSpinner from "./components/ui/IOSSpinner";
 
 // Lazy Load Pages
 const Home = lazy(() => import("./pages/Home"));
@@ -24,12 +24,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 
 const LoadingFallback = () => (
   <div className="flex h-screen w-full items-center justify-center bg-body">
-    <RefreshCircleOutline
-      color="var(--text-tertiary)"
-      height="32px"
-      width="32px"
-      cssClasses="animate-spin"
-    />
+    <IOSSpinner size={32} color="var(--text-tertiary)" />
   </div>
 );
 

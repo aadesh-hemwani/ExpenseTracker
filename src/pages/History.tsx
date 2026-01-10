@@ -30,6 +30,7 @@ import html2canvas from "html2canvas";
 import { generateMonthlyReport } from "../utils/reportGenerator";
 import { useRef } from "react";
 import { useAuth } from "../context/AuthContext";
+import IOSSpinner from "../components/ui/IOSSpinner";
 
 interface MonthCardProps {
   monthKey: string;
@@ -200,7 +201,7 @@ const CalendarView = ({
           title="Download Statement"
         >
           {isGeneratingPDF ? (
-            <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+            <IOSSpinner size={20} />
           ) : (
             <CloudDownloadOutline
               height="22px"

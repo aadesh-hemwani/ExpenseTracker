@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
 import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
-import RefreshCircleOutline from "react-ionicons/lib/RefreshCircleOutline";
 import ArrowForwardOutline from "react-ionicons/lib/ArrowForwardOutline";
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
@@ -17,6 +16,7 @@ import { getCategoryIcon } from "../utils/uiUtils";
 
 import CountUp from "../components/CountUp";
 import InsightSheet from "../components/InsightSheet";
+import IOSSpinner from "../components/ui/IOSSpinner";
 
 const container = {
   hidden: { opacity: 0 },
@@ -146,12 +146,7 @@ const Home = () => {
   if (loadingCurrent || loadingStats) {
     return (
       <div className="flex justify-center items-center h-[50vh]">
-        <RefreshCircleOutline
-          color="inherit"
-          height="32px"
-          width="32px"
-          cssClasses="animate-spin text-tertiary"
-        />
+        <IOSSpinner size={32} />
       </div>
     );
   }
