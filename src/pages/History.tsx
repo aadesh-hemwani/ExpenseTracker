@@ -76,172 +76,174 @@ interface CalendarViewProps {
   expenses: Expense[];
   calendarDays: Date[];
   readOnly?: boolean;
+  isLoading?: boolean;
 }
 
-const CalendarView = memo(
-  ({
-    currentMonth,
-    onBack,
-    onSelectDate,
-    selectedDate,
-    expenses = [],
-    calendarDays,
-    readOnly = false,
-  }: CalendarViewProps) => {
-    // Expenses are now passed down!
-    const { deleteExpense } = useExpenses();
-    const { user } = useAuth(); // Access user for PDF report
+const CalendarView = ({
+  currentMonth,
+  onBack,
+  onSelectDate,
+  selectedDate,
+  expenses = [],
+  calendarDays,
+  readOnly = false,
+  isLoading = false,
+}: CalendarViewProps) => {
+  // Expenses are now passed down!
+  const { deleteExpense } = useExpenses();
+  const { user } = useAuth(); // Access user for PDF report
 
-    // Optimized: Create a map of daily totals to avoid repeated filtering
-    const dailyTotalsMap = useMemo(() => {
-      const map: Record<string, number> = {};
-      expenses.forEach((e) => {
-        // @ts-ignore
-        if (!e.date) return;
-        // @ts-ignore
-        const dateVal = e.date.toDate ? e.date.toDate() : e.date;
-        const dayKey = format(dateVal, "yyyy-MM-dd");
-        map[dayKey] = (map[dayKey] || 0) + Number(e.amount);
-      });
-      return map;
-    }, [expenses]);
+  // Optimized: Create a map of daily totals to avoid repeated filtering
+  const dailyTotalsMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    expenses.forEach((e) => {
+      // @ts-ignore
+      if (!e.date) return;
+      // @ts-ignore
+      const dateVal = e.date.toDate ? e.date.toDate() : e.date;
+      const dayKey = format(dateVal, "yyyy-MM-dd");
+      map[dayKey] = (map[dayKey] || 0) + Number(e.amount);
+    });
+    return map;
+  }, [expenses]);
 
-    // PDF Export Logic
-    const chartContainerRef = useRef<HTMLDivElement>(null);
-    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  // PDF Export Logic
+  const chartContainerRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
-    const handleDownloadPDF = async () => {
-      setIsGeneratingPDF(true);
-      try {
-        // Capture Chart if available
-        let chartImage = undefined;
-        if (chartContainerRef.current) {
-          // Wait for chart to render fully if needed
-          const canvas = await html2canvas(chartContainerRef.current, {
-            scale: 2, // Higher resolution
-            backgroundColor: "#ffffff", // Force white background
-            onclone: (clonedDoc) => {
-              // 1. Hide the Recharts Legend in the capture (we draw a native one)
-              const legend = clonedDoc.querySelector(
-                ".recharts-legend-wrapper"
-              );
-              if (legend) {
-                (legend as HTMLElement).style.display = "none";
-              }
+  const handleDownloadPDF = async () => {
+    setIsGeneratingPDF(true);
+    try {
+      // Capture Chart if available
+      let chartImage = undefined;
+      if (chartContainerRef.current) {
+        // Wait for chart to re-render without animation
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
-              // 2. Force White Background & Black Text on the Card
-              // Use a more specific selector or the captured element itself if possible.
-              // Since we are capturing chartContainerRef, we can target the wrapper div or its children.
+        // Wait for chart to render fully if needed
+        const canvas = await html2canvas(chartContainerRef.current, {
+          scale: 2, // Higher resolution
+          backgroundColor: "#ffffff", // Force white background
+          onclone: (clonedDoc) => {
+            // 1. Hide the Recharts Legend in the capture (we draw a native one)
+            const legend = clonedDoc.querySelector(".recharts-legend-wrapper");
+            if (legend) {
+              (legend as HTMLElement).style.display = "none";
+            }
 
-              const chartCard =
-                clonedDoc.querySelector(".bg-surface") ||
-                clonedDoc.querySelector(".bg-black") ||
-                clonedDoc.querySelector("[class*='bg-black']");
-              if (chartCard) {
-                const card = chartCard as HTMLElement;
-                card.style.backgroundColor = "#ffffff";
-                card.style.color = "#000000";
-                card.style.border = "none"; // Remove border if any
-                card.style.boxShadow = "none";
-              }
+            // 2. Force White Background & Black Text on the Card
+            // Use a more specific selector or the captured element itself if possible.
+            // Since we are capturing chartContainerRef, we can target the wrapper div or its children.
 
-              // 3. Center the Title
-              const title = clonedDoc.querySelector("h3");
-              if (title) {
-                title.style.color = "#000000";
-                title.style.textAlign = "center";
-                title.style.width = "100%";
-              }
-            },
-          });
-          chartImage = canvas.toDataURL("image/png");
-        }
+            const chartCard =
+              clonedDoc.querySelector(".bg-surface") ||
+              clonedDoc.querySelector(".bg-black") ||
+              clonedDoc.querySelector("[class*='bg-black']");
+            if (chartCard) {
+              const card = chartCard as HTMLElement;
+              card.style.backgroundColor = "#ffffff";
+              card.style.color = "#000000";
+              card.style.border = "none"; // Remove border if any
+              card.style.boxShadow = "none";
+            }
 
-        await generateMonthlyReport(
-          expenses,
-          {
-            userName: user?.displayName || "User",
-            email: user?.email || undefined,
-            generatedDate: new Date(),
-            period: format(currentMonth, "MMMM yyyy"),
+            // 3. Center the Title
+            const title = clonedDoc.querySelector("h3");
+            if (title) {
+              title.style.color = "#000000";
+              title.style.textAlign = "center";
+              title.style.width = "100%";
+            }
           },
-          chartImage
-        );
-      } catch (error) {
-        console.error("PDF Generation failed", error);
-      } finally {
-        setIsGeneratingPDF(false);
+        });
+        chartImage = canvas.toDataURL("image/png");
       }
-    };
 
-    const getDailyTotal = (date: Date) => {
-      const key = format(date, "yyyy-MM-dd");
-      return dailyTotalsMap[key] || 0;
-    };
+      await generateMonthlyReport(
+        expenses,
+        {
+          userName: user?.displayName || "User",
+          email: user?.email || undefined,
+          generatedDate: new Date(),
+          period: format(currentMonth, "MMMM yyyy"),
+        },
+        chartImage
+      );
+    } catch (error) {
+      console.error("PDF Generation failed", error);
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
 
-    return (
-      <div className="h-full flex flex-col">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <LiquidBack onClick={onBack} />
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-              {format(currentMonth, "MMMM yyyy")}
-            </h2>
-          </div>
+  const getDailyTotal = (date: Date) => {
+    const key = format(date, "yyyy-MM-dd");
+    return dailyTotalsMap[key] || 0;
+  };
 
-          {/* PDF Export Button */}
-          <button
-            onClick={handleDownloadPDF}
-            disabled={isGeneratingPDF}
-            className="p-2.5 rounded-2xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-all disabled:opacity-50 active:scale-95"
-            title="Download Statement"
-          >
-            {isGeneratingPDF ? (
-              <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <CloudDownloadOutline
-                height="22px"
-                width="22px"
-                color="currentColor"
-              />
-            )}
-          </button>
+  return (
+    <div className="h-full flex flex-col">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <LiquidBack onClick={onBack} />
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+            {format(currentMonth, "MMMM yyyy")}
+          </h2>
         </div>
 
-        {/* Charts Section with Ref: REMOVED as per user request to avoid duplicate. 
+        {/* PDF Export Button */}
+        <button
+          onClick={handleDownloadPDF}
+          disabled={isGeneratingPDF || isLoading}
+          className="p-2.5 rounded-2xl bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 text-gray-700 dark:text-gray-300 transition-all disabled:opacity-50 active:scale-95"
+          title="Download Statement"
+        >
+          {isGeneratingPDF ? (
+            <div className="w-5 h-5 border-2 border-gray-500 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <CloudDownloadOutline
+              height="22px"
+              width="22px"
+              color="currentColor"
+            />
+          )}
+        </button>
+      </div>
+
+      {/* Charts Section with Ref: REMOVED as per user request to avoid duplicate. 
             Ref moved to the bottom chart. */}
 
-        {/* Legend/Info (Optional, if Chart component doesn't show it) */}
+      {/* Legend/Info (Optional, if Chart component doesn't show it) */}
 
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-1 md:gap-2">
-          {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-            <div
-              key={i}
-              className="text-center text-xs font-semibold text-gray-300 py-2"
-            >
-              {day}
-            </div>
-          ))}
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1 md:gap-2">
+        {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+          <div
+            key={i}
+            className="text-center text-xs font-semibold text-gray-300 py-2"
+          >
+            {day}
+          </div>
+        ))}
 
-          {calendarDays.map((day, idx) => {
-            const dailyTotal = getDailyTotal(day);
-            const roundedTotal = Math.ceil(dailyTotal);
-            const hasSpend = roundedTotal > 0;
-            const isSelected = selectedDate && isSameDay(day, selectedDate);
-            const isCurrentMonth = isSameMonth(day, currentMonth);
+        {calendarDays.map((day, idx) => {
+          const dailyTotal = getDailyTotal(day);
+          const roundedTotal = Math.ceil(dailyTotal);
+          const hasSpend = roundedTotal > 0;
+          const isSelected = selectedDate && isSameDay(day, selectedDate);
+          const isCurrentMonth = isSameMonth(day, currentMonth);
 
-            let amountColor = "text-green-500";
-            if (roundedTotal > 2000) amountColor = "text-red-500";
-            else if (roundedTotal >= 1000) amountColor = "text-yellow-500";
+          let amountColor = "text-green-500";
+          if (roundedTotal > 2000) amountColor = "text-red-500";
+          else if (roundedTotal >= 1000) amountColor = "text-yellow-500";
 
-            return (
-              <button
-                key={idx}
-                onClick={() => onSelectDate(day)}
-                disabled={!isCurrentMonth}
-                className={`
+          return (
+            <button
+              key={idx}
+              onClick={() => onSelectDate(day)}
+              disabled={!isCurrentMonth}
+              className={`
                     relative h-14 md:h-24 rounded-xl flex flex-col items-center justify-start pt-2 transition-all border
                     ${!isCurrentMonth ? "opacity-30" : "opacity-100"}
                     ${
@@ -255,61 +257,60 @@ const CalendarView = memo(
                         : ""
                     }
                   `}
-              >
-                <span className="text-sm">{format(day, "d")}</span>
+            >
+              <span className="text-sm">{format(day, "d")}</span>
 
-                {hasSpend && (
-                  <>
-                    {/* Desktop Amount */}
-                    <span
-                      className={`block md:text-[10px] text-[8px] mt-1 font-medium ${
-                        isSelected
-                          ? "text-gray-300 dark:text-gray-600"
-                          : amountColor
-                      }`}
-                    >
-                      ₹{roundedTotal}
-                    </span>
-                  </>
-                )}
-              </button>
-            );
-          })}
+              {hasSpend && (
+                <>
+                  {/* Desktop Amount */}
+                  <span
+                    className={`block md:text-[10px] text-[8px] mt-1 font-medium ${
+                      isSelected
+                        ? "text-gray-300 dark:text-gray-600"
+                        : amountColor
+                    }`}
+                  >
+                    ₹{roundedTotal}
+                  </span>
+                </>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Monthly Expenses List */}
+      <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+        {/* Chart Section */}
+        <div ref={chartContainerRef} className="mb-8">
+          <CategoryDonutChart expenses={expenses} animate={!isGeneratingPDF} />
         </div>
 
-        {/* Monthly Expenses List */}
-        <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-          {/* Chart Section */}
-          <div ref={chartContainerRef} className="mb-8">
-            <CategoryDonutChart expenses={expenses} />
-          </div>
-
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            All Expenses in {format(currentMonth, "MMMM")}
-          </h3>
-          <div className="space-y-4">
-            {expenses.length > 0 ? (
-              expenses.map((expense) => (
-                <SwipeableExpenseItem
-                  key={expense.id}
-                  t={expense}
-                  getCategoryIcon={getCategoryIcon}
-                  onDelete={deleteExpense}
-                  readOnly={readOnly}
-                  // Use default wrapper style for list consistency
-                />
-              ))
-            ) : (
-              <p className="text-center text-gray-400 text-sm py-4">
-                No expenses recorded for this month.
-              </p>
-            )}
-          </div>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          All Expenses in {format(currentMonth, "MMMM")}
+        </h3>
+        <div className="space-y-4">
+          {expenses.length > 0 ? (
+            expenses.map((expense) => (
+              <SwipeableExpenseItem
+                key={expense.id}
+                t={expense}
+                getCategoryIcon={getCategoryIcon}
+                onDelete={deleteExpense}
+                readOnly={readOnly}
+                // Use default wrapper style for list consistency
+              />
+            ))
+          ) : (
+            <p className="text-center text-gray-400 text-sm py-4">
+              No expenses recorded for this month.
+            </p>
+          )}
         </div>
       </div>
-    );
-  }
-);
+    </div>
+  );
+};
 
 interface HistoryProps {
   userId?: string;
@@ -330,13 +331,14 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
   };
 
   // 3. Get Specific Month Expenses (On Demand) - Now uses Cache with Stats Validation
-  const { expenses: monthExpenses } = useExpensesForMonth(
-    view === "calendar" ? currentMonth : null,
-    stats,
-    !statsLoading,
-    true,
-    userId
-  );
+  const { expenses: monthExpenses, loading: monthLoading } =
+    useExpensesForMonth(
+      view === "calendar" ? currentMonth : null,
+      stats,
+      !statsLoading,
+      true,
+      userId
+    );
 
   // 1. Group Data for the "Month Grid" View
   const monthGroups = useMemo(() => {
@@ -420,6 +422,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
           expenses={monthExpenses}
           calendarDays={calendarDays}
           readOnly={readOnly}
+          isLoading={monthLoading}
         />
       )}
 

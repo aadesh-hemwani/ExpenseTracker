@@ -41,6 +41,7 @@ const Home = () => {
   const now = useMemo(() => new Date(), []);
   const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
 
+  // Fetch Data: simplified hooks (cache-first)
   const { expenses: lastMonthExpenses } = useExpensesForMonth(
     lastMonthDate,
     stats,
@@ -50,19 +51,21 @@ const Home = () => {
   const { expenses: thisMonthFullExpenses, loading: loadingCurrent } =
     useExpensesForMonth(now, stats, !loadingStats);
 
+  // Simplified: Merge and Sort
   const recentExpenses = useMemo(() => {
-    const all = [...thisMonthFullExpenses, ...lastMonthExpenses];
-    return all
+    return [...thisMonthFullExpenses, ...lastMonthExpenses]
       .sort((a, b) => {
-        // @ts-ignore
-        const dateA = a.date instanceof Timestamp ? a.date.toDate() : a.date;
-        // @ts-ignore
-        const dateB = b.date instanceof Timestamp ? b.date.toDate() : b.date;
-        return Number(dateB) - Number(dateA);
+        // Use timestamp comparison directly if possible, else helper
+        const tA =
+          a.date instanceof Timestamp ? a.date.toMillis() : Number(a.date);
+        const tB =
+          b.date instanceof Timestamp ? b.date.toMillis() : Number(b.date);
+        return tB - tA;
       })
       .slice(0, 20);
   }, [thisMonthFullExpenses, lastMonthExpenses]);
 
+  // Metrics Calculation
   const {
     currentMonthTotal,
     percentageChange,
@@ -72,65 +75,60 @@ const Home = () => {
     thisMonthGraphData,
     lastMonthGraphData,
   } = useMemo(() => {
-    const now = new Date();
-    const currentMonthKey = format(now, "yyyy-MM");
-
-    // @ts-ignore
-    const thisMonthStat = stats.find((s) => s.monthKey === currentMonthKey);
-    const thisMonthSum = thisMonthStat ? Number(thisMonthStat.total) : 0;
-
     const currentDay = now.getDate();
-    const lastMonthPartialSum = lastMonthExpenses.reduce((acc, expense) => {
-      const expenseDate =
-        expense.date instanceof Timestamp
-          ? expense.date.toDate()
-          : expense.date;
+    const daysInMonth = 31; // Simplification for graph visuals
+
+    // 1. Current Month Total
+    const thisMonthSum = thisMonthFullExpenses.reduce(
+      (sum, e) => sum + Number(e.amount),
+      0
+    );
+
+    // 2. Last Month Partial (Compare up to same day)
+    const lastMonthPartialSum = lastMonthExpenses.reduce((acc, e) => {
+      const d = e.date instanceof Timestamp ? e.date.toDate() : e.date;
       // @ts-ignore
-      if (expenseDate && expenseDate.getDate() <= currentDay) {
-        return acc + Number(expense.amount);
-      }
+      if (d && d.getDate() <= currentDay) return acc + Number(e.amount);
       return acc;
     }, 0);
 
+    // 3. Trends
     let pctChange = 0;
     if (lastMonthPartialSum > 0) {
       pctChange =
         ((thisMonthSum - lastMonthPartialSum) / lastMonthPartialSum) * 100;
     }
-
     const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
-    const getCumulativeData = (expensesList: Expense[], daysInMonth = 31) => {
-      const dailyTotals = new Array(daysInMonth).fill(0);
-      expensesList.forEach((expense) => {
+    // 4. Graph Data Helpers
+    const getDailyCumulative = (list: Expense[]) => {
+      const totals = new Array(daysInMonth).fill(0);
+      list.forEach((e) => {
+        const d = e.date instanceof Timestamp ? e.date.toDate() : e.date;
         // @ts-ignore
-        const d =
-          expense.date instanceof Timestamp
-            ? expense.date.toDate()
-            : expense.date;
         if (d) {
-          const dayIndex = d.getDate() - 1;
-          if (dayIndex >= 0 && dayIndex < daysInMonth) {
-            dailyTotals[dayIndex] += Number(expense.amount);
-          }
+          const day = d.getDate() - 1;
+          if (day >= 0 && day < daysInMonth) totals[day] += Number(e.amount);
         }
       });
 
-      const cumulative = [];
-      let runningTotal = 0;
-      for (let i = 0; i < daysInMonth; i++) {
-        runningTotal += dailyTotals[i];
-        cumulative.push(runningTotal);
-      }
+      const cumulative: number[] = [];
+      let sum = 0;
+      totals.forEach((val) => {
+        sum += val;
+        cumulative.push(sum);
+      });
       return cumulative;
     };
 
-    const currentDayIndex = now.getDate();
-    const fullLastMonthData = getCumulativeData(lastMonthExpenses, 31);
-    const lastMonthGraphData = fullLastMonthData.slice(0, currentDayIndex);
-
-    const fullCurrentMonthData = getCumulativeData(thisMonthFullExpenses, 31);
-    const thisMonthGraphData = fullCurrentMonthData.slice(0, currentDayIndex);
+    const thisGraph = getDailyCumulative(thisMonthFullExpenses).slice(
+      0,
+      currentDay
+    );
+    const lastGraph = getDailyCumulative(lastMonthExpenses).slice(
+      0,
+      currentDay
+    );
 
     return {
       currentMonthTotal: thisMonthSum,
@@ -139,10 +137,10 @@ const Home = () => {
       lastMonthPartialSum,
       lastMonthDate,
       diff: Math.abs(thisMonthSum - lastMonthPartialSum),
-      thisMonthGraphData: [0, ...thisMonthGraphData],
-      lastMonthGraphData: [0, ...lastMonthGraphData],
+      thisMonthGraphData: [0, ...thisGraph],
+      lastMonthGraphData: [0, ...lastGraph],
     };
-  }, [stats, lastMonthExpenses, thisMonthFullExpenses]);
+  }, [lastMonthExpenses, thisMonthFullExpenses]);
 
   // Loading State
   if (loadingCurrent || loadingStats) {

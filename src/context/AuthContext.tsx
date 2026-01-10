@@ -145,39 +145,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        // 1. Check Cache First
-        const cached = getCachedProfile(currentUser.uid);
+        // Initial set with Firebase data to unblock UI
+        // @ts-ignore
+        setUser(currentUser);
+        setLoading(false);
 
-        if (cached) {
-          // Use cached data immediately
-          console.log("Using cached user profile");
-          // @ts-ignore - Merging firebase user with cached data
-          setUser({ ...currentUser, ...cached });
-          setLoading(false);
+        // Background: Check Cache -> If Valid, Merge -> Else Fetch -> Cache
+        const checkProfile = async () => {
+          try {
+            // 1. Check Local Cache
+            const cached = getCachedProfile(currentUser.uid);
+            if (cached) {
+              console.log("Applied cached profile");
+              // @ts-ignore
+              setUser((prev) => ({ ...prev, ...cached }));
+            }
 
-          // BREAKING CHANGE: Always verify against Firestore for critical flags (isAdmin)
-          // This ensures if I manually set isAdmin in DB, it picks it up on refresh
-          cacheProfile(currentUser).then((freshData) => {
+            // 2. Fetch Fresh Data (Always, to catch isAdmin/Budget changes)
+            const freshData = await cacheProfile(currentUser);
             if (freshData) {
               // @ts-ignore
               setUser((prev) => ({ ...prev, ...freshData }));
             }
-          });
-        } else {
-          // 2. Fetch/Update Cache in Background (passively) if we didn't have it
-          // Or initially just set the basic currentUser and let cache build
-          console.log("Fetching and caching user profile...");
-          // @ts-ignore
-          setUser(currentUser);
-          setLoading(false);
-
-          // Build cache
-          const newCache = await cacheProfile(currentUser);
-          if (newCache) {
-            // @ts-ignore
-            setUser((prev) => ({ ...prev, ...newCache }));
+          } catch (e) {
+            console.error("Profile sync failed", e);
           }
-        }
+        };
+
+        checkProfile();
       } else {
         setUser(null);
         setLoading(false);

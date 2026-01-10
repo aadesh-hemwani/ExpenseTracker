@@ -11,6 +11,7 @@ import { Expense } from "../types";
 
 interface CategoryDonutChartProps {
   expenses: Expense[];
+  animate?: boolean;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -34,7 +35,10 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 import { CATEGORY_COLORS } from "../utils/uiUtils";
 
-const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
+const CategoryDonutChart = ({
+  expenses,
+  animate = true,
+}: CategoryDonutChartProps) => {
   const data = useMemo(() => {
     if (!expenses || expenses.length === 0) return [];
 
@@ -71,6 +75,7 @@ const CategoryDonutChart = ({ expenses }: CategoryDonutChartProps) => {
               dataKey="value"
               stroke="none"
               cornerRadius={6}
+              isAnimationActive={animate}
             >
               {data.map((entry, index) => (
                 <Cell

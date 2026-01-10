@@ -235,6 +235,47 @@ export const generateMonthlyReport = async (
   });
 
   // Save the PDF
+  // Save the PDF
   const safeDate = format(metadata.generatedDate, "yyyy-MM-dd");
-  doc.save(`Statement_${safeDate}.pdf`);
+  const filename = `Statement_${safeDate}.pdf`;
+
+  const blob = doc.output("blob");
+  const file = new File([blob], filename, { type: "application/pdf" });
+
+  // Mobile Native Share (if available) - Prevents "Open in Chrome"
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: "Monthly Expense Report",
+        text: `Here is the expense report for ${metadata.period}`,
+      });
+      return;
+    } catch (error) {
+      if ((error as any).name !== "AbortError") {
+        console.error("Share failed", error);
+      }
+      // If user canceled or failed, we might want to fallback or just stop. 
+      // Usually if they cancel share, they don't want a download.
+      // But if it failed technically, maybe fallback.
+      // Let's fallback only on technical failure, not user cancel.
+      if ((error as any).name === "AbortError") return;
+    }
+  }
+
+  // Fallback: Force Download
+  try {
+     // Use standard save which works well on Desktop
+    doc.save(filename);
+  } catch (e) {
+    // Ultimate Fallback: Direct Link Click
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 };

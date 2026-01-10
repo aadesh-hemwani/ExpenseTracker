@@ -76,7 +76,7 @@ interface AnalyticsProps {
 const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const { user } = useAuth();
   // 1. Get High-Level Stats for Trend Chart
-  const { stats } = useMonthlyStats(userId);
+  const { stats, loading: statsLoading } = useMonthlyStats(userId);
 
   // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
   // We default to the current month for the "Insight" view
@@ -85,7 +85,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const { expenses: monthlyExpenses, loading } = useExpensesForMonth(
     targetDate,
     stats,
-    true,
+    !statsLoading, // Wait for stats to load!
     false,
     userId
   );
@@ -120,9 +120,14 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   // AUTO-SYNC STATS Logic
   const { updateMonthlyStat } = useExpenses();
   useEffect(() => {
-    if (loading || userId) return; // Wait for expenses to load, and skip if Admin View (userId present)
+    // Wait for BOTH detailed expenses AND stats to be fully loaded
+    if (loading || statsLoading || userId) return;
 
     const currentMonthKey = format(targetDate, "yyyy-MM");
+
+    // Find cached stat
+    const cachedStat = stats.find((s: any) => s.monthKey === currentMonthKey);
+
     // Calculate true totals from actual expenses
     const trueTotal = monthlyExpenses.reduce(
       (sum, item) => sum + Number(item.amount),
@@ -130,8 +135,21 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     );
     const trueCount = monthlyExpenses.length;
 
-    // Find cached stat
-    const cachedStat = stats.find((s: any) => s.monthKey === currentMonthKey);
+    // SAFETY GUARD 1: If we found NO expenses, but stats claim we have them,
+    // it's likely a fetch failure. Do NOT overwrite with 0.
+    if (trueCount === 0 && cachedStat && cachedStat.count > 0) {
+      console.warn(
+        "Auto-Sync Aborted: Mismatch detected (Fetch likely failed). Stats:",
+        cachedStat
+      );
+      return;
+    }
+
+    // SAFETY GUARD 2: If both are empty/zero, no need to write a "0" doc.
+    // This prevents creating ghost docs if stats failed to load.
+    if (trueCount === 0 && (!cachedStat || cachedStat.count === 0)) {
+      return;
+    }
 
     // Compare and Update if needed
     if (
@@ -143,7 +161,14 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       console.log(`Cached: ${cachedStat?.total}, True: ${trueTotal}`);
       updateMonthlyStat(currentMonthKey, trueTotal, trueCount, userId);
     }
-  }, [monthlyExpenses, stats, loading, targetDate, updateMonthlyStat]);
+  }, [
+    monthlyExpenses,
+    stats,
+    loading,
+    statsLoading,
+    targetDate,
+    updateMonthlyStat,
+  ]);
 
   // A. Prepare Data for "Monthly Trend" (Last 6 Months) from 'stats'
   const monthlyData = useMemo(() => {
