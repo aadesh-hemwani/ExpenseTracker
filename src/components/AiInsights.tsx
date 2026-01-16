@@ -5,13 +5,14 @@ import { Insight } from "../utils/insights";
 
 interface AiInsightsProps {
   insights?: Insight[];
+  isLoading?: boolean;
 }
 
-const AiInsights = ({ insights = [] }: AiInsightsProps) => {
+const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  if (!insights.length) return null;
+  if (!insights.length && !isLoading) return null;
 
   const handleScroll = () => {
     if (containerRef.current) {
@@ -32,7 +33,7 @@ const AiInsights = ({ insights = [] }: AiInsightsProps) => {
             color="var(--color-accent)"
             height="20px"
             width="20px"
-            cssClasses="text-accent"
+            cssClasses={`text-accent ${isLoading ? "animate-spin-slow" : ""}`}
           />
         </div>
         <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">

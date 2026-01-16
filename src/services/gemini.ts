@@ -1,0 +1,210 @@
+/// <reference types="vite/client" />
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Expense } from "../types";
+import { format } from "date-fns";
+
+// Initialize the API
+// Note: It's safer to use a backend proxy for production to hide the key,
+// but for this personal project/demo, client-side is acceptable if key is restricted.
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+console.log("🔑 Gemini API Key Status:", API_KEY ? "Present" : "Missing", API_KEY ? `(Length: ${API_KEY.length})` : "");
+const genAI = new GoogleGenerativeAI(API_KEY);
+
+export interface GeminiInsight {
+  title: string;
+  message: string;
+  actionableTip: string;
+  sentiment: "positive" | "neutral" | "warning";
+}
+
+export const generateFinancialInsight = async (
+  expenses: Expense[],
+  monthlyLimit: number,
+  totalSpent: number
+): Promise<GeminiInsight | null> => {
+  if (!API_KEY) {
+    console.warn("Gemini API Key is missing.");
+    return null;
+  }
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    // Prepare data summary for the prompt
+    // We don't want to send too much PII, just categories and amounts
+    const recentTxns = expenses
+      .slice(0, 15)
+      .map(
+        (e) => {
+          let dateObj: Date;
+          if (e.date && typeof (e.date as any).toDate === 'function') {
+            dateObj = (e.date as any).toDate();
+          } else {
+            dateObj = new Date(e.date as any);
+          }
+          return `- ${e.category}: ${e.amount} (${format(dateObj, "MMM dd")})`;
+        }
+      )
+      .join("\n");
+
+    const categoryTotals: Record<string, number> = {};
+    expenses.forEach((e) => {
+      const val = Number(e.amount);
+      categoryTotals[e.category] = (categoryTotals[e.category] || 0) + val;
+    });
+
+    const topCategories = Object.entries(categoryTotals)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 3)
+      .map(([cat, val]) => `${cat}: ${val.toFixed(0)}`)
+      .join(", ");
+
+    const prompt = `
+      Act as a friendly but savvy financial advisor.
+      Here is my current financial snapshot for this month:
+      - Total Spent: ${totalSpent}
+      - Monthly Budget: ${monthlyLimit > 0 ? monthlyLimit : "Not set"}
+      - Top Categories: ${topCategories}
+      - Recent Transactions:
+      ${recentTxns}
+
+      Based on this, provide a concise financial insight in JSON format with the following fields:
+      - title: Short headline (max 5 words)
+      - message: 1-2 sentence analysis of my spending pattern.
+      - actionableTip: One specific thing I can do to save or improve.
+      - sentiment: "positive", "neutral", or "warning" (based on if I'm overspending or doing well).
+
+      Do not use Markdown code blocks. Just valid JSON string.
+    `;
+    
+    console.log("🤖 Sending Prompt to Gemini:", prompt);
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    console.log("🤖 Gemini Response:", text);
+
+    // Clean up if the model wraps it in backticks
+    const jsonStr = text
+      .replace(/```json/g, "")
+      .replace(/```/g, "")
+      .trim();
+
+    return JSON.parse(jsonStr) as GeminiInsight;
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return null;
+  }
+};
+
+export interface AnalyticsInsight {
+  type: "warning" | "trendingUp" | "trendingDown" | "success" | "info" | "category";
+  title: string;
+  message: string;
+  priority: number;
+}
+
+export const generateAnalyticsInsights = async (
+  expenses: Expense[],
+  monthlyLimit: number,
+  totalSpent: number
+): Promise<AnalyticsInsight[]> => {
+  if (!API_KEY) return [];
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    const recentTxns = expenses.slice(0, 30).map(e => {
+      const dateStr = format(e.date instanceof Date ? e.date : (e.date as any).toDate(), "MMM dd");
+      const noteStr = e.note ? ` (Note: "${e.note}")` : "";
+      return `${e.category}: ${e.amount} on ${dateStr}${noteStr}`;
+    }).join("\n      - ");
+
+    const prompt = `
+      Analyze these finances for this month:
+      - Total Spent: ${totalSpent}
+      - Budget: ${monthlyLimit}
+      - Recent Transactions:
+      - ${recentTxns}
+
+      Generate 3 distinct, brief insights as a JSON array.
+      Use the transaction notes (if available) to make the insights feel personal (e.g., mention specific purchases like "that dinner" or "the trip").
+      
+      Types: "warning" (overspending), "trendingUp" (spending fast), "trendingDown" (saving), "success" (under budget), "info" (prediction), "category" (top spend).
+      
+      Format:
+      [
+        {
+          "type": "warning",
+          "title": "Short Title",
+          "message": "One sentence explanation.",
+          "priority": 1 (1=Urgent, 5=Low)
+        }
+      ]
+      Output ONLY valid JSON.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(jsonStr) as AnalyticsInsight[];
+  } catch (error) {
+    console.error("Gemini Analytics Error:", error);
+    return [];
+  }
+};
+
+export interface BudgetRecommendation {
+  recommendedBudget: number;
+  reasoning: string;
+  savingsPotential: number; // Percentage like 5, 10, etc.
+}
+
+export const calculateRecommendedBudget = async (
+  recentExpenses: Expense[]
+): Promise<BudgetRecommendation | null> => {
+  if (!API_KEY) return null;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    // Sanitize and simplify data for token efficiency
+    const txns = recentExpenses.slice(0, 50).map(e => 
+      `${e.amount} (${e.category})`
+    ).join(", ");
+
+    const total = recentExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    // Rough monthly average estimation (assuming data passed is roughly representative)
+    // Ideally we'd pass exact date ranges, but for this feature we'll infer.
+
+    const prompt = `
+      I have spending data totaling ${total} from these transactions: ${txns}.
+      
+      Act as a financial advisor. Calculate a realistic monthly budget cap that is:
+      1. Close to their actual average spend (so it's not impossible).
+      2. But slightly lower (5-10%) to encourage savings.
+      3. Round to the nearest 500.
+      
+      IMPORTANT FORMATTING RULES:
+      - Use **INR (₹)** for all currency values. Do NOT use '$'.
+      - The "reasoning" field must be a short, punchy summary using bullet points (unicode •) for key insights. 
+      - Keep it under 200 characters if possible, but focused on WHY this budget was chosen.
+
+      Return JSON:
+      {
+        "recommendedBudget": 25000,
+        "reasoning": "• Your avg spend is ₹27k\n• Heavy spending on Food (₹8k)\n• Cut incidental shopping to save ₹2k",
+        "savingsPotential": 8
+      }
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const jsonStr = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    return JSON.parse(jsonStr) as BudgetRecommendation;
+  } catch (error) {
+    console.error("Gemini Budget Error:", error);
+    return null;
+  }
+};

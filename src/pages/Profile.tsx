@@ -261,9 +261,106 @@ const Profile = () => {
           </div>
 
           <form onSubmit={handleSaveBudget}>
-            <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider mb-2">
-              Spending Cap (₹)
-            </label>
+            <div className="flex justify-between items-center mb-2">
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">
+                Spending Cap (₹)
+              </label>
+              <button
+                type="button"
+                onClick={async () => {
+                  setLoading(true);
+                  try {
+                    // 1. Fetch recent expenses (last 90 days roughly)
+                    // Ideally we use a proper hook, but for this "one-off" action, direct query is fine
+                    const {
+                      collection,
+                      query,
+                      where,
+                      orderBy,
+                      limit,
+                      getDocs,
+                    } = await import("firebase/firestore");
+                    const q = query(
+                      collection(db, "users", user?.uid || "", "expenses"),
+                      // orderBy("date", "desc"), // Sorting done client-side for safety/speed
+                      limit(100)
+                    );
+
+                    console.log(
+                      `🪄 Auto-Budget: Fetching for user ${user?.uid}...`
+                    );
+                    const snapshot = await getDocs(q);
+                    console.log(
+                      `🪄 Auto-Budget: Found ${snapshot.size} transactions.`
+                    );
+
+                    let expenses = snapshot.docs.map((d) => d.data());
+
+                    // Client-side sort by date (descending) since we can't do it in query
+                    expenses.sort((a, b) => {
+                      const dateA = a.date?.toDate
+                        ? a.date.toDate()
+                        : new Date(a.date);
+                      const dateB = b.date?.toDate
+                        ? b.date.toDate()
+                        : new Date(b.date);
+                      return dateB.getTime() - dateA.getTime();
+                    });
+
+                    // Debug total before sending
+                    const localTotal = expenses.reduce(
+                      (sum, e) => sum + Number(e.amount || 0),
+                      0
+                    );
+                    console.log(
+                      `🪄 Auto-Budget: Calculated Total: ${localTotal}`
+                    );
+
+                    if (expenses.length === 0) {
+                      setMessage("No transaction history found to analyze.");
+                      setLoading(false);
+                      return;
+                    }
+
+                    // 2. Get Recommendation
+                    const { calculateRecommendedBudget } = await import(
+                      "../services/gemini"
+                    );
+                    // @ts-ignore
+                    const rec = await calculateRecommendedBudget(expenses);
+
+                    if (rec) {
+                      setBudget(rec.recommendedBudget.toString());
+                      setMessage(
+                        `✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`
+                      );
+                    } else {
+                      setMessage("Could not generate a suggestion.");
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    setMessage("Failed to analyze data.");
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                className="text-xs flex items-center gap-1 text-indigo-500 font-bold hover:text-indigo-600 transition-colors"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-3 w-3"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Auto-Calculate
+              </button>
+            </div>
             <div className="flex gap-2">
               <input
                 type="number"
@@ -285,7 +382,7 @@ const Profile = () => {
               <p
                 className={`text-xs mt-3 ${
                   message.includes("Failed") ? "text-red-500" : "text-green-600"
-                } font-medium`}
+                } font-medium whitespace-pre-wrap leading-relaxed`}
               >
                 {message}
               </p>

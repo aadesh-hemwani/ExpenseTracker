@@ -20,6 +20,12 @@ import { format, subMonths } from "date-fns";
 import ArrowForwardOutline from "react-ionicons/lib/ArrowForwardOutline";
 import PieChartOutline from "react-ionicons/lib/PieChartOutline";
 import BarChartOutline from "react-ionicons/lib/BarChartOutline";
+import WarningOutline from "react-ionicons/lib/WarningOutline";
+import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
+import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
+import CheckmarkCircleOutline from "react-ionicons/lib/CheckmarkCircleOutline";
+import BulbOutline from "react-ionicons/lib/BulbOutline";
+import { useAiInsights } from "../hooks/useAiInsights";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import CountUp from "../components/CountUp";
@@ -200,14 +206,71 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   }, [monthlyExpenses]);
 
   // Generate AI Insights
+  const {
+    analyticsInsights,
+    loading: aiLoading,
+    fetchAnalyticsInsights,
+  } = useAiInsights();
+
+  useEffect(() => {
+    if (!loading && !statsLoading && monthlyExpenses.length > 0) {
+      const total = monthlyExpenses.reduce(
+        (sum, item) => sum + Number(item.amount),
+        0
+      );
+      fetchAnalyticsInsights(monthlyExpenses, budget, total);
+    }
+  }, [loading, statsLoading, monthlyExpenses, budget, fetchAnalyticsInsights]);
+
   const insights = useMemo(() => {
+    if (analyticsInsights.length > 0) {
+      return analyticsInsights.map((ai, index) => {
+        let icon = BulbOutline;
+        let color = "text-indigo-600 dark:text-indigo-400";
+        let bg = "bg-indigo-50 dark:bg-indigo-500/10";
+
+        if (ai.type === "warning") {
+          icon = WarningOutline;
+          color = "text-red-600 dark:text-red-400";
+          bg = "bg-red-50 dark:bg-red-500/10";
+        } else if (ai.type === "trendingUp") {
+          icon = TrendingUpOutline;
+          color = "text-amber-600 dark:text-amber-400";
+          bg = "bg-amber-50 dark:bg-amber-500/10";
+        } else if (ai.type === "trendingDown") {
+          icon = TrendingDownOutline;
+          color = "text-emerald-600 dark:text-emerald-400";
+          bg = "bg-emerald-50 dark:bg-emerald-500/10";
+        } else if (ai.type === "success") {
+          icon = CheckmarkCircleOutline;
+          color = "text-green-600 dark:text-green-400";
+          bg = "bg-green-50 dark:bg-green-500/10";
+        } else if (ai.type === "category") {
+          icon = PieChartOutline;
+          color = "text-purple-600 dark:text-purple-400";
+          bg = "bg-purple-50 dark:bg-purple-500/10";
+        }
+
+        return {
+          id: `ai-${index}`,
+          priority: ai.priority || index,
+          icon,
+          title: ai.title,
+          text: ai.message,
+          color,
+          bg,
+        };
+      });
+    }
+
+    // Fallback to local insights if AI is loading or fails
     return generateInsights(
       stats as any,
       monthlyExpenses,
       currentMonthTotal,
       budget
     );
-  }, [stats, monthlyExpenses, currentMonthTotal, budget]);
+  }, [stats, monthlyExpenses, currentMonthTotal, budget, analyticsInsights]);
 
   const topCategory = categoryData[0];
 
@@ -344,7 +407,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
 
       <motion.div variants={item}>
         {/* @ts-ignore */}
-        <AiInsights insights={insights} />
+        <AiInsights insights={insights} isLoading={aiLoading} />
       </motion.div>
 
       <motion.div variants={item} className="pt-2">

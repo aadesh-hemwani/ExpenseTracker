@@ -29,12 +29,6 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
   data,
   lastMonthDate,
 }) => {
-  // const maxVal = Math.max(data.currentMonthTotal, data.lastMonthPartialSum);
-  // const scale = maxVal > 0 ? 100 / maxVal : 0;
-
-  // const currentHeight = Math.min(data.currentMonthTotal * scale, 100);
-  // const lastHeight = Math.min(data.lastMonthPartialSum * scale, 100);
-
   const renderAmount = (amount: number) => {
     const formatted = formatCurrency(amount);
     const [integer, decimal] = formatted.split(".");
@@ -77,7 +71,7 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                   stiffness: 300,
                   mass: 0.8,
                 }}
-                className="relative z-10 bg-white dark:bg-black w-[95%] md:w-[32rem] max-w-full rounded-[50px] md:rounded-3xl px-6 py-6 md:p-8 shadow-2xl max-h-[90vh] flex flex-col mx-auto mb-3 md:mb-0 border border-gray-200 dark:border-white/10 pointer-events-auto"
+                className="relative z-10 bg-white dark:bg-black w-[95%] md:w-[32rem] max-w-full rounded-[50px] md:rounded-3xl px-6 py-6 md:p-8 shadow-2xl max-h-[90vh] flex flex-col mx-auto mb-3 md:mb-0 border border-gray-200 dark:border-white/10 pointer-events-auto overflow-y-auto"
               >
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold dark:text-white">
@@ -87,7 +81,7 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                 </div>
 
                 <div className="space-y-8 pb-6">
-                  {/* Text Insight */}
+                  {/* Standard Stats */}
                   <div className="space-y-4">
                     <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base">
                       By this time last month (
