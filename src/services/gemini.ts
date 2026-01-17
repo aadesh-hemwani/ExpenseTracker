@@ -169,32 +169,58 @@ export const calculateRecommendedBudget = async (
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    // Sanitize and simplify data for token efficiency
-    const txns = recentExpenses.slice(0, 50).map(e => 
-      `${e.amount} (${e.category})`
-    ).join(", ");
+    // 1. Pre-process Data: Group by Month -> Category
+    const monthlyData: Record<string, { total: number; categories: Record<string, number> }> = {};
 
-    const total = recentExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
-    // Rough monthly average estimation (assuming data passed is roughly representative)
-    // Ideally we'd pass exact date ranges, but for this feature we'll infer.
+    recentExpenses.forEach((e) => {
+        let dateObj: Date;
+        if (e.date && typeof (e.date as any).toDate === 'function') {
+        dateObj = (e.date as any).toDate();
+        } else {
+        dateObj = new Date(e.date as any);
+        }
+        
+        const monthKey = format(dateObj, "yyyy-MM");
+        const amount = Number(e.amount);
+
+        if (!monthlyData[monthKey]) {
+            monthlyData[monthKey] = { total: 0, categories: {} };
+        }
+
+        monthlyData[monthKey].total += amount;
+        monthlyData[monthKey].categories[e.category] = (monthlyData[monthKey].categories[e.category] || 0) + amount;
+    });
+
+    const breakdownJson = JSON.stringify(monthlyData, null, 2);
+    const totalSpent = recentExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+    const monthsCount = Object.keys(monthlyData).length || 1;
+    const stats = `Total Spent: ${totalSpent} over ${monthsCount} months.`;
 
     const prompt = `
-      I have spending data totaling ${total} from these transactions: ${txns}.
+      Act as a financial expert. Analyze the customer's spending history which is grouped by Month and then Category.
       
-      Act as a financial advisor. Calculate a realistic monthly budget cap that is:
-      1. Close to their actual average spend (so it's not impossible).
-      2. But slightly lower (5-10%) to encourage savings.
-      3. Round to the nearest 500.
+      DATA SUMMARY:
+      ${stats}
       
+      DETAILED BREAKDOWN:
+      ${breakdownJson}
+
+      TASK:
+      Calculate a realistic monthly budget cap.
+      1. Identify the "stable" baseline spending (ignoring one-off partial months if obvious).
+      2. Look for category trends (e.g., "Food increased in Dec").
+      3. Suggest a budget that is slightly lower (5-10%) than their average to strictly drive savings.
+      4. Round to nearest 500.
+
       IMPORTANT FORMATTING RULES:
       - Use **INR (₹)** for all currency values. Do NOT use '$'.
-      - The "reasoning" field must be a short, punchy summary using bullet points (unicode •) for key insights. 
-      - Keep it under 200 characters if possible, but focused on WHY this budget was chosen.
+      - The "reasoning" field must be a short, punchy summary using bullet points (unicode •) for key insights.
+      - Mention specific category spikes if relevant (e.g. "High Food spend in Dec").
 
       Return JSON:
       {
         "recommendedBudget": 25000,
-        "reasoning": "• Your avg spend is ₹27k\n• Heavy spending on Food (₹8k)\n• Cut incidental shopping to save ₹2k",
+        "reasoning": "• Avg spend is ₹27k\n• Food spiked to ₹8k in Dec\n• Cut incidental shopping to save ₹2k",
         "savingsPotential": 8
       }
     `;

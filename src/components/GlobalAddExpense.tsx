@@ -13,6 +13,7 @@ import { LiquidFAB } from "./ui/LiquidFAB";
 import { LiquidClose } from "./ui/LiquidClose";
 import { format } from "date-fns";
 import IOSSpinner from "./ui/IOSSpinner";
+import confetti from "canvas-confetti";
 
 const GlobalAddExpense = memo(() => {
   const { addExpense } = useExpenses();
@@ -25,7 +26,6 @@ const GlobalAddExpense = memo(() => {
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isInputFocused, setIsInputFocused] = useState(false);
   const [hasClipboard, setHasClipboard] = useState(false);
 
   // Check clipboard permission/content when modal opens
@@ -150,7 +150,19 @@ const GlobalAddExpense = memo(() => {
     setIsSubmitting(true);
     try {
       await addExpense(amountVal.toString(), category, note, date);
-      handleCloseModal();
+
+      // 🎉 Fire Confetti!
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        zIndex: 10001, // Higher than modal
+      });
+
+      // Small delay to let user see success state before closing
+      setTimeout(() => {
+        handleCloseModal();
+      }, 400);
     } catch (error) {
       console.error("Failed to add expense", error);
     } finally {
@@ -336,74 +348,69 @@ const GlobalAddExpense = memo(() => {
                     <input
                       type="text"
                       value={note}
-                      onFocus={() => setIsInputFocused(true)}
-                      onBlur={() => setIsInputFocused(false)}
                       onChange={(e) => setNote(e.target.value)}
                       placeholder="Add note..."
                       className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl py-3 px-4 text-center text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
                     />
                   </div>
 
-                  {/* Numpad Grid - Hidden when typing note */}
-                  {!isInputFocused && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="grid grid-cols-4 gap-2 mt-auto"
-                    >
-                      <NumKey val="1" />
-                      <NumKey val="2" />
-                      <NumKey val="3" />
-                      <NumKey
-                        val="BACKSPACE"
-                        label={
-                          <BackspaceOutline
-                            height="24px"
-                            width="24px"
-                            color="currentColor"
-                          />
-                        }
-                      />
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="grid grid-cols-4 gap-2 mt-auto"
+                  >
+                    <NumKey val="1" />
+                    <NumKey val="2" />
+                    <NumKey val="3" />
+                    <NumKey
+                      val="BACKSPACE"
+                      label={
+                        <BackspaceOutline
+                          height="24px"
+                          width="24px"
+                          color="currentColor"
+                        />
+                      }
+                    />
 
-                      <NumKey val="4" />
-                      <NumKey val="5" />
-                      <NumKey val="6" />
+                    <NumKey val="4" />
+                    <NumKey val="5" />
+                    <NumKey val="6" />
 
-                      {/* Conditional Magic Wand or Submit */}
-                      {hasClipboard ? (
-                        <motion.button
-                          whileTap={{ scale: 0.92 }}
-                          onClick={() => {
-                            if (navigator.vibrate) navigator.vibrate(10);
-                            handleSmartPaste();
-                          }}
-                          className="relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200 bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
-                        >
-                          <ColorWandOutline
-                            height="24px"
-                            width="24px"
-                            color="currentColor"
-                          />
-                        </motion.button>
-                      ) : (
-                        <SubmitButton rowSpan="row-span-3" />
-                      )}
+                    {/* Conditional Magic Wand or Submit */}
+                    {hasClipboard ? (
+                      <motion.button
+                        whileTap={{ scale: 0.92 }}
+                        onClick={() => {
+                          if (navigator.vibrate) navigator.vibrate(10);
+                          handleSmartPaste();
+                        }}
+                        className="relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200 bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
+                      >
+                        <ColorWandOutline
+                          height="24px"
+                          width="24px"
+                          color="currentColor"
+                        />
+                      </motion.button>
+                    ) : (
+                      <SubmitButton rowSpan="row-span-3" />
+                    )}
 
-                      <NumKey val="7" />
-                      <NumKey val="8" />
-                      <NumKey val="9" />
+                    <NumKey val="7" />
+                    <NumKey val="8" />
+                    <NumKey val="9" />
 
-                      {/* Submit Button (only if Magic Wand is present) */}
-                      {hasClipboard && <SubmitButton rowSpan="row-span-2" />}
+                    {/* Submit Button (only if Magic Wand is present) */}
+                    {hasClipboard && <SubmitButton rowSpan="row-span-2" />}
 
-                      <div className="col-span-1" />
-                      {/* Empty spacer or custom key */}
+                    <div className="col-span-1" />
+                    {/* Empty spacer or custom key */}
 
-                      <NumKey val="0" />
-                      <NumKey val="." />
-                    </motion.div>
-                  )}
+                    <NumKey val="0" />
+                    <NumKey val="." />
+                  </motion.div>
                 </div>
               </motion.div>
             </div>

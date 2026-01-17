@@ -67,7 +67,12 @@ const SwipeableExpenseItem = memo(
         {!readOnly && (
           <div className="absolute top-1/2 -translate-y-1/2 right-4 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center z-0">
             <button
-              onClick={() => onDelete(t.id, t.amount, t.date)}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onDelete(t.id, t.amount, t.date);
+              }}
               className="w-full h-full flex items-center justify-center text-white"
               aria-label="Delete"
             >

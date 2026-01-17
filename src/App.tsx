@@ -7,7 +7,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import { ThemeProvider } from "./context/ThemeContext";
 
 import ReloadPrompt from "./components/ReloadPrompt";
-import NotificationManager from "./components/NotificationManager";
 import ErrorBoundary from "./components/ErrorBoundary";
 
 import SplashScreen from "./components/SplashScreen";
@@ -53,7 +52,6 @@ function App() {
           <ReloadPrompt />
           <BrowserRouter>
             <AuthProvider>
-              <NotificationManager />
               <Suspense fallback={<LoadingFallback />}>
                 <Routes>
                   <Route path="/login" element={<Login />} />

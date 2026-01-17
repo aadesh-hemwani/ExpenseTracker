@@ -101,10 +101,11 @@ export const useExpensesForMonth = (
   const { user } = useAuth();
   const targetUserId = userId || user?.uid;
 
+  // Effect A: Real-time Subscription (Current Month Only)
+  // Dependencies: user, date, subscribe. NOT stats.
   useEffect(() => {
-    let isActive = true; // Prevents race conditions
+    let isActive = true;
 
-    // 1. Basic Validation
     if (!targetUserId || !date) {
       setExpenses([]);
       setLoading(false);
@@ -115,7 +116,6 @@ export const useExpensesForMonth = (
     const currentMonthKey = format(new Date(), "yyyy-MM");
     const isCurrentMonth = monthKey === currentMonthKey;
 
-    // 2. Real-time Subscription (Current Month Only)
     if (subscribe && isCurrentMonth) {
       setLoading(true);
       const start = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -160,9 +160,22 @@ export const useExpensesForMonth = (
         unsubscribe();
       };
     }
+  }, [targetUserId, date, subscribe]);
 
-    // 3. Historical Data Fetching (Cached or Network)
-    // Wait for stats to confirm if data even exists
+  // Effect B: Historical Data Fetching (Past Months)
+  // Dependencies: user, date, stats (to verify cache).
+  useEffect(() => {
+    let isActive = true;
+
+    if (!targetUserId || !date) return;
+
+    const monthKey = format(date, "yyyy-MM");
+    const currentMonthKey = format(new Date(), "yyyy-MM");
+    const isCurrentMonth = monthKey === currentMonthKey;
+
+    // Skip if this is the current month (handled by Effect A)
+    if (subscribe && isCurrentMonth) return;
+
     if (!statsLoaded) {
       setLoading(true);
       return;
@@ -170,19 +183,24 @@ export const useExpensesForMonth = (
 
     const matchingStat = allStats.find((s) => s.monthKey === monthKey);
 
-
-
     const fetchHistorical = async () => {
       if (!isActive) return;
       setLoading(true);
-      setExpenses([]); // Reset to prevent mixing old data
       
+      // Only clear if we are switching to a completely different month
+      // This prevents flashing when merely re-validating stats (like in Home screen)
+      setExpenses((prev) => {
+        if (prev.length > 0 && prev[0].date) {
+           const prevMonth = format(prev[0].date instanceof Date ? prev[0].date : new Date(), "yyyy-MM");
+           if (prevMonth !== monthKey) return [];
+        }
+        return prev;
+      }); 
+
       const isSelf = targetUserId === user?.uid;
 
       try {
         // A. Try Cache (Self only)
-        // We only use cache if we have a valid stat to verify it against.
-        // If stats are 0 or missing (due to bug), we force network to self-heal.
         if (isSelf && matchingStat && matchingStat.count > 0) {
           const cached = await getMonthFromCache(monthKey);
           if (
@@ -228,8 +246,6 @@ export const useExpensesForMonth = (
 
         // C. Update Cache (Self only)
         if (isSelf) {
-          // If we have matching stats, use them for cache metadata.
-          // If NOT (e.g. recovery mode), calculate from the fresh data.
           const trueTotal = docs.reduce((sum, e) => sum + Number(e.amount), 0);
           const trueCount = docs.length;
 

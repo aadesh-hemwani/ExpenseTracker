@@ -283,7 +283,7 @@ const Profile = () => {
                     const q = query(
                       collection(db, "users", user?.uid || "", "expenses"),
                       // orderBy("date", "desc"), // Sorting done client-side for safety/speed
-                      limit(100)
+                      limit(300) // Fetch ~3 months of data
                     );
 
                     console.log(
