@@ -1,4 +1,4 @@
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./context/AuthContext";
@@ -11,21 +11,14 @@ import ErrorBoundary from "./components/ErrorBoundary";
 
 import SplashScreen from "./components/SplashScreen";
 import { useState } from "react";
-import IOSSpinner from "./components/ui/IOSSpinner";
 
-// Lazy Load Pages
-const Home = lazy(() => import("./pages/Home"));
-const History = lazy(() => import("./pages/History"));
-const Analytics = lazy(() => import("./pages/Analytics"));
-const Admin = lazy(() => import("./pages/Admin"));
-const Login = lazy(() => import("./pages/Login"));
-const Profile = lazy(() => import("./pages/Profile"));
-
-const LoadingFallback = () => (
-  <div className="flex h-screen w-full items-center justify-center bg-body">
-    <IOSSpinner size={32} color="var(--text-tertiary)" />
-  </div>
-);
+// Static Imports
+import Home from "./pages/Home";
+import History from "./pages/History";
+import Analytics from "./pages/Analytics";
+import Admin from "./pages/Admin";
+import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 
 function App() {
   const [loading, setLoading] = useState(true);
@@ -52,25 +45,23 @@ function App() {
           <ReloadPrompt />
           <BrowserRouter>
             <AuthProvider>
-              <Suspense fallback={<LoadingFallback />}>
-                <Routes>
-                  <Route path="/login" element={<Login />} />
-                  {/* Protected Routes */}
-                  <Route
-                    element={
-                      <ProtectedRoute>
-                        <Layout />
-                      </ProtectedRoute>
-                    }
-                  >
-                    <Route path="/" element={<Home />} />
-                    <Route path="/history" element={<History />} />
-                    <Route path="/analytics" element={<Analytics />} />
-                    <Route path="/profile" element={<Profile />} />
-                    <Route path="/admin" element={<Admin />} />
-                  </Route>
-                </Routes>
-              </Suspense>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                {/* Protected Routes */}
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="/" element={<Home />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/admin" element={<Admin />} />
+                </Route>
+              </Routes>
             </AuthProvider>
           </BrowserRouter>
         </ErrorBoundary>

@@ -353,8 +353,8 @@ export const useExpenses = () => {
              // OPTIMIZATION: Use passed constraints to avoid reading the doc
              // This is crucial if Read quota is exceeded
              expenseAmount = Number(amount);
-             // @ts-ignore
-             const d = date.toDate ? date.toDate() : date;
+             // Ensure we have a Date object
+             const d = date instanceof Timestamp ? date.toDate() : (date as Date);
              monthKey = format(d, "yyyy-MM");
           } else {
              // Fallback: Read doc if we don't have details (Will fail if quota exceeded)
@@ -362,8 +362,9 @@ export const useExpenses = () => {
              if (!expenseDoc.exists()) throw "Document does not exist!";
              const data = expenseDoc.data();
              expenseAmount = Number(data.amount);
-             // @ts-ignore
-             monthKey = format(data.date.toDate(), "yyyy-MM");
+             const dateField = data.date;
+             const d = dateField instanceof Timestamp ? dateField.toDate() : new Date(dateField);
+             monthKey = format(d, "yyyy-MM");
           }
 
           const statDocRef = doc(statsRef, monthKey);

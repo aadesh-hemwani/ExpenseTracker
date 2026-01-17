@@ -86,8 +86,8 @@ const Home = () => {
 
     // 2. Last Month Partial (Compare up to same day)
     const lastMonthPartialSum = lastMonthExpenses.reduce((acc, e) => {
-      const d = e.date instanceof Timestamp ? e.date.toDate() : e.date;
-      // @ts-ignore
+      const d =
+        e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
       if (d && d.getDate() <= currentDay) return acc + Number(e.amount);
       return acc;
     }, 0);
@@ -104,8 +104,8 @@ const Home = () => {
     const getDailyCumulative = (list: Expense[]) => {
       const totals = new Array(daysInMonth).fill(0);
       list.forEach((e) => {
-        const d = e.date instanceof Timestamp ? e.date.toDate() : e.date;
-        // @ts-ignore
+        const d =
+          e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
         if (d) {
           const day = d.getDate() - 1;
           if (day >= 0 && day < daysInMonth) totals[day] += Number(e.amount);

@@ -58,7 +58,6 @@ const GlobalAddExpense = memo(() => {
   }, [isAddModalOpen]);
 
   // Check for deep link to open modal
-  // Check for deep link to open modal
   useEffect(() => {
     const action = searchParams.get("action");
     const text = searchParams.get("text");
