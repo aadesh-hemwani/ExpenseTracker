@@ -1,5 +1,5 @@
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { Expense } from "../types";
 import { CATEGORY_COLORS } from "./uiUtils";
@@ -27,6 +27,10 @@ export const generateMonthlyReport = async (
   metadata: ReportMetadata,
   chartImage?: string // Base64 image string of the chart
 ) => {
+  // Dynamic Import
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.width;
   const pageHeight = doc.internal.pageSize.height;
@@ -225,7 +229,7 @@ export const generateMonthlyReport = async (
     columnStyles: {
         3: { halign: "right", fontStyle: "bold" } 
     },
-    didDrawPage: (data) => {
+    didDrawPage: () => {
         // Footer (Page Numbers)
         const str = "Page " + doc.getNumberOfPages();
         doc.setFontSize(8);

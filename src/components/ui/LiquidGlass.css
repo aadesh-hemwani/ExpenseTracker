@@ -32,9 +32,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Distribute items */
-  width: 100%; /* Adapt to container width */
-  height: 70px; /* From CodePen */
+  justify-content: space-between;
+  width: 100%;
+  height: 70px;
   padding: 8px 12px 10px;
   box-sizing: border-box;
   border-radius: 99em;
@@ -151,13 +151,11 @@
 
   display: block;
   /* width: set in React */
-  height: calc(
-    100% - 10px
-  ); /* 70px - 4px top - something bottom? CodePen: calc(100% - 10px) with top 4px implies 6px bottom space? */
+  height: calc(100% - 10px);
 
   border-radius: 99em;
   background-color: color-mix(in srgb, var(--c-glass) 36%, transparent);
-  z-index: 1; /* Below text/icons */
+  z-index: 1;
 
   /* Blob Shadows */
   box-shadow:
@@ -212,10 +210,6 @@
   /* The scale animation is key for the liquid feel */
 }
 
-/* We need to apply the animation when the position changes. 
-   React will handle the 'translate' via style prop or class.
-   We can use a keyframed class that triggers on change.
-*/
 .liquid-move-anim {
   animation: scaleToggle 440ms ease;
 }
@@ -232,21 +226,19 @@
   }
 }
 
-/* Helper to hide SVG filter */
 .liquid-filter-def {
   position: absolute;
   width: 0;
   height: 0;
   overflow: hidden;
   pointer-events: none;
-  visibility: hidden; /* Ensure it doesn't take layout space */
+  visibility: hidden;
 }
 
-/* Liquid FAB */
 .liquid-fab {
   position: fixed;
-  bottom: calc(24px + env(safe-area-inset-bottom)); /* Safe area aware */
-  right: 16px; /* right-4 */
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  right: 16px;
   width: 4.5rem;
   height: 4.5rem;
   border-radius: 99em;
@@ -371,7 +363,6 @@
   transition: all 0.3s ease;
 }
 
-/* Liquid Pill (Small inline button) */
 .liquid-pill {
   position: relative;
   display: inline-flex;
@@ -403,14 +394,10 @@
   transform: scale(0.96);
 }
 
-/* Liquid Card (Large Container) */
 .liquid-card {
   position: relative;
-  /* Layout handled by Tailwind classes */
 
-  /* Glass Base - Match Navbar */
   background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-  /* Complex Glass Shadows - Match Navbar */
   box-shadow:
     inset 0 0 0 1px
       color-mix(

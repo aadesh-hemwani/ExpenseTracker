@@ -10,10 +10,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'Minimalist Expense Tracker',
+        name: 'Expenses.',
         short_name: 'Expenses',
         description: 'Track your daily expenses with function and form.',
-        display: 'standalone', // Removes browser UI for native feel
+        display: 'standalone', 
         scope: '/',
         start_url: '/',
         orientation: 'portrait',
@@ -75,17 +75,11 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('firebase')) return 'firebase';
-            if (id.includes('react-ionicons')) return 'icons';
-            if (id.includes('html2canvas') || id.includes('jspdf')) return 'pdf';
-            if (id.includes('@google/generative-ai')) return 'ai';
-            if (id.includes('recharts')) return 'charts';
-            if (id.includes('framer-motion')) return 'framer';
-            if (id.includes('react-router') || id.includes('react-dom') || id.includes('react/')) return 'vendor';
-            if (id.includes('date-fns') || id.includes('canvas-confetti')) return 'utils';
-          }
+        manualChunks: {
+          'vendor': ['react', 'react-dom', 'react-router-dom'],
+          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics'],
+          'ui': ['framer-motion', 'react-ionicons', 'clsx', 'tailwind-merge'],
+          'charts': ['recharts']
         }
       }
     },

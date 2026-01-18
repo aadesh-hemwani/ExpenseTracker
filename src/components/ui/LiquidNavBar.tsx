@@ -107,8 +107,6 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
                 onClick={() => navigate(item.path)}
                 style={
                   {
-                    // Overriding local color style to rely on CSS class for transition
-                    // but keeping variable for active color reference if needed
                     "--c-action": activeColor,
                   } as React.CSSProperties
                 }
@@ -135,5 +133,5 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
         </nav>
       </>
     );
-  }
+  },
 );

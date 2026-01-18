@@ -14,7 +14,7 @@ export const LiquidBack: React.FC<LiquidBackProps> = ({
   return (
     <button
       onClick={onClick}
-      className={`liquid-close-btn ${className}`} // Reuse 'liquid-close-btn' for consistent styling
+      className={`liquid-close-btn ${className}`}
       aria-label="Go Back"
     >
       <ChevronBackOutline height="24px" width="24px" />

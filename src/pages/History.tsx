@@ -27,7 +27,7 @@ import { getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
 import CategoryDonutChart from "../components/CategoryDonutChart";
 import CloudDownloadOutline from "react-ionicons/lib/CloudDownloadOutline";
-import html2canvas from "html2canvas";
+// import html2canvas from "html2canvas";
 import { generateMonthlyReport } from "../utils/reportGenerator";
 import { useRef } from "react";
 import { useAuth } from "../context/AuthContext";
@@ -124,6 +124,7 @@ const CalendarView = ({
         await new Promise((resolve) => setTimeout(resolve, 500));
 
         // Wait for chart to render fully if needed
+        const { default: html2canvas } = await import("html2canvas");
         const canvas = await html2canvas(chartContainerRef.current, {
           scale: 2, // Higher resolution
           backgroundColor: "#ffffff", // Force white background
@@ -170,7 +171,7 @@ const CalendarView = ({
           generatedDate: new Date(),
           period: format(currentMonth, "MMMM yyyy"),
         },
-        chartImage
+        chartImage,
       );
     } catch (error) {
       console.error("PDF Generation failed", error);
@@ -295,32 +296,35 @@ const CalendarView = ({
         <div className="space-y-4">
           <div className="flex flex-col space-y-6">
             {Object.entries(
-              expenses.reduce((acc, expense) => {
-                const date =
-                  expense.date instanceof Timestamp
-                    ? expense.date.toDate()
-                    : new Date(expense.date);
+              expenses.reduce(
+                (acc, expense) => {
+                  const date =
+                    expense.date instanceof Timestamp
+                      ? expense.date.toDate()
+                      : new Date(expense.date);
 
-                let dateLabel = format(date, "MMM dd");
-                if (
-                  format(date, "yyyy-MM-dd") ===
-                  format(new Date(), "yyyy-MM-dd")
-                ) {
-                  dateLabel = "Today";
-                } else if (
-                  format(date, "yyyy-MM-dd") ===
-                  format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
-                ) {
-                  dateLabel = "Yesterday";
-                }
+                  let dateLabel = format(date, "MMM dd");
+                  if (
+                    format(date, "yyyy-MM-dd") ===
+                    format(new Date(), "yyyy-MM-dd")
+                  ) {
+                    dateLabel = "Today";
+                  } else if (
+                    format(date, "yyyy-MM-dd") ===
+                    format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
+                  ) {
+                    dateLabel = "Yesterday";
+                  }
 
-                if (!acc[dateLabel]) acc[dateLabel] = [];
-                acc[dateLabel].push(expense);
-                return acc;
-                // Sort keys so newest dates come first in the object iteration?
-                // Object.entries doesn't guarantee order, but usually follows insertion for strings.
-                // Ideally we map over sorted unique dates.
-              }, {} as Record<string, Expense[]>)
+                  if (!acc[dateLabel]) acc[dateLabel] = [];
+                  acc[dateLabel].push(expense);
+                  return acc;
+                  // Sort keys so newest dates come first in the object iteration?
+                  // Object.entries doesn't guarantee order, but usually follows insertion for strings.
+                  // Ideally we map over sorted unique dates.
+                },
+                {} as Record<string, Expense[]>,
+              ),
             )
               // We need to ensure sorting. The Home implementation relied on reduce insertion order of pre-sorted list.
               // Since 'expenses' is already sorted by date desc in hook, we should be fine.
@@ -378,7 +382,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
       stats,
       !statsLoading,
       true,
-      userId
+      userId,
     );
 
   // 1. Group Data for the "Month Grid" View
@@ -473,7 +477,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
           <ExpenseListModal
             title={format(selectedDate, "EEEE, MMM do")}
             expenses={monthExpenses.filter((e) =>
-              isSameDay(getDate(e.date), selectedDate)
+              isSameDay(getDate(e.date), selectedDate),
             )}
             onClose={handleCloseModal}
           />
