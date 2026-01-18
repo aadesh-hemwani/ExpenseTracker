@@ -15,6 +15,7 @@ import {
   getDocs,
   DocumentData,
   QuerySnapshot,
+  writeBatch,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
@@ -287,7 +288,9 @@ export const useExpenses = () => {
       amount: number | string,
       category: string,
       note: string,
-      customDate?: Date | string
+      customDate?: Date | string,
+      icon?: string,
+      iconType?: 'lucide' | 'ion' | 'emoji'
     ) => {
       if (!user) return;
 
@@ -308,34 +311,56 @@ export const useExpenses = () => {
       const monthKey = format(dateObj, "yyyy-MM");
       const statDocRef = doc(statsRef, monthKey);
 
-      try {
-        await runTransaction(db, async (transaction) => {
-          // 1. Add to Expenses Collection
-          const newExpenseRef = doc(collectionRef);
+      // Create doc ref outside to get ID
+      const newExpenseRef = doc(collectionRef); 
 
-          transaction.set(newExpenseRef, {
+      try {
+        const batch = writeBatch(db);
+
+        // 1. Set Expense
+        batch.set(newExpenseRef, {
             amount: Number(amount),
             category,
             note,
             date: finalDate,
-          });
+            ...(icon && { icon }),
+            ...(iconType && { iconType }),
+        });
 
-          // 2. Update Aggregated Stats
-          transaction.set(
+        // 2. Update Aggregated Stats (Optimistic with increment)
+        batch.set(
             statDocRef,
             {
               total: increment(Number(amount)),
               count: increment(1),
             },
             { merge: true }
-          );
-        });
+        );
+
+        await batch.commit();
+        return newExpenseRef.id;
       } catch (e) {
-        console.error("Transaction failed: ", e);
+        console.error("Batch failed: ", e);
+        return undefined;
       }
     },
     [user]
   );
+
+  const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
+      if(!user) return;
+      
+      const docRef = doc(db, "users", user.uid, "expenses", id);
+      try {
+          // Removes undefined values to avoid Firestore errors
+          const sanitized = Object.fromEntries(
+            Object.entries(updates).filter(([_, v]) => v !== undefined)
+          );
+          await setDoc(docRef, sanitized, { merge: true });
+      } catch(e) {
+          console.error("Failed to update expense", e);
+      }
+  }, [user]);
 
   const deleteExpense = useCallback(
     async (id: string, amount?: number, date?: Date | Timestamp) => {
@@ -419,7 +444,8 @@ export const useExpenses = () => {
     addExpense,
     deleteExpense,
     updateMonthlyStat,
+    updateExpense,
     expenses: [],
     loading: false,
-  }), [addExpense, deleteExpense, updateMonthlyStat]);
+  }), [addExpense, deleteExpense, updateMonthlyStat, updateExpense]);
 };

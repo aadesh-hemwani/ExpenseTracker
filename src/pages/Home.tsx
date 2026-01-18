@@ -45,7 +45,7 @@ const Home = () => {
   const { expenses: lastMonthExpenses } = useExpensesForMonth(
     lastMonthDate,
     stats,
-    !loadingStats
+    !loadingStats,
   );
 
   const { expenses: thisMonthFullExpenses, loading: loadingCurrent } =
@@ -81,7 +81,7 @@ const Home = () => {
     // 1. Current Month Total
     const thisMonthSum = thisMonthFullExpenses.reduce(
       (sum, e) => sum + Number(e.amount),
-      0
+      0,
     );
 
     // 2. Last Month Partial (Compare up to same day)
@@ -123,11 +123,11 @@ const Home = () => {
 
     const thisGraph = getDailyCumulative(thisMonthFullExpenses).slice(
       0,
-      currentDay
+      currentDay,
     );
     const lastGraph = getDailyCumulative(lastMonthExpenses).slice(
       0,
-      currentDay
+      currentDay,
     );
 
     return {
@@ -153,90 +153,72 @@ const Home = () => {
 
   return (
     <div className="space-y-10 animate-fade-in">
-      {/* Hero Section */}
-      <header className="flex flex-col space-y-2 pt-4">
-        <div>
-          <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-            {format(new Date(), "MMMM yyyy")}
-          </span>
-          <div className="flex items-baseline mt-1 space-x-1">
-            <span className="text-5xl font-semibold text-primary tracking-tight">
-              <CountUp value={currentMonthTotal} />
-            </span>
-            <span className="text-lg text-tertiary font-normal">
-              .{currentMonthTotal.toFixed(2).split(".")[1]}
-            </span>
+      <header className="flex flex-col space-y-6 pt-4 relative">
+        <div className="flex items-center justify-between px-2">
+          <div>
+            <p className="text-lg font-bold text-tertiary uppercase tracking-widest">
+              {format(new Date(), "MMMM yyyy")}
+            </p>
           </div>
         </div>
 
-        {/* Intelligent Insight Pill */}
-        <button
-          onClick={() => setShowInsightSheet(true)}
-          className={`group relative w-full sm:w-auto flex items-center justify-between p-3 pr-4 
-            bg-white dark:bg-white/5 bg-gradient-to-br from-white to-gray-50 dark:from-white/10 dark:to-white/5 border
-            rounded-2xl shadow-sm hover:shadow-md transition-all duration-300
-            active:scale-[0.98]
-            ${
-              trendDirection === "down"
-                ? "animate-glow-green border-emerald-500/20"
-                : "animate-glow-red border-rose-500/20"
-            }`}
-        >
-          <div className="flex items-center space-x-3">
-            <div
-              className={`
-               w-10 h-10 rounded-full flex items-center justify-center
+        {/* Balance Card */}
+        <div className="liquid-card relative overflow-hidden rounded-[2rem] p-6 sm:p-8 hover:scale-[1.01] transition-transform duration-500">
+          <div className="relative z-10 flex flex-col items-center justify-center space-y-1">
+            <span className="text-xs font-semibold text-tertiary uppercase tracking-wider">
+              Total Spent
+            </span>
+            <div className="flex items-baseline space-x-1 mt-2">
+              <span className="text-6xl font-light tracking-tight text-primary drop-shadow-sm">
+                <CountUp value={currentMonthTotal} />
+              </span>
+              <span className="text-2xl text-tertiary font-light mb-1">
+                .{currentMonthTotal.toFixed(2).split(".")[1]}
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setShowInsightSheet(true)}
+              className={`group liquid-pill flex items-center space-x-2 border-0
                ${
                  trendDirection === "down"
-                   ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400"
-                   : "bg-rose-50 text-rose-600 dark:bg-rose-500/10 dark:text-rose-400"
-               }
-             `}
+                   ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20"
+                   : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
+               }`}
             >
               {trendDirection === "down" ? (
                 <TrendingDownOutline
-                  color="inherit"
-                  height="20px"
-                  width="20px"
-                  cssClasses="text-current"
+                  color="currentColor"
+                  height="16px"
+                  width="16px"
                 />
               ) : (
                 <TrendingUpOutline
-                  color="inherit"
-                  height="20px"
-                  width="20px"
-                  cssClasses="text-current"
+                  color="currentColor"
+                  height="16px"
+                  width="16px"
                 />
               )}
-            </div>
-            <div className="text-left">
-              <p
-                className={`text-sm font-semibold ${
-                  trendDirection === "down"
-                    ? "text-emerald-700 dark:text-emerald-400"
-                    : "text-rose-700 dark:text-rose-400"
-                }`}
-              >
-                {trendDirection === "down" ? "Under Budget" : "Spending High"}
-              </p>
-              <p className="text-xs text-tertiary">
+              <span className="text-xs font-bold uppercase tracking-wider">
                 {percentageChange}%{" "}
-                {trendDirection === "down" ? "less" : "more"} than last month
-              </p>
-            </div>
+                {trendDirection === "down" ? "Lower" : "Higher"}
+              </span>
+              <ArrowForwardOutline
+                color="currentColor"
+                height="14px"
+                width="14px"
+                cssClasses="opacity-50 group-hover:opacity-100 transition-opacity"
+              />
+            </button>
           </div>
-          <ArrowForwardOutline
-            color="inherit"
-            height="16px"
-            width="16px"
-            cssClasses="text-tertiary group-hover:text-primary transition-colors"
-          />
-        </button>
+        </div>
       </header>
 
       {/* Grouped Transactions */}
       <section className="space-y-4">
-        <h3 className="text-sm font-semibold text-tertiary px-1 uppercase tracking-wider">
+        <h3 className="text-xs font-bold text-tertiary px-1 uppercase tracking-wider">
           Recent Transactions
         </h3>
 
@@ -254,35 +236,38 @@ const Home = () => {
               layout
             >
               {Object.entries(
-                recentExpenses.reduce((acc, expense) => {
-                  const date =
-                    expense.date instanceof Timestamp
-                      ? expense.date.toDate()
-                      : new Date(expense.date);
+                recentExpenses.reduce(
+                  (acc, expense) => {
+                    const date =
+                      expense.date instanceof Timestamp
+                        ? expense.date.toDate()
+                        : new Date(expense.date);
 
-                  let dateLabel = format(date, "MMM dd");
-                  if (
-                    format(date, "yyyy-MM-dd") ===
-                    format(new Date(), "yyyy-MM-dd")
-                  ) {
-                    dateLabel = "Today";
-                  } else if (
-                    format(date, "yyyy-MM-dd") ===
-                    format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
-                  ) {
-                    dateLabel = "Yesterday";
-                  }
+                    let dateLabel = format(date, "MMM dd");
+                    if (
+                      format(date, "yyyy-MM-dd") ===
+                      format(new Date(), "yyyy-MM-dd")
+                    ) {
+                      dateLabel = "Today";
+                    } else if (
+                      format(date, "yyyy-MM-dd") ===
+                      format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
+                    ) {
+                      dateLabel = "Yesterday";
+                    }
 
-                  if (!acc[dateLabel]) acc[dateLabel] = [];
-                  acc[dateLabel].push(expense);
-                  return acc;
-                }, {} as Record<string, Expense[]>)
+                    if (!acc[dateLabel]) acc[dateLabel] = [];
+                    acc[dateLabel].push(expense);
+                    return acc;
+                  },
+                  {} as Record<string, Expense[]>,
+                ),
               ).map(([label, expenses], index) => (
                 <div
                   key={label}
                   className={`space-y-2 ${index > 0 ? "pt-3" : ""}`}
                 >
-                  <h4 className="sticky top-0 z-20 py-2 bg-body/95 backdrop-blur-xl text-xs font-bold text-tertiary/80 uppercase tracking-widest px-1 transition-colors">
+                  <h4 className="sticky top-0 z-20 py-2 bg-transparent text-xs font-bold text-tertiary uppercase tracking-wider px-1">
                     {label}
                   </h4>
                   <div className="space-y-2">

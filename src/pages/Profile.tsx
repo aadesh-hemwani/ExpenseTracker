@@ -283,15 +283,15 @@ const Profile = () => {
                     const q = query(
                       collection(db, "users", user?.uid || "", "expenses"),
                       // orderBy("date", "desc"), // Sorting done client-side for safety/speed
-                      limit(300) // Fetch ~3 months of data
+                      limit(300), // Fetch ~3 months of data
                     );
 
                     console.log(
-                      `🪄 Auto-Budget: Fetching for user ${user?.uid}...`
+                      `🪄 Auto-Budget: Fetching for user ${user?.uid}...`,
                     );
                     const snapshot = await getDocs(q);
                     console.log(
-                      `🪄 Auto-Budget: Found ${snapshot.size} transactions.`
+                      `🪄 Auto-Budget: Found ${snapshot.size} transactions.`,
                     );
 
                     let expenses = snapshot.docs.map((d) => d.data());
@@ -310,10 +310,10 @@ const Profile = () => {
                     // Debug total before sending
                     const localTotal = expenses.reduce(
                       (sum, e) => sum + Number(e.amount || 0),
-                      0
+                      0,
                     );
                     console.log(
-                      `🪄 Auto-Budget: Calculated Total: ${localTotal}`
+                      `🪄 Auto-Budget: Calculated Total: ${localTotal}`,
                     );
 
                     if (expenses.length === 0) {
@@ -323,16 +323,15 @@ const Profile = () => {
                     }
 
                     // 2. Get Recommendation
-                    const { calculateRecommendedBudget } = await import(
-                      "../services/gemini"
-                    );
+                    const { calculateRecommendedBudget } =
+                      await import("../services/gemini");
                     // @ts-ignore
                     const rec = await calculateRecommendedBudget(expenses);
 
                     if (rec) {
                       setBudget(rec.recommendedBudget.toString());
                       setMessage(
-                        `✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`
+                        `✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`,
                       );
                     } else {
                       setMessage("Could not generate a suggestion.");

@@ -75,12 +75,17 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics'],
-          'framer': ['framer-motion'],
-          'charts': ['recharts'],
-          'ui': ['clsx', 'tailwind-merge']
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('react-ionicons')) return 'icons';
+            if (id.includes('html2canvas') || id.includes('jspdf')) return 'pdf';
+            if (id.includes('@google/generative-ai')) return 'ai';
+            if (id.includes('recharts')) return 'charts';
+            if (id.includes('framer-motion')) return 'framer';
+            if (id.includes('react-router') || id.includes('react-dom') || id.includes('react/')) return 'vendor';
+            if (id.includes('date-fns') || id.includes('canvas-confetti')) return 'utils';
+          }
         }
       }
     },

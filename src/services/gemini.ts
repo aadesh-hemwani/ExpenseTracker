@@ -234,3 +234,37 @@ export const calculateRecommendedBudget = async (
     return null;
   }
 };
+
+export const suggestIcon = async (note: string): Promise<string | null> => {
+  if (!API_KEY || !note) return null;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    
+    // Check if simple keyword match is enough to save API call? 
+    // No, user wants AI.
+
+    const prompt = `
+      You are an icon suggester used by an expense tracker app.
+      The app uses the "Lucide React" icon library.
+      
+      Task: Based on the following expense note, suggest the single best Lucide icon name that visually represents the purchase.
+      
+      Note: "${note}"
+      
+      Rules:
+      1. Return ONLY the icon component name in PascalCase (e.g., "Coffee", "Ticket", "Banana", "Car", "Gamepad2").
+      2. Do not include "Lucide" or "Icon" suffix unless it's part of the actual name.
+      3. If unsure, return "CreditCard".
+      4. Output nothing else. No JSON, no backticks.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
+    const iconName = text.trim().replace(/['"`]/g, ""); // Clean up quotes
+    return iconName;
+  } catch (error) {
+    console.error("Gemini Icon Suggestion Error:", error);
+    return null;
+  }
+};

@@ -5,9 +5,11 @@ export interface Expense {
     id: string;
     amount: number;
     category: string;
-    date: Timestamp | Date; // Depending on if it's from Firestore or local state
+    date: Timestamp | Date;
     description?: string;
     note?: string;
+    icon?: string;
+    iconType?: 'lucide' | 'ion' | 'emoji';
     type: 'income' | 'expense';
     userId: string;
     createdAt?: Timestamp;
@@ -25,13 +27,12 @@ export interface ThemeContextType {
 
 export interface AuthContextType {
     user: User | null;
-    loading?: boolean; // Optional because we might not always use it or it might be implicit
+    loading?: boolean;
     googleSignIn: () => Promise<void>;
     logOut: () => Promise<void>;
 }
 
 export interface User extends FirebaseUser {
-    // Add any custom user properties if we extend the firebase user
     monthlyBudgetCap?: number;
     isAdmin?: boolean;
 }

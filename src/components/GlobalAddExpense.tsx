@@ -14,9 +14,11 @@ import { LiquidClose } from "./ui/LiquidClose";
 import { format } from "date-fns";
 import IOSSpinner from "./ui/IOSSpinner";
 import confetti from "canvas-confetti";
+import { findLucideIcon } from "../utils/uiUtils";
+import { suggestIcon } from "../services/gemini";
 
 const GlobalAddExpense = memo(() => {
-  const { addExpense } = useExpenses();
+  const { addExpense, updateExpense } = useExpenses();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -148,26 +150,58 @@ const GlobalAddExpense = memo(() => {
 
     setIsSubmitting(true);
     try {
-      await addExpense(amountVal.toString(), category, note, date);
+      // 1. Hybrid: Try Local Cache First
+      const localIcon = findLucideIcon(note);
+
+      // 2. Save Immediately (Optimistic)
+      // If local icon found, save it. If not, save undefined & fetch later.
+      const newId = await addExpense(
+        amountVal.toString(),
+        category,
+        note,
+        date,
+        localIcon,
+        localIcon ? "lucide" : undefined
+      );
 
       // 🎉 Fire Confetti!
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        zIndex: 10001, // Higher than modal
+        zIndex: 10001,
       });
 
+      // 3. Background: AI Fallback (If no local icon found)
+      // Only runs if note exists AND local search failed
+      if (newId && !localIcon && note.trim().length > 2) {
+        // Fire and forget
+        suggestIcon(note).then((aiIcon) => {
+          if (aiIcon) {
+            updateExpense(newId, { icon: aiIcon, iconType: "lucide" });
+          }
+        });
+      }
+
       // Small delay to let user see success state before closing
+      // This also gives Firestore a moment to sync local cache if needed
       setTimeout(() => {
         handleCloseModal();
-      }, 400);
+      }, 500);
     } catch (error) {
       console.error("Failed to add expense", error);
     } finally {
       setIsSubmitting(false);
     }
-  }, [amountStr, category, note, date, addExpense, handleCloseModal]);
+  }, [
+    amountStr,
+    category,
+    note,
+    date,
+    addExpense,
+    updateExpense, // Deduped destructuring
+    handleCloseModal,
+  ]);
 
   // Numpad Button Component
   const NumKey = ({

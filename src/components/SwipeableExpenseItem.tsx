@@ -1,5 +1,5 @@
 import { ReactNode, memo } from "react";
-import { motion, useMotionValue, useAnimation, PanInfo } from "framer-motion";
+import { motion, useMotionValue, useAnimation } from "framer-motion";
 import TrashOutline from "react-ionicons/lib/TrashOutline";
 import { format } from "date-fns";
 import { formatCurrency } from "../utils/formatUtils";
@@ -8,7 +8,12 @@ import { Timestamp } from "firebase/firestore";
 
 interface SwipeableExpenseItemProps {
   t: Expense;
-  getCategoryIcon: (category: string, size?: string) => ReactNode;
+  getCategoryIcon: (
+    category: string,
+    size?: string,
+    note?: string,
+    iconName?: string,
+  ) => ReactNode;
   onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
   className?: string;
   cardClassName?: string;
@@ -29,18 +34,15 @@ const SwipeableExpenseItem = memo(
     const controls = useAnimation();
     const x = useMotionValue(0);
 
-    const handleDragEnd = async (_: any, info: PanInfo) => {
+    const handleDragEnd = async (_: any, info: any) => {
       const offset = info.offset.x;
       const velocity = info.velocity.x;
-
-      // If swiped left enough, snap open to reveal button
       if (offset < -60 || velocity < -500) {
         await controls.start({
           x: -80,
           transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
         });
       } else {
-        // Otherwise snap back to closed
         await controls.start({
           x: 0,
           transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
@@ -73,7 +75,7 @@ const SwipeableExpenseItem = memo(
                 e.stopPropagation();
                 onDelete(t.id, t.amount, t.date);
               }}
-              className="w-full h-full flex items-center justify-center text-white"
+              className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center text-white"
               aria-label="Delete"
             >
               <TrashOutline color="#ffffff" height="24px" width="24px" />
@@ -91,43 +93,58 @@ const SwipeableExpenseItem = memo(
           dragMomentum={false}
           onDragEnd={handleDragEnd}
           whileTap={{ scale: 0.98 }}
-          className={`relative z-10 flex items-center justify-between p-4 bg-surface rounded-3xl border border-subtle shadow-sm ${cardClassName}`}
+          className={`relative z-10 flex items-center justify-between p-4 
+            bg-white dark:bg-[#1c1c1e] 
+            border border-gray-100 dark:border-white/10 
+            rounded-3xl shadow-sm
+            ${cardClassName}`}
         >
           <div className="flex items-center space-x-4 flex-1 min-w-0">
-            {/* Icon */}
-            <div className="shrink-0">
-              {getCategoryIcon(t.category, "28px")}
+            {/* Illuminated Icon Container */}
+            <div className="shrink-0 relative group">
+              <div
+                className="absolute inset-0 bg-current opacity-20 dark:opacity-20 blur-xl rounded-full scale-75 group-hover:scale-110 transition-transform duration-500"
+                style={{ color: "var(--icon-color, currentColor)" }}
+              />
+              <div className="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-white/10 border border-black/5 dark:border-white/10 shadow-sm">
+                {getCategoryIcon(
+                  t.category,
+                  "24px",
+                  t.note || t.description,
+                  t.icon,
+                )}
+              </div>
             </div>
 
             {/* Note & Date/Category */}
             <div className="flex flex-col flex-1 min-w-0 pr-4">
-              <p className="font-semibold text-gray-900 dark:text-white text-sm truncate">
+              <p className="font-semibold text-gray-900 dark:text-white text-[15px] truncate leading-tight">
                 {t.note || t.description || t.category}
               </p>
-              <div className="flex items-center text-xs text-gray-400 mt-0.5 space-x-1 truncate">
+              <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">
+                <span className="opacity-80">{t.category}</span>
                 {!hideDate && (
                   <>
-                    <span>
+                    <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+                    <span className="opacity-80">
                       {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
                     </span>
-                    <span>•</span>
                   </>
                 )}
-                <span>{t.category}</span>
               </div>
             </div>
           </div>
 
           {/* Amount (Right Aligned) */}
           <div className="text-right shrink-0">
-            <span className="font-semibold text-gray-900 dark:text-white block text-lg">
+            <span className="font-bold text-gray-900 dark:text-white block text-lg tracking-tight">
               {formatCurrency(t.amount)}
             </span>
           </div>
         </motion.div>
       </motion.div>
     );
-  }
+  },
 );
 
 export default SwipeableExpenseItem;
