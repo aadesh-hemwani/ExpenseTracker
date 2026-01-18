@@ -250,7 +250,7 @@ const Home = () => {
                       height="332"
                       rx="25"
                       ry="25"
-                      className="stroke-black dark:stroke-white fill-white dark:fill-[#1b1b1c]"
+                      className="stroke-black dark:stroke-white fill-[#f5f3ef] dark:fill-[#262522]"
                       stroke-width="5px"
                     />
                   </svg>
