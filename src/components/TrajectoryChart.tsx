@@ -31,7 +31,7 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
     const daysInMonth = Math.max(
       currentMonthData.length,
       lastMonthData.length,
-      2
+      2,
     );
     const xStep =
       daysInMonth > 1
@@ -80,17 +80,11 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
   // Last point of current data for the "pulse" dot
   const endPoint = pointsCurrent[pointsCurrent.length - 1];
 
-  const lineColor = trendDirection === "down" ? "#16a34a" : "#dc2626"; // green-600 : red-600
-  // Tailwind colors might not parse in SVG stroke, so using hex needed or currentColor class
   const strokeClassCurrent =
     trendDirection === "down"
       ? "text-green-600 dark:text-green-400"
       : "text-red-600 dark:text-red-400";
   const strokeClassLast = "text-gray-300 dark:text-zinc-600";
-  const fillClassDot =
-    trendDirection === "down"
-      ? "bg-green-600 dark:bg-green-400"
-      : "bg-red-600 dark:bg-red-400";
 
   return (
     <div className="w-full flex flex-col items-center">
@@ -110,15 +104,6 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
             strokeDasharray="4 4"
           />
 
-          {/* Y Axis Labels */}
-          <text
-            x={padding + 5}
-            y={padding - 5}
-            className="text-[10px] fill-gray-400 dark:fill-zinc-500 font-medium"
-          >
-            {currencySymbol}
-            {Math.round(maxY).toLocaleString()}
-          </text>
           <text
             x={padding + 5}
             y={chartHeight - padding - 5}
@@ -185,34 +170,21 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
             />
           )}
         </svg>
-
-        {/* Floating tooltip/label for the end point - REMOVED per user request */}
-        {/*
-        {endPoint && (
-          <motion.div
-             // ... removed ...
-          >
-             ...
-          </motion.div>
-        )}
-        */}
-      </div>
-
-      {/* Legend */}
-      <div className="flex gap-4 mt-2 text-xs font-medium text-gray-500 dark:text-gray-400">
-        <div className="flex items-center gap-1.5">
-          <div
-            className={`w-3 h-0.5 border-t-2 border-dashed border-gray-300 dark:border-zinc-600`}
-          ></div>
-          <span>Last Month</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div
-            className={`w-3 h-0.5 rounded-full ${
-              trendDirection === "down" ? "bg-green-500" : "bg-red-500"
-            }`}
-          ></div>
-          <span>This Month</span>
+        <div className="absolute -bottom-6 right-2 flex gap-3 text-[9px] font-medium text-gray-400 dark:text-zinc-600 pointer-events-none">
+          <div className="flex items-center gap-1">
+            <div
+              className={`w-2 h-0.5 border-t border-dashed border-gray-400 dark:border-zinc-500`}
+            ></div>
+            <span>Last Month</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div
+              className={`w-2 h-0.5 rounded-full ${
+                trendDirection === "down" ? "bg-green-500" : "bg-red-500"
+              }`}
+            ></div>
+            <span>This Month</span>
+          </div>
         </div>
       </div>
     </div>
