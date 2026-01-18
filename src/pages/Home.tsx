@@ -323,7 +323,7 @@ const Home = () => {
 
             {/* BACK FACE */}
             <div
-              className="absolute inset-0 liquid-card overflow-hidden rounded-[1.5rem] p-6 flex flex-col justify-between hover:scale-[1.01] transition-all duration-500 group bg-gradient-to-bl from-blue-100/60 via-transparent to-purple-200/80 dark:from-blue-800/40 dark:via-transparent dark:to-purple-800/40"
+              className="absolute inset-0 liquid-card overflow-hidden rounded-[1.5rem] p-6 flex flex-col justify-between hover:scale-[1.01] transition-all duration-500 group bg-gradient-to-bl from-blue-100/60 via-transparent to-accent/20 dark:from-blue-800/40 dark:via-transparent dark:to-accent/15"
               style={{
                 backfaceVisibility: "hidden",
                 transform: "rotateY(180deg)",
