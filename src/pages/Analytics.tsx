@@ -16,6 +16,7 @@ import {
 } from "../hooks/useExpenses";
 import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 import { getCategoryIcon } from "../utils/uiUtils";
+import { formatCurrency } from "../utils/formatUtils";
 import { format, subMonths } from "date-fns";
 import ArrowForwardOutline from "react-ionicons/lib/ArrowForwardOutline";
 import PieChartOutline from "react-ionicons/lib/PieChartOutline";
@@ -52,13 +53,6 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
-const formatCurrency = (val: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 0,
-  }).format(val);
-
 // Custom Tooltip Component for Recharts
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -86,14 +80,14 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
 
   // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
   // We default to the current month for the "Insight" view
-  // @ts-ignore
+  // We default to the current month for the "Insight" view
   const [targetDate, setTargetDate] = useState<Date>(new Date());
   const { expenses: monthlyExpenses, loading } = useExpensesForMonth(
     targetDate,
     stats,
     !statsLoading, // Wait for stats to load!
     false,
-    userId
+    userId,
   );
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -137,7 +131,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     // Calculate true totals from actual expenses
     const trueTotal = monthlyExpenses.reduce(
       (sum, item) => sum + Number(item.amount),
-      0
+      0,
     );
     const trueCount = monthlyExpenses.length;
 
@@ -146,7 +140,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     if (trueCount === 0 && cachedStat && cachedStat.count > 0) {
       console.warn(
         "Auto-Sync Aborted: Mismatch detected (Fetch likely failed). Stats:",
-        cachedStat
+        cachedStat,
       );
       return;
     }
@@ -183,7 +177,6 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     for (let i = 5; i >= 0; i--) {
       const date = subMonths(today, i);
       const key = format(date, "yyyy-MM");
-      // @ts-ignore
       const data = stats.find((s) => s.monthKey === key);
       last6.push({
         name: format(date, "MMM"),
@@ -197,7 +190,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   // B. Prepare Data for "Category Breakdown" (Current Month Only)
   const categoryData = useMemo(
     () => getCategoryBreakdown(monthlyExpenses),
-    [monthlyExpenses]
+    [monthlyExpenses],
   );
 
   // Current Month KPI (Calculated from detailed expenses for accuracy/liveliness)
@@ -216,7 +209,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     if (!loading && !statsLoading && monthlyExpenses.length > 0) {
       const total = monthlyExpenses.reduce(
         (sum, item) => sum + Number(item.amount),
-        0
+        0,
       );
       fetchAnalyticsInsights(monthlyExpenses, budget, total);
     }
@@ -268,7 +261,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       stats as any,
       monthlyExpenses,
       currentMonthTotal,
-      budget
+      budget,
     );
   }, [stats, monthlyExpenses, currentMonthTotal, budget, analyticsInsights]);
 
@@ -364,13 +357,13 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
                     currentMonthTotal / budget > 1
                       ? "text-red-500"
                       : currentMonthTotal / budget > 0.8
-                      ? "text-yellow-500"
-                      : "text-green-500"
+                        ? "text-yellow-500"
+                        : "text-green-500"
                   }`}
                 >
                   {Math.min(
                     Number(((currentMonthTotal / budget) * 100).toFixed(0)),
-                    999
+                    999,
                   )}
                   %
                 </span>
@@ -384,13 +377,13 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
                   currentMonthTotal / budget > 1
                     ? "bg-red-500"
                     : currentMonthTotal / budget > 0.8
-                    ? "bg-yellow-400"
-                    : "bg-green-500"
+                      ? "bg-yellow-400"
+                      : "bg-green-500"
                 }`}
                 style={{
                   width: `${Math.min(
                     (currentMonthTotal / budget) * 100,
-                    100
+                    100,
                   )}%`,
                 }}
               />
@@ -406,7 +399,6 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       )}
 
       <motion.div variants={item}>
-        {/* @ts-ignore */}
         <AiInsights insights={insights} isLoading={aiLoading} />
       </motion.div>
 
@@ -515,7 +507,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
           <ExpenseListModal
             title={selectedCategory}
             expenses={monthlyExpenses.filter(
-              (e) => e.category === selectedCategory
+              (e) => e.category === selectedCategory,
             )}
             onClose={handleCloseModal}
           />

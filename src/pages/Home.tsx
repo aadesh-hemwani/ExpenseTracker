@@ -34,7 +34,7 @@ const item = {
 const Home = () => {
   const { stats, loading: loadingStats } = useMonthlyStats();
   const { deleteExpense } = useExpenses();
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+
   const { user } = useAuth();
   const [showInsightSheet, setShowInsightSheet] = useState(false);
 

@@ -113,8 +113,16 @@ const CreditCard: React.FC<CreditCardProps> = ({
 
   return (
     <div
-      className="relative w-full max-w-[360px] mx-auto aspect-[1.586/1] cursor-pointer group"
+      className="relative w-full max-w-[360px] mx-auto aspect-[1.586/1] cursor-pointer group outline-none focus:ring-4 focus:ring-offset-2 focus:ring-accent/50 rounded-[1.5rem]"
       onClick={handleCardClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          handleCardClick();
+        }
+      }}
+      role="button"
+      tabIndex={0}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       style={{ perspective: "1000px" }}
