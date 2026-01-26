@@ -9,29 +9,36 @@
   --base-l: 100%;
 
   /* Semantic Colors (Light Mode) */
-  --bg-body: 0 0% 100%; /* Pure White body for cleaner look */
-  --bg-surface: 0 0% 98%; /* Slightly off-white surface */
+  --bg-body: 210 20% 98%; /* Cool Gray/Blue Tint */
+  --bg-surface: 0 0% 100%; /* Pure White */
   --bg-elevated: 0 0% 100%;
 
-  /* Premium "Ink" Grays (Less Blue, More Neutral) */
-  --text-primary: 0 0% 9%; /* #171717 - Sharp Black */
-  --text-secondary: 0 0% 40%; /* Neutral Gray */
-  --text-tertiary: 0 0% 64%; /* Lighter Gray */
+  /* Premium "Ink" Grays */
+  --text-primary: 220 40% 10%; /* Deep Blue-Black */
+  --text-secondary: 220 10% 40%; /* Cool Gray */
+  --text-tertiary: 220 10% 65%; /* Lighter Cool Gray */
 
-  --border-subtle: 0 0% 90%; /* Neutral Border */
+  --border-subtle: 220 15% 90%; /* Cool Gray Border */
 
   /* Accent Colors - Indigo default */
-  --accent-h: 239;
-  --accent-s: 84%;
-  --accent-l: 67%;
-  --accent-exact: #6366f1;
+  --accent-h: 245;
+  --accent-s: 80%;
+  --accent-l: 60%;
+  --accent-exact: #5c6ac4;
 }
 
 /* SF Pro Font Stack */
 body {
   font-family:
-    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
-    "Helvetica Neue", Helvetica, Arial, sans-serif;
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "SF Pro Display",
+    "SF Pro Text",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: hsl(var(--bg-body));
@@ -39,6 +46,13 @@ body {
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
+
+  /* Mesh Gradient Background (Subtle) */
+  background-image:
+    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, transparent 50%),
+    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0) 0, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, transparent 50%);
+  background-attachment: fixed;
 
   /* iOS Mobile Behaviors */
   touch-action: manipulation;
@@ -73,29 +87,41 @@ body {
 /* Dark Mode Overrides */
 .dark {
   /* OLED Friendly but with depth */
-  --bg-body: 0 0% 0%; /* True Black */
-  --bg-surface: 0 0% 10%; /* Dark Neutral */
-  --bg-elevated: 0 0% 14%;
+  --bg-body: 222 47% 4%; /* Dark Navy/Black */
+  --bg-surface: 222 47% 8%; /* Slightly Lighter */
+  --bg-elevated: 222 47% 12%;
 
-  --text-primary: 0 0% 98%; /* White */
-  --text-secondary: 0 0% 60%; /* Neutral Light Gray */
-  --text-tertiary: 0 0% 40%; /* Darker Gray */
+  --text-primary: 210 40% 98%; /* White-ish */
+  --text-secondary: 215 20% 65%; /* Cool Gray */
+  --text-tertiary: 215 15% 45%; /* Darker Cool Gray */
 
-  --border-subtle: 0 0% 16%;
+  --border-subtle: 217 33% 15%;
 }
 
 .dark body {
   background-color: hsl(var(--bg-body));
+  /* Dark Mode Gradient */
+  background-image:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(99, 102, 241, 0.15),
+      transparent 40%
+    ),
+    radial-gradient(circle at 80% 10%, rgba(236, 72, 153, 0.1), transparent 30%);
 }
 
 /* Utilities */
 @layer utilities {
   .glass {
-    @apply backdrop-blur-xl bg-white/70 dark:bg-neutral-900/70 border border-white/20 dark:border-white/10;
+    @apply backdrop-blur-xl bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/5 shadow-soft dark:shadow-none;
   }
 
   .glass-card {
-    @apply backdrop-blur-lg bg-surface/80 dark:bg-surface/60 border border-black/5 dark:border-white/10 shadow-sm;
+    @apply backdrop-blur-lg bg-white/70 dark:bg-gray-900/60 border border-white/50 dark:border-white/10 shadow-sm transition-all duration-300;
+  }
+
+  .glass-nav {
+    @apply backdrop-blur-2xl bg-white/80 dark:bg-black/60 border-t border-white/20 dark:border-white/10 shadow-lg;
   }
 
   .text-balance {
