@@ -113,7 +113,7 @@ const CreditCard: React.FC<CreditCardProps> = ({
 
   return (
     <div
-      className="relative w-full max-w-[360px] mx-auto aspect-[1.586/1] cursor-pointer group outline-none focus:ring-4 focus:ring-offset-2 focus:ring-accent/50 rounded-[1.5rem]"
+      className="relative w-full max-w-[360px] mx-auto aspect-[1.586/1] cursor-pointer group outline-none rounded-[1.5rem]"
       onClick={handleCardClick}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
@@ -302,7 +302,7 @@ const CreditCard: React.FC<CreditCardProps> = ({
             </span>
             <div className="flex items-baseline space-x-1">
               <span className="text-5xl font-light tracking-tight dark:text-white text-zinc-900 drop-shadow-sm font-sans">
-                <CountUp value={currentBalance} />
+                <CountUp value={Math.trunc(currentBalance)} />
               </span>
               <span className="text-xl dark:text-white/50 text-zinc-900/50 font-light">
                 .{currentBalance.toFixed(2).split(".")[1]}
