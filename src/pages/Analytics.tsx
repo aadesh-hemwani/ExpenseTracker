@@ -36,6 +36,7 @@ import { doc, getDoc } from "firebase/firestore";
 import Card from "../components/Card";
 import ExpenseListModal from "../components/ExpenseListModal";
 import AiInsights from "../components/AiInsights";
+import ChatAssistant from "../components/ChatAssistant";
 import { generateInsights } from "../utils/insights";
 
 const container = {
@@ -81,7 +82,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
   // We default to the current month for the "Insight" view
   // We default to the current month for the "Insight" view
-  const [targetDate, setTargetDate] = useState<Date>(new Date());
+  const [targetDate] = useState<Date>(new Date());
   const { expenses: monthlyExpenses, loading } = useExpensesForMonth(
     targetDate,
     stats,
@@ -400,6 +401,11 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
 
       <motion.div variants={item}>
         <AiInsights insights={insights} isLoading={aiLoading} />
+      </motion.div>
+
+      {/* Chat Assistant Card */}
+      <motion.div variants={item}>
+        <ChatAssistant userId={userId} monthlyLimit={budget} mode="card" />
       </motion.div>
 
       <motion.div variants={item} className="pt-2">

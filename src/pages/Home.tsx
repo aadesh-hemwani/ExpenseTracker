@@ -253,6 +253,9 @@ const Home = () => {
           )}
         </div>
       </section>
+
+      {/* AI Chat Assistant removed - moved to Analytics */
+      /* <ChatAssistant userId={user?.uid} monthlyLimit={user?.monthlyBudgetCap} /> */}
     </div>
   );
 };

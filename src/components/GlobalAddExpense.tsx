@@ -1,8 +1,9 @@
 import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
+import TimeOutline from "react-ionicons/lib/TimeOutline";
 import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
 import CheckmarkOutline from "react-ionicons/lib/CheckmarkOutline";
 import ColorWandOutline from "react-ionicons/lib/ColorWandOutline";
@@ -29,6 +30,7 @@ const GlobalAddExpense = memo(() => {
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasClipboard, setHasClipboard] = useState(false);
+  const controls = useAnimation();
 
   // Check clipboard permission/content when modal opens
   useEffect(() => {
@@ -141,12 +143,19 @@ const GlobalAddExpense = memo(() => {
         });
       }
     },
-    [amountStr]
+    [amountStr],
   );
 
   const handleSave = useCallback(async () => {
     const amountVal = parseFloat(amountStr);
-    if (amountVal <= 0) return;
+    if (amountVal <= 0) {
+      if (navigator.vibrate) navigator.vibrate(200);
+      controls.start({
+        x: [0, -10, 10, -10, 10, 0],
+        transition: { duration: 0.4 },
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -161,7 +170,7 @@ const GlobalAddExpense = memo(() => {
         note,
         date,
         localIcon,
-        localIcon ? "lucide" : undefined
+        localIcon ? "lucide" : undefined,
       );
 
       // 🎉 Fire Confetti!
@@ -240,7 +249,7 @@ const GlobalAddExpense = memo(() => {
       whileTap={{ scale: 0.95 }}
       onClick={handleSave}
       className={`${rowSpan} bg-accent rounded-3xl flex items-center justify-center text-white shadow-xl shadow-accent/25 active:brightness-110`}
-      disabled={isSubmitting || amountStr === "0"}
+      disabled={isSubmitting}
     >
       {isSubmitting ? (
         <IOSSpinner size={32} color="#fff" />
@@ -291,26 +300,62 @@ const GlobalAddExpense = memo(() => {
                 <div className="px-6 pb-4 pt-2 flex flex-col h-full space-y-4">
                   {/* Top Bar: Date & Close */}
                   <div className="flex justify-between items-center">
-                    <div className="relative">
-                      <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
-                        <CalendarOutline
-                          height="16px"
-                          width="16px"
-                          color="currentColor"
+                    <div className="flex items-center space-x-2">
+                      {/* Date Picker */}
+                      <div className="relative">
+                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
+                          <CalendarOutline
+                            height="16px"
+                            width="16px"
+                            color="currentColor"
+                          />
+                          <span>{format(date, "MMM dd, yyyy")}</span>
+                        </button>
+                        <input
+                          type="date"
+                          value={format(date, "yyyy-MM-dd")}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) return;
+                            const [y, m, d] = val.split("-").map(Number);
+                            setDate((prev) => {
+                              const newDate = new Date(y, m - 1, d);
+                              newDate.setHours(prev.getHours());
+                              newDate.setMinutes(prev.getMinutes());
+                              return newDate;
+                            });
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
-                        <span>{format(date, "MMM dd, yyyy")}</span>
-                      </button>
-                      <input
-                        type="date"
-                        value={format(date, "yyyy-MM-dd")}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (!val) return;
-                          const [y, m, d] = val.split("-").map(Number);
-                          setDate(new Date(y, m - 1, d));
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
+                      </div>
+
+                      {/* Time Picker */}
+                      <div className="relative">
+                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
+                          <TimeOutline
+                            height="16px"
+                            width="16px"
+                            color="currentColor"
+                          />
+                          <span>{format(date, "hh:mm a")}</span>
+                        </button>
+                        <input
+                          type="time"
+                          value={format(date, "HH:mm")}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) return;
+                            const [hours, minutes] = val.split(":").map(Number);
+                            setDate((prev) => {
+                              const newDate = new Date(prev);
+                              newDate.setHours(hours);
+                              newDate.setMinutes(minutes);
+                              return newDate;
+                            });
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                      </div>
                     </div>
                     <LiquidClose onClick={handleCloseModal} />
                   </div>
@@ -320,13 +365,19 @@ const GlobalAddExpense = memo(() => {
                     <span className="text-gray-400 dark:text-gray-500 text-sm font-medium tracking-widest uppercase mb-1">
                       {category}
                     </span>
-                    <div className="text-6xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline">
+                    <motion.div
+                      animate={controls}
+                      className="text-6xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline"
+                    >
                       <span className="text-3xl font-medium text-gray-400 dark:text-gray-600 mr-2">
                         ₹
                       </span>
                       {/* Custom formatting for the input string */}
                       {amountStr}
-                    </div>
+                      <span className="text-3xl font-medium opacity-0 ml-2">
+                        ₹
+                      </span>
+                    </motion.div>
                   </div>
 
                   {/* Categories Horizontal Scroll */}
@@ -449,7 +500,7 @@ const GlobalAddExpense = memo(() => {
             </div>
           )}
         </AnimatePresence>,
-        document.body
+        document.body,
       )}
     </>
   );

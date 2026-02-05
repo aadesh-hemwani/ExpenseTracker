@@ -123,11 +123,11 @@ const SwipeableExpenseItem = memo(
               </p>
               <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">
                 <span className="opacity-80">{t.category}</span>
-                {!hideDate && (
+                {!hideDate && t.date && (
                   <>
                     <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
                     <span className="opacity-80">
-                      {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
+                      {format(getDate(t.date), "MMM dd")}
                     </span>
                   </>
                 )}
@@ -135,10 +135,13 @@ const SwipeableExpenseItem = memo(
             </div>
           </div>
 
-          {/* Amount (Right Aligned) */}
-          <div className="text-right shrink-0">
+          {/* Amount & Time (Right Aligned) */}
+          <div className="text-right shrink-0 flex flex-col justify-center">
             <span className="font-bold text-gray-900 dark:text-white block text-lg tracking-tight">
               {formatCurrency(t.amount)}
+            </span>
+            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-0.5">
+              {t.date ? format(getDate(t.date), "hh:mm a") : ""}
             </span>
           </div>
         </motion.div>
