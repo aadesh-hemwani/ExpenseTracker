@@ -12,21 +12,42 @@
   <title>Expenses.</title>
   <meta name="description" content="Minimalist Expense Tracker" />
   <script>
-    console.log("Index HTML Executing");
+    // Global Error Handler for Mobile Debugging
     window.onerror = function (msg, url, line, col, error) {
-      console.error("Global Error:", msg, url, line, col, error);
+      const debugDiv = document.getElementById('debug-console') || createDebugDiv();
+      debugDiv.innerHTML += `<div style="color:red; border-bottom:1px solid #333; padding:4px;">
+        <strong>Error:</strong> ${msg}<br>
+        <small>${url}:${line}:${col}</small><br>
+        <small>${error?.stack || ''}</small>
+      </div>`;
     };
 
-    // Check if main.tsx is reachable
-    fetch('/src/main.tsx').then(response => {
-      console.log("Main.tsx fetch status:", response.status);
-    }).catch(err => console.error("Main.tsx fetch error:", err));
+    window.onunhandledrejection = function (event) {
+      const debugDiv = document.getElementById('debug-console') || createDebugDiv();
+      debugDiv.innerHTML += `<div style="color:orange; border-bottom:1px solid #333; padding:4px;">
+        <strong>Unhandled Rejection:</strong> ${event.reason}<br>
+      </div>`;
+    };
 
-    // Check DOM content after a small delay
-    setTimeout(() => {
-      const root = document.getElementById('root');
-      console.log("Root content:", root ? root.innerHTML.substring(0, 100) : "No root");
-    }, 3000);
+    // Capture logs too if needed
+    /*
+    const originalLog = console.log;
+    console.log = function(...args) {
+       originalLog.apply(console, args);
+       const debugDiv = document.getElementById('debug-console') || createDebugDiv();
+       debugDiv.innerHTML += `<div style="color:#aaa; border-bottom:1px solid #333; padding:4px;">
+        LOG: ${args.join(' ')}
+      </div>`;
+    }
+    */
+
+    function createDebugDiv() {
+      const div = document.createElement('div');
+      div.id = 'debug-console';
+      div.style.cssText = "position:fixed; top:0; left:0; width:100%; height:50vh; background:rgba(0,0,0,0.8); color:white; overflow:auto; z-index:10000; font-family:monospace; font-size:10px; pointer-events:none;";
+      document.body.appendChild(div);
+      return div;
+    }
   </script>
 </head>
 

@@ -63,11 +63,12 @@ export default defineConfig({
           }
         }
       },
+
       workbox: {
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-        globIgnores: ['**/*react-ionicons_lib*'],
+        globIgnores: ['**/assets/*-*.js'],
         navigateFallbackDenylist: [/^\/.*\.js$/, /^\/.*\.css$/, /^\/.*\.png$/, /^\/.*\.json$/]
       },
     })
@@ -84,6 +85,6 @@ export default defineConfig({
         }
       }
     },
-    chunkSizeWarningLimit: 1000
+    chunkSizeWarningLimit: 1000,
   }
 });

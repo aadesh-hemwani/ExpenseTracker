@@ -74,15 +74,31 @@ export const useMonthlyStats = (userId?: string) => {
               retryTimeout = setTimeout(connect, 2000);
             }
           }
+          if (safetyTimeout) clearTimeout(safetyTimeout);
         }
       );
+
+      // Safety Timeout for initial load
+      const safetyTimeout = setTimeout(() => {
+        if (isActive) {
+          console.warn("useMonthlyStats subscription timed out");
+          setLoading(false);
+        }
+      }, 8000);
+
+      const cleanup = () => {
+        unsubscribe();
+        clearTimeout(safetyTimeout);
+      };
+      // Store cleanup for top level use
+      return cleanup;
     };
 
-    connect();
+    const cleanupFn = connect();
 
     return () => {
       isActive = false;
-      if (unsubscribe) unsubscribe();
+      if (cleanupFn) cleanupFn();
       if (retryTimeout) clearTimeout(retryTimeout);
     };
   }, [targetUserId]);
@@ -149,17 +165,28 @@ export const useExpensesForMonth = (
           })) as Expense[];
           setExpenses(docs);
           setLoading(false);
+          if (timeoutId) clearTimeout(timeoutId);
         },
         (error) => {
           if (!isActive) return;
           console.error("Snapshot error:", error);
           setLoading(false);
+          if (timeoutId) clearTimeout(timeoutId);
         }
       );
+
+      // Safety Timeout
+      const timeoutId = setTimeout(() => {
+        if (isActive) {
+          console.warn("useExpensesForMonth subscription timed out");
+          setLoading(false);
+        }
+      }, 8000);
 
       return () => {
         isActive = false;
         unsubscribe();
+        clearTimeout(timeoutId);
       };
     }
   }, [targetUserId, date, subscribe]);
@@ -188,16 +215,16 @@ export const useExpensesForMonth = (
     const fetchHistorical = async () => {
       if (!isActive) return;
       setLoading(true);
-      
+
       // Only clear if we are switching to a completely different month
       // This prevents flashing when merely re-validating stats (like in Home screen)
       setExpenses((prev) => {
         if (prev.length > 0 && prev[0].date) {
-           const prevMonth = format(prev[0].date instanceof Date ? prev[0].date : new Date(), "yyyy-MM");
-           if (prevMonth !== monthKey) return [];
+          const prevMonth = format(prev[0].date instanceof Date ? prev[0].date : new Date(), "yyyy-MM");
+          if (prevMonth !== monthKey) return [];
         }
         return prev;
-      }); 
+      });
 
       const isSelf = targetUserId === user?.uid;
 
@@ -264,7 +291,7 @@ export const useExpensesForMonth = (
         console.error("Error fetching history:", err);
       } finally {
         if (isActive) {
-           setLoading(false);
+          setLoading(false);
         }
       }
     };
@@ -296,14 +323,14 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
 
     setLoading(true);
     const collectionRef = collection(db, "users", targetUserId, "expenses");
-    
+
     // Calculate start date: 1st day of (CurrentMonth - monthsLookback)
     const now = new Date();
     const startDate = new Date(now.getFullYear(), now.getMonth() - monthsLookback, 1);
     startDate.setHours(0, 0, 0, 0);
 
     const q = query(
-      collectionRef, 
+      collectionRef,
       where("date", ">=", Timestamp.fromDate(startDate)),
       orderBy("date", "desc")
     );
@@ -322,10 +349,20 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
       (error) => {
         console.error("useRecentExpenses error:", error);
         setLoading(false);
+        if (timeoutId) clearTimeout(timeoutId);
       }
     );
 
-    return () => unsubscribe();
+    // Safety Timeout
+    const timeoutId = setTimeout(() => {
+      console.warn("useRecentExpenses subscription timed out");
+      setLoading(false);
+    }, 8000);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timeoutId);
+    };
   }, [targetUserId, monthsLookback]);
 
   return { expenses, loading };
@@ -363,29 +400,29 @@ export const useExpenses = () => {
       const statDocRef = doc(statsRef, monthKey);
 
       // Create doc ref outside to get ID
-      const newExpenseRef = doc(collectionRef); 
+      const newExpenseRef = doc(collectionRef);
 
       try {
         const batch = writeBatch(db);
 
         // 1. Set Expense
         batch.set(newExpenseRef, {
-            amount: Number(amount),
-            category,
-            note,
-            date: finalDate,
-            ...(icon && { icon }),
-            ...(iconType && { iconType }),
+          amount: Number(amount),
+          category,
+          note,
+          date: finalDate,
+          ...(icon && { icon }),
+          ...(iconType && { iconType }),
         });
 
         // 2. Update Aggregated Stats (Optimistic with increment)
         batch.set(
-            statDocRef,
-            {
-              total: increment(Number(amount)),
-              count: increment(1),
-            },
-            { merge: true }
+          statDocRef,
+          {
+            total: increment(Number(amount)),
+            count: increment(1),
+          },
+          { merge: true }
         );
 
         await batch.commit();
@@ -399,18 +436,18 @@ export const useExpenses = () => {
   );
 
   const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
-      if(!user) return;
-      
-      const docRef = doc(db, "users", user.uid, "expenses", id);
-      try {
-          // Removes undefined values to avoid Firestore errors
-          const sanitized = Object.fromEntries(
-            Object.entries(updates).filter(([_, v]) => v !== undefined)
-          );
-          await setDoc(docRef, sanitized, { merge: true });
-      } catch(e) {
-          console.error("Failed to update expense", e);
-      }
+    if (!user) return;
+
+    const docRef = doc(db, "users", user.uid, "expenses", id);
+    try {
+      // Removes undefined values to avoid Firestore errors
+      const sanitized = Object.fromEntries(
+        Object.entries(updates).filter(([_, v]) => v !== undefined)
+      );
+      await setDoc(docRef, sanitized, { merge: true });
+    } catch (e) {
+      console.error("Failed to update expense", e);
+    }
   }, [user]);
 
   const deleteExpense = useCallback(
@@ -426,21 +463,21 @@ export const useExpenses = () => {
           let monthKey = "";
 
           if (amount !== undefined && date) {
-             // OPTIMIZATION: Use passed constraints to avoid reading the doc
-             // This is crucial if Read quota is exceeded
-             expenseAmount = Number(amount);
-             // Ensure we have a Date object
-             const d = date instanceof Timestamp ? date.toDate() : (date as Date);
-             monthKey = format(d, "yyyy-MM");
+            // OPTIMIZATION: Use passed constraints to avoid reading the doc
+            // This is crucial if Read quota is exceeded
+            expenseAmount = Number(amount);
+            // Ensure we have a Date object
+            const d = date instanceof Timestamp ? date.toDate() : (date as Date);
+            monthKey = format(d, "yyyy-MM");
           } else {
-             // Fallback: Read doc if we don't have details (Will fail if quota exceeded)
-             const expenseDoc = await transaction.get(docRef);
-             if (!expenseDoc.exists()) throw "Document does not exist!";
-             const data = expenseDoc.data();
-             expenseAmount = Number(data.amount);
-             const dateField = data.date;
-             const d = dateField instanceof Timestamp ? dateField.toDate() : new Date(dateField);
-             monthKey = format(d, "yyyy-MM");
+            // Fallback: Read doc if we don't have details (Will fail if quota exceeded)
+            const expenseDoc = await transaction.get(docRef);
+            if (!expenseDoc.exists()) throw "Document does not exist!";
+            const data = expenseDoc.data();
+            expenseAmount = Number(data.amount);
+            const dateField = data.date;
+            const d = dateField instanceof Timestamp ? dateField.toDate() : new Date(dateField);
+            monthKey = format(d, "yyyy-MM");
           }
 
           const statDocRef = doc(statsRef, monthKey);
@@ -451,12 +488,12 @@ export const useExpenses = () => {
           // 2. Decrement Stats
           if (expenseAmount !== undefined && monthKey) {
             transaction.set(
-                statDocRef,
-                {
+              statDocRef,
+              {
                 total: increment(-expenseAmount),
                 count: increment(-1),
-                },
-                { merge: true }
+              },
+              { merge: true }
             );
           }
         });
@@ -476,7 +513,7 @@ export const useExpenses = () => {
     ) => {
       const uid = targetUserId || user?.uid;
       if (!uid) return;
-      
+
       const statsRef = collection(db, "users", uid, "stats");
       const statDocRef = doc(statsRef, monthKey);
       try {

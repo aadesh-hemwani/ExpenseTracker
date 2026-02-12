@@ -3,6 +3,7 @@ import { ReactElement, lazy, Suspense } from "react";
 // Optimized Dynamic Lucide Import
 import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { ICON_MAP } from "./iconMap";
+import { Activity, Briefcase, Car, Grid2x2, Receipt, ShoppingCart, Ticket, Utensils } from "lucide-react";
 
 // Wrapper for lazy loaded icons
 const DynamicLucideIcon = ({
@@ -131,20 +132,20 @@ export const getCategoryIcon = (
   // 4. Default Category Matching
   switch (cat) {
     case "Food":
-      return <DynamicLucideIcon name="utensils" color={color} size={sizeNum} />;
+      return <Utensils color={color} size={sizeNum} />;
     case "Shopping":
-      return <DynamicLucideIcon name="shopping-cart" color={color} size={sizeNum} />;
+      return <ShoppingCart color={color} size={sizeNum} />;
     case "Transport":
-      return <DynamicLucideIcon name="car" color={color} size={sizeNum} />;
+      return <Car color={color} size={sizeNum} />;
     case "Entertainment":
-      return <DynamicLucideIcon name="ticket" color={color} size={sizeNum} />;
+      return <Ticket color={color} size={sizeNum} />;
     case "Health":
-      return <DynamicLucideIcon name="activity" color={color} size={sizeNum} />;
+      return <Activity color={color} size={sizeNum} />;
     case "Bills":
-      return <DynamicLucideIcon name="receipt" color={color} size={sizeNum} />;
+      return <Receipt color={color} size={sizeNum} />;
     case "Misc":
-      return <DynamicLucideIcon name="grid-2x2" color={color} size={sizeNum} />;
+      return <Grid2x2 color={color} size={sizeNum} />;
     default:
-      return <DynamicLucideIcon name="briefcase" color={color} size={sizeNum} />;
+      return <Briefcase color={color} size={sizeNum} />;
   }
 };
