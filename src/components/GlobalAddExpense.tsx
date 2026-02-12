@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import TimeOutline from "react-ionicons/lib/TimeOutline";
 import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
-import CheckmarkOutline from "react-ionicons/lib/CheckmarkOutline";
+
 import ColorWandOutline from "react-ionicons/lib/ColorWandOutline";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
@@ -216,46 +216,28 @@ const GlobalAddExpense = memo(() => {
   const NumKey = ({
     val,
     label,
-    primary = false,
+    transparent = false,
   }: {
     val: string;
     label?: React.ReactNode;
-    primary?: boolean;
+    transparent?: boolean;
   }) => (
     <motion.button
-      whileTap={{ scale: 0.92 }}
-      transition={{ duration: 0.05 }} // Instant response
+      whileTap={{
+        scale: 0.95,
+        backgroundColor: transparent ? "transparent" : "rgba(255,255,255,0.15)",
+      }}
+      transition={{ duration: 0.05 }}
       onClick={() => {
-        // Haptic feedback
         if (navigator.vibrate) navigator.vibrate(10);
         val === "DONE" ? handleSave() : handleNumpadPress(val);
       }}
       className={`
-        relative h-20 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
-        ${
-          primary
-            ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 active:shadow-none"
-            : "bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
-        }
+        relative h-16 rounded-[1rem] flex items-center justify-center text-3xl font-normal select-none touch-manipulation transition-colors duration-200
+        ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white"}
       `}
     >
       {label || val}
-    </motion.button>
-  );
-
-  // Submit Button Component
-  const SubmitButton = ({ rowSpan }: { rowSpan: string }) => (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={handleSave}
-      className={`${rowSpan} bg-accent rounded-3xl flex items-center justify-center text-white shadow-xl shadow-accent/25 active:brightness-110`}
-      disabled={isSubmitting}
-    >
-      {isSubmitting ? (
-        <IOSSpinner size={32} color="#fff" />
-      ) : (
-        <CheckmarkOutline height="32px" width="32px" color="#fff" />
-      )}
     </motion.button>
   );
 
@@ -428,7 +410,7 @@ const GlobalAddExpense = memo(() => {
                   </div>
 
                   {/* Note Input (Optional) */}
-                  <div className="relative px-2">
+                  <div className="relative w-full">
                     <input
                       type="text"
                       value={note}
@@ -438,63 +420,73 @@ const GlobalAddExpense = memo(() => {
                     />
                   </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="grid grid-cols-4 gap-2 mt-auto"
-                  >
-                    <NumKey val="1" />
-                    <NumKey val="2" />
-                    <NumKey val="3" />
-                    <NumKey
-                      val="BACKSPACE"
-                      label={
-                        <BackspaceOutline
-                          height="24px"
-                          width="24px"
-                          color="currentColor"
-                        />
-                      }
-                    />
+                  {/* Numpad & Actions Container */}
+                  <div className="mt-auto pb-6 w-full flex flex-col gap-4">
+                    {/* Grid */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="grid grid-cols-3 gap-3"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                        <NumKey key={num} val={num.toString()} />
+                      ))}
+                      <NumKey
+                        val="."
+                        transparent
+                        label={
+                          <span className="text-2xl font-bold pb-2">.</span>
+                        }
+                      />
+                      <NumKey val="0" />
+                      <NumKey
+                        val="BACKSPACE"
+                        transparent
+                        label={
+                          <BackspaceOutline
+                            height="28px"
+                            width="28px"
+                            color="currentColor"
+                          />
+                        }
+                      />
+                    </motion.div>
 
-                    <NumKey val="4" />
-                    <NumKey val="5" />
-                    <NumKey val="6" />
-
-                    {/* Conditional Magic Wand or Submit */}
-                    {hasClipboard ? (
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => {
-                          if (navigator.vibrate) navigator.vibrate(10);
-                          handleSmartPaste();
-                        }}
-                        className="relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200 bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
-                      >
-                        <ColorWandOutline
-                          height="24px"
-                          width="24px"
-                          color="currentColor"
-                        />
-                      </motion.button>
-                    ) : (
-                      <SubmitButton rowSpan="row-span-3" />
-                    )}
-
-                    <NumKey val="7" />
-                    <NumKey val="8" />
-                    <NumKey val="9" />
-
-                    {/* Submit Button (only if Magic Wand is present) */}
-                    {hasClipboard && <SubmitButton rowSpan="row-span-2" />}
-
-                    <div className="col-span-1" />
-                    {/* Empty spacer or custom key */}
-
-                    <NumKey val="0" />
-                    <NumKey val="." />
-                  </motion.div>
+                    {/* Action Button */}
+                    <div className="mt-2">
+                      {hasClipboard ? (
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            if (navigator.vibrate) navigator.vibrate(10);
+                            handleSmartPaste();
+                          }}
+                          className="w-full py-4 rounded-[1.2rem] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 flex items-center justify-center text-white shadow-lg text-lg font-bold gap-2 transition-all"
+                        >
+                          <ColorWandOutline
+                            color="#fff"
+                            height="24px"
+                            width="24px"
+                          />
+                          <span>Auto-Fill from Clipboard</span>
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSave}
+                          disabled={isSubmitting}
+                          className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
+                        >
+                          {isSubmitting ? (
+                            <IOSSpinner size={24} color="#fff" />
+                          ) : (
+                            "Add Expense"
+                          )}
+                        </motion.button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </div>
