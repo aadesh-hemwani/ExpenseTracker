@@ -1,5 +1,5 @@
 import React from "react";
-import ChevronBackOutline from "react-ionicons/lib/ChevronBackOutline";
+import { ChevronLeft } from "lucide-react";
 import "./LiquidGlass.css";
 
 interface LiquidBackProps {
@@ -17,7 +17,7 @@ export const LiquidBack: React.FC<LiquidBackProps> = ({
       className={`liquid-close-btn ${className}`}
       aria-label="Go Back"
     >
-      <ChevronBackOutline height="24px" width="24px" />
+      <ChevronLeft size={24} />
     </button>
   );
 };

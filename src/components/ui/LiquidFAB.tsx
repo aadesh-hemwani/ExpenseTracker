@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import Add from "react-ionicons/lib/Add";
+import { Plus } from "lucide-react";
 import "./LiquidGlass.css";
 
 interface LiquidFABProps {
@@ -19,7 +19,7 @@ export const LiquidFAB: React.FC<LiquidFABProps> = ({ onClick, icon }) => {
     >
       <div className="liquid-fab-blob" />
       <div className="relative z-10 text-white">
-        {icon || <Add color="#ffffff" height="32px" width="32px" />}
+        {icon || <Plus color="#ffffff" size={32} />}
       </div>
     </motion.button>
   );

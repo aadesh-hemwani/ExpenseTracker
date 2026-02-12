@@ -15,8 +15,16 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       setIsVisible(false);
     }, 2000); // 2s duration
 
-    return () => clearTimeout(timer);
-  }, []);
+    // Safety: ensure we call onComplete even if animation fails
+    const safetyTimer = setTimeout(() => {
+      if (onComplete) onComplete();
+    }, 2500);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(safetyTimer);
+    };
+  }, [onComplete]);
 
   return (
     <AnimatePresence mode="wait" onExitComplete={onComplete}>

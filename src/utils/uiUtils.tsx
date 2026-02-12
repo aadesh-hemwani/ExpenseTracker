@@ -1,17 +1,25 @@
-import { ReactElement } from "react";
-import FastFoodOutline from "react-ionicons/lib/FastFoodOutline";
-import CartOutline from "react-ionicons/lib/CartOutline";
-import CarOutline from "react-ionicons/lib/CarOutline";
-import TicketOutline from "react-ionicons/lib/TicketOutline";
-import CashOutline from "react-ionicons/lib/CashOutline";
-import GridOutline from "react-ionicons/lib/GridOutline";
-import MedkitOutline from "react-ionicons/lib/MedkitOutline";
-import BriefcaseOutline from "react-ionicons/lib/BriefcaseOutline";
+import { ReactElement, lazy, Suspense } from "react";
 
-// Dynamic Lucide Import (Imports all icons, bundle size tradeoff accepted for AI flexibility)
-import * as LucideIcons from "lucide-react";
-
+// Optimized Dynamic Lucide Import
+import dynamicIconImports from "lucide-react/dynamicIconImports";
 import { ICON_MAP } from "./iconMap";
+
+// Wrapper for lazy loaded icons
+const DynamicLucideIcon = ({
+  name,
+  ...props
+}: {
+  name: string;
+  [key: string]: any;
+}) => {
+  const Icon = lazy(dynamicIconImports[name as keyof typeof dynamicIconImports]);
+  // Fallback while loading - can be a simple spinner or empty div
+  return (
+    <Suspense fallback={<div className="w-5 h-5 bg-gray-200 rounded-full animate-pulse" />}>
+      <Icon {...props} />
+    </Suspense>
+  );
+};
 
 export const findLucideIcon = (text: string): string | undefined => {
   if (!text) return undefined;
@@ -31,20 +39,18 @@ export const findLucideIcon = (text: string): string | undefined => {
       return ICON_MAP[word];
     }
 
-    // 4. Check Direct PascalCase match (e.g. "Pizza")
-    const pascal = word.charAt(0).toUpperCase() + word.slice(1);
-    // @ts-ignore
-    if (LucideIcons[pascal]) {
-      return pascal;
+    // 4. Check Direct Match in dynamic imports
+    const lowerWord = word.toLowerCase();
+
+    // Check if the word directly matches a key
+    if (lowerWord in dynamicIconImports) {
+      return lowerWord;
     }
 
-    // 5. Check Plural/Singular (Simple)
-    if (word.endsWith("s")) {
-      const singular = word.slice(0, -1);
-      const pascalSingular =
-        singular.charAt(0).toUpperCase() + singular.slice(1);
-      // @ts-ignore
-      if (LucideIcons[pascalSingular]) return pascalSingular;
+    // Try singular
+    if (lowerWord.endsWith("s")) {
+      const singular = lowerWord.slice(0, -1);
+      if (singular in dynamicIconImports) return singular;
     }
   }
 
@@ -69,6 +75,7 @@ export const CATEGORY_COLORS: Record<string, string> = {
   Entertainment: "#ec4899", // pink-500
   Health: "#22c55e", // green-500
   Misc: "#6b7280", // gray-500
+  Other: "#6b7280", // gray-500
 };
 
 export const getCategoryIcon = (
@@ -91,60 +98,53 @@ export const getCategoryIcon = (
   // 2. Render Lucide Icon if available
   if (resolvedIconName) {
     if (!iconType || iconType === "lucide") {
-      const cleanName = resolvedIconName.trim();
-      // @ts-ignore
-      let LucideIcon = LucideIcons[cleanName];
+      let cleanName = resolvedIconName.trim();
 
-      // Fallback: Try PascalCase
-      if (!LucideIcon) {
-        const pascalName =
-          cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase();
-        // @ts-ignore
-        LucideIcon = LucideIcons[pascalName];
-      }
-
-      // Fallback: Case Insensitive
-      if (!LucideIcon) {
-        const foundKey = Object.keys(LucideIcons).find(
-          (k) => k.toLowerCase() === cleanName.toLowerCase()
-        );
-        if (foundKey) {
-          // @ts-ignore
-          LucideIcon = LucideIcons[foundKey];
+      const allKeys = Object.keys(dynamicIconImports);
+      // Try exact match
+      if (!(cleanName in dynamicIconImports)) {
+        // Try lowercase match
+        const lowerName = cleanName.toLowerCase();
+        if (lowerName in dynamicIconImports) {
+          cleanName = lowerName;
+        } else {
+          // Try to find a key that matches case-insensitively (more expensive but safe)
+          const found = allKeys.find(k => k.toLowerCase() === cleanName.toLowerCase() || k.replace(/-/g, '').toLowerCase() === cleanName.toLowerCase());
+          if (found) cleanName = found;
+          else {
+            // Try converting PascalCase to kebab-case
+            const kebab = cleanName.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+            if (kebab in dynamicIconImports) cleanName = kebab;
+          }
         }
       }
 
-      if (LucideIcon) {
+      if (cleanName in dynamicIconImports) {
         const sizeNum = parseInt(size.replace("px", "")) || 20;
-        return <LucideIcon color={color} size={sizeNum} />;
+        return <DynamicLucideIcon name={cleanName} color={color} size={sizeNum} />;
       }
     }
-    // Future: Handle 'emoji' or 'ion' explicitly here
   }
 
-  const commonProps = {
-    height: size,
-    width: size,
-    color: color,
-  };
+  const sizeNum = parseInt(size.replace("px", "")) || 20;
 
   // 4. Default Category Matching
   switch (cat) {
     case "Food":
-      return <FastFoodOutline {...commonProps} />;
+      return <DynamicLucideIcon name="utensils" color={color} size={sizeNum} />;
     case "Shopping":
-      return <CartOutline {...commonProps} />;
+      return <DynamicLucideIcon name="shopping-cart" color={color} size={sizeNum} />;
     case "Transport":
-      return <CarOutline {...commonProps} />;
+      return <DynamicLucideIcon name="car" color={color} size={sizeNum} />;
     case "Entertainment":
-      return <TicketOutline {...commonProps} />;
+      return <DynamicLucideIcon name="ticket" color={color} size={sizeNum} />;
     case "Health":
-      return <MedkitOutline {...commonProps} />;
+      return <DynamicLucideIcon name="activity" color={color} size={sizeNum} />;
     case "Bills":
-      return <CashOutline {...commonProps} />;
+      return <DynamicLucideIcon name="receipt" color={color} size={sizeNum} />;
     case "Misc":
-      return <GridOutline {...commonProps} />;
+      return <DynamicLucideIcon name="grid-2x2" color={color} size={sizeNum} />;
     default:
-      return <BriefcaseOutline {...commonProps} />;
+      return <DynamicLucideIcon name="briefcase" color={color} size={sizeNum} />;
   }
 };

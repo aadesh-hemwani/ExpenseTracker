@@ -1,8 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
-import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
 import TrajectoryChart from "./TrajectoryChart";
 import { LiquidClose } from "./ui/LiquidClose";
@@ -93,24 +92,22 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                     </p>
 
                     <div
-                      className={`p-4 rounded-2xl ${
-                        data.trendDirection === "down"
+                      className={`p-4 rounded-2xl ${data.trendDirection === "down"
                           ? "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400"
                           : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
-                          className={`p-3 rounded-full shrink-0 ${
-                            data.trendDirection === "down"
+                          className={`p-3 rounded-full shrink-0 ${data.trendDirection === "down"
                               ? "bg-green-100 dark:bg-green-500/20"
                               : "bg-red-100 dark:bg-red-500/20"
-                          }`}
+                            }`}
                         >
                           {data.trendDirection === "down" ? (
-                            <TrendingDownOutline height="24px" width="24px" />
+                            <TrendingDown size={24} />
                           ) : (
-                            <TrendingUpOutline height="24px" width="24px" />
+                            <TrendingUp size={24} />
                           )}
                         </div>
                         <div>

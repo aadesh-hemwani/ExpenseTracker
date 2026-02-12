@@ -1,10 +1,5 @@
 import { endOfMonth } from 'date-fns';
-import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
-import DiscOutline from "react-ionicons/lib/DiscOutline";
-import BulbOutline from "react-ionicons/lib/BulbOutline";
-import PieChartOutline from "react-ionicons/lib/PieChartOutline";
-import WarningOutline from "react-ionicons/lib/WarningOutline";
-import CheckmarkCircleOutline from "react-ionicons/lib/CheckmarkCircleOutline";
+import { TrendingUp, Disc, Lightbulb, PieChart, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Expense } from '../types';
 import { MonthlyData } from './analyticsHelpers';
 
@@ -57,7 +52,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
             insights.push({
                 id: 'budget-exceeded',
                 priority: 1,
-                icon: WarningOutline,
+                icon: AlertTriangle,
                 title: 'Budget Exceeded',
                 text: `You've exceeded your budget by ₹${Math.abs(remaining).toLocaleString()}. Review your ${topCategory?.name || 'recent'} expenses immediately.`,
                 color: 'text-red-600 dark:text-red-400',
@@ -69,17 +64,17 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
             // If they are on track to exceed, warn them.
             // Or just generic "Reduce by X"
             // Let's enable "Reduce X by Y"
-            
+
             // Just calculated "available per day" vs "current burn rate"? 
             // Simpler: "Reduce by ₹X/day to stay within budget."
-            
+
             // remaining / daysRemaining
             const dailyBudgetLeft = remaining / daysRemaining;
-            
+
             insights.push({
                 id: 'budget-warning',
                 priority: 1,
-                icon: WarningOutline,
+                icon: AlertTriangle,
                 title: 'Budget Alert',
                 text: `You have ₹${remaining.toLocaleString()} left. Limit spending to ₹${Math.round(dailyBudgetLeft).toLocaleString()}/day to stay on track.`,
                 color: 'text-orange-600 dark:text-orange-400',
@@ -94,16 +89,16 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
     if (dayOfMonth > 5) { // Need some data
         const dailyAverage = currentMonthTotal / dayOfMonth;
         const projectedTotal = dailyAverage * daysInMonth; // Simple linear projection
-        
+
         if (budget > 0 && projectedTotal > budget) {
-             const excess = projectedTotal - budget;
-             // Actionable advice
-             const reduceAmount = Math.round(excess / daysRemaining);
-             
-             insights.push({
+            const excess = projectedTotal - budget;
+            // Actionable advice
+            const reduceAmount = Math.round(excess / daysRemaining);
+
+            insights.push({
                 id: 'forecast-exceed',
                 priority: 2,
-                icon: TrendingUpOutline,
+                icon: TrendingUp,
                 title: 'Pace Warning',
                 text: `At this pace, you'll exceed budget by ₹${Math.round(excess).toLocaleString()}. Reduce ${topCategory?.name ? topCategory.name : 'spending'} by ₹${reduceAmount}/day.`,
                 color: 'text-amber-600 dark:text-amber-400',
@@ -111,10 +106,10 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
             });
         } else if (projectedTotal > 1000) {
             // Just informational if no budget or under budget
-             insights.push({
+            insights.push({
                 id: 'forecast-info',
                 priority: 4,
-                icon: DiscOutline,
+                icon: Disc,
                 title: 'Forecast',
                 text: `On track to spend ≈₹${Math.round(projectedTotal / 100) * 100} by month end.`,
                 color: 'text-blue-600 dark:text-blue-400',
@@ -127,11 +122,11 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
     // 3. CATEGORY DOMINANCE (Priority: 3 - Actionable)
     // --------------------------------------------------------------------------
     if (topCategory && monthlyExpenses.length > 5) {
-         if ((topCategory.value / currentMonthTotal) > 0.50) {
+        if ((topCategory.value / currentMonthTotal) > 0.50) {
             insights.push({
                 id: 'top-cat',
                 priority: 3,
-                icon: PieChartOutline,
+                icon: PieChart,
                 title: 'Spending Pattern',
                 text: `${topCategory.name} makes up ${Math.round((topCategory.value / currentMonthTotal) * 100)}% of costs. Consider setting a limit for this category.`,
                 color: 'text-purple-600 dark:text-purple-400',
@@ -146,14 +141,14 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
     if (stats.length > 2 && dayOfMonth > 15) {
         const avgSpend = stats.reduce((acc, s) => acc + Number(s.total), 0) / stats.length;
         if (currentMonthTotal < avgSpend * 0.9) { // 10% less
-             // Project it
+            // Project it
             const projected = (currentMonthTotal / dayOfMonth) * daysInMonth;
             if (projected < avgSpend) {
                 const savings = avgSpend - projected;
                 insights.push({
                     id: 'low-spend',
                     priority: 5,
-                    icon: CheckmarkCircleOutline,
+                    icon: CheckCircle2,
                     title: 'Great Job',
                     text: `You're on track to save ₹${Math.round(savings).toLocaleString()} compared to your average month!`,
                     color: 'text-emerald-600 dark:text-emerald-400',
@@ -170,7 +165,7 @@ export const generateInsights = (stats: MonthlyData[], monthlyExpenses: Expense[
         insights.push({
             id: 'generic',
             priority: 99,
-            icon: BulbOutline,
+            icon: Lightbulb,
             title: 'Insights',
             text: "Your spending is balanced. Continue tracking to get smarter recommendations.",
             color: 'text-indigo-600 dark:text-indigo-400',

@@ -1,4 +1,4 @@
-import CloseOutline from "react-ionicons/lib/CloseOutline";
+import { X } from "lucide-react";
 import "./LiquidGlass.css";
 
 interface LiquidCloseProps {
@@ -16,7 +16,7 @@ export const LiquidClose: React.FC<LiquidCloseProps> = ({
       className={`liquid-close-btn ${className}`}
       aria-label="Close"
     >
-      <CloseOutline height="20px" width="20px" />
+      <X size={20} />
     </button>
   );
 };

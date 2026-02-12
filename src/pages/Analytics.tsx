@@ -18,14 +18,16 @@ import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import { format, subMonths } from "date-fns";
-import ArrowForwardOutline from "react-ionicons/lib/ArrowForwardOutline";
-import PieChartOutline from "react-ionicons/lib/PieChartOutline";
-import BarChartOutline from "react-ionicons/lib/BarChartOutline";
-import WarningOutline from "react-ionicons/lib/WarningOutline";
-import TrendingUpOutline from "react-ionicons/lib/TrendingUpOutline";
-import TrendingDownOutline from "react-ionicons/lib/TrendingDownOutline";
-import CheckmarkCircleOutline from "react-ionicons/lib/CheckmarkCircleOutline";
-import BulbOutline from "react-ionicons/lib/BulbOutline";
+import {
+  ArrowRight,
+  PieChart,
+  BarChart3,
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  CheckCircle2,
+  Lightbulb
+} from "lucide-react";
 import { useAiInsights } from "../hooks/useAiInsights";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
@@ -81,7 +83,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   // 2. Get Detailed Expenses for Current Month (for Category Breakdown)
   // We default to the current month for the "Insight" view
   // We default to the current month for the "Insight" view
-  const [targetDate, setTargetDate] = useState<Date>(new Date());
+  const [targetDate] = useState<Date>(new Date());
   const { expenses: monthlyExpenses, loading } = useExpensesForMonth(
     targetDate,
     stats,
@@ -218,28 +220,28 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const insights = useMemo(() => {
     if (analyticsInsights.length > 0) {
       return analyticsInsights.map((ai, index) => {
-        let icon = BulbOutline;
+        let icon = Lightbulb;
         let color = "text-indigo-600 dark:text-indigo-400";
         let bg = "bg-indigo-50 dark:bg-indigo-500/10";
 
         if (ai.type === "warning") {
-          icon = WarningOutline;
+          icon = AlertTriangle;
           color = "text-red-600 dark:text-red-400";
           bg = "bg-red-50 dark:bg-red-500/10";
         } else if (ai.type === "trendingUp") {
-          icon = TrendingUpOutline;
+          icon = TrendingUp;
           color = "text-amber-600 dark:text-amber-400";
           bg = "bg-amber-50 dark:bg-amber-500/10";
         } else if (ai.type === "trendingDown") {
-          icon = TrendingDownOutline;
+          icon = TrendingDown;
           color = "text-emerald-600 dark:text-emerald-400";
           bg = "bg-emerald-50 dark:bg-emerald-500/10";
         } else if (ai.type === "success") {
-          icon = CheckmarkCircleOutline;
+          icon = CheckCircle2;
           color = "text-green-600 dark:text-green-400";
           bg = "bg-green-50 dark:bg-green-500/10";
         } else if (ai.type === "category") {
-          icon = PieChartOutline;
+          icon = PieChart;
           color = "text-purple-600 dark:text-purple-400";
           bg = "bg-purple-50 dark:bg-purple-500/10";
         }
@@ -298,11 +300,11 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
             <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
               This Month
             </span>
-            <ArrowForwardOutline
+            <ArrowRight
               color="rgba(255,255,255,0.6)"
-              height="14px"
-              width="14px"
-              cssClasses="-rotate-45 stroke-[1.5]"
+              size={14}
+              className="-rotate-45"
+              strokeWidth={1.5}
             />
           </div>
           <div className="text-4xl font-bold">
@@ -315,11 +317,10 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
             <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
               Top Category
             </span>
-            <PieChartOutline
+            <PieChart
               color="var(--color-accent)"
-              height="16px"
-              width="16px"
-              cssClasses="text-accent"
+              size={16}
+              className="text-accent"
             />
           </div>
           <div className="text-xl font-bold text-gray-900 dark:text-white truncate">
@@ -353,13 +354,12 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
               </div>
               <div className="text-right">
                 <span
-                  className={`text-xl font-bold ${
-                    currentMonthTotal / budget > 1
-                      ? "text-red-500"
-                      : currentMonthTotal / budget > 0.8
-                        ? "text-yellow-500"
-                        : "text-green-500"
-                  }`}
+                  className={`text-xl font-bold ${currentMonthTotal / budget > 1
+                    ? "text-red-500"
+                    : currentMonthTotal / budget > 0.8
+                      ? "text-yellow-500"
+                      : "text-green-500"
+                    }`}
                 >
                   {Math.min(
                     Number(((currentMonthTotal / budget) * 100).toFixed(0)),
@@ -373,13 +373,12 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
             {/* Progress Bar Container */}
             <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-3">
               <div
-                className={`h-full rounded-full transition-all duration-1000 ease-out ${
-                  currentMonthTotal / budget > 1
-                    ? "bg-red-500"
-                    : currentMonthTotal / budget > 0.8
-                      ? "bg-yellow-400"
-                      : "bg-green-500"
-                }`}
+                className={`h-full rounded-full transition-all duration-1000 ease-out ${currentMonthTotal / budget > 1
+                  ? "bg-red-500"
+                  : currentMonthTotal / budget > 0.8
+                    ? "bg-yellow-400"
+                    : "bg-green-500"
+                  }`}
                 style={{
                   width: `${Math.min(
                     (currentMonthTotal / budget) * 100,
@@ -406,11 +405,10 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
         {/* Monthly Trend Chart */}
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-            <BarChartOutline
+            <BarChart3
               color="var(--color-accent)"
-              height="20px"
-              width="20px"
-              cssClasses="text-accent"
+              size={20}
+              className="text-accent"
             />
           </div>
           <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">
@@ -474,11 +472,10 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
             <button
               key={index}
               onClick={() => handleCategoryClick(cat.name)}
-              className={`w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
-                index !== categoryData.length - 1
-                  ? "border-b border-gray-100 dark:border-white/5"
-                  : ""
-              }`}
+              className={`w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${index !== categoryData.length - 1
+                ? "border-b border-gray-100 dark:border-white/5"
+                : ""
+                }`}
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/5">

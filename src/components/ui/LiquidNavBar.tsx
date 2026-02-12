@@ -46,7 +46,7 @@ const LiquidFilter = () => (
 );
 
 interface LiquidNavBarProps {
-  items: { icon: any; activeIcon?: any; path: string; label?: string }[];
+  items: { icon: any; path: string; label?: string }[];
 }
 
 export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
@@ -97,7 +97,6 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
 
           {items.map((item, index) => {
             const Icon = item.icon;
-            const ActiveIcon = item.activeIcon || Icon;
             const isActive = index === activeIndex;
 
             return (
@@ -111,21 +110,12 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
                   } as React.CSSProperties
                 }
               >
-                {isActive ? (
-                  <ActiveIcon
-                    color={activeColor}
-                    height="28px"
-                    width="28px"
-                    cssClasses="liquid-nav__icon"
-                  />
-                ) : (
-                  <Icon
-                    color="currentColor"
-                    height="28px"
-                    width="28px"
-                    cssClasses="liquid-nav__icon"
-                  />
-                )}
+                <Icon
+                  color={isActive ? activeColor : "currentColor"}
+                  size={28}
+                  className={`liquid-nav__icon`}
+                  strokeWidth={isActive ? 2.5 : 2}
+                />
                 <span>{item.label}</span>
               </div>
             );

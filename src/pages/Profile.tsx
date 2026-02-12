@@ -4,15 +4,17 @@ import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import LogOutOutline from "react-ionicons/lib/LogOutOutline";
-import SaveOutline from "react-ionicons/lib/SaveOutline";
-import Person from "react-ionicons/lib/Person";
-import WalletOutline from "react-ionicons/lib/WalletOutline";
-import ColorPaletteOutline from "react-ionicons/lib/ColorPaletteOutline";
-import Checkmark from "react-ionicons/lib/Checkmark";
-import ShieldCheckmarkOutline from "react-ionicons/lib/ShieldCheckmarkOutline";
-import MoonOutline from "react-ionicons/lib/MoonOutline";
-import SunnyOutline from "react-ionicons/lib/SunnyOutline";
+import {
+  LogOut,
+  Save,
+  User,
+  Wallet,
+  Palette,
+  Check,
+  ShieldCheck,
+  Moon,
+  Sun,
+} from "lucide-react";
 import { motion } from "framer-motion";
 import Card from "../components/Card";
 
@@ -114,11 +116,10 @@ const Profile = () => {
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-lg">
-                <Person
+                <User
                   color="var(--color-accent)"
-                  height="40px"
-                  width="40px"
-                  cssClasses="text-accent"
+                  size={40}
+                  className="text-accent"
                 />
               </div>
             )}
@@ -142,9 +143,8 @@ const Profile = () => {
           )}
 
           <div className="mt-3 flex items-center gap-1.5 px-2.5 py-0.5 bg-green-500/20 dark:bg-green-900/40 text-green-800 dark:text-green-600 text-[10px] font-medium rounded-full border border-gray-100 dark:border-white/5">
-            <ShieldCheckmarkOutline
-              height="12px"
-              width="12px"
+            <ShieldCheck
+              size={12}
               color="currentColor"
             />
             <span>Google Verified</span>
@@ -158,9 +158,8 @@ const Profile = () => {
         <Card>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
-              <ColorPaletteOutline
-                height="20px"
-                width="20px"
+              <Palette
+                size={20}
                 color="currentColor"
               />
             </div>
@@ -173,22 +172,19 @@ const Profile = () => {
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
               <div
-                className={`p-2 rounded-full transition-colors ${
-                  theme === "dark"
-                    ? "bg-gray-800 text-yellow-400"
-                    : "bg-yellow-100 text-yellow-600"
-                }`}
+                className={`p-2 rounded-full transition-colors ${theme === "dark"
+                  ? "bg-gray-800 text-yellow-400"
+                  : "bg-yellow-100 text-yellow-600"
+                  }`}
               >
                 {theme === "dark" ? (
-                  <MoonOutline
-                    height="20px"
-                    width="20px"
+                  <Moon
+                    size={20}
                     color="currentColor"
                   />
                 ) : (
-                  <SunnyOutline
-                    height="20px"
-                    width="20px"
+                  <Sun
+                    size={20}
                     color="currentColor"
                   />
                 )}
@@ -204,14 +200,12 @@ const Profile = () => {
             </div>
             <button
               onClick={toggleTheme}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${
-                theme === "dark" ? "bg-accent" : "bg-gray-200"
-              }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${theme === "dark" ? "bg-accent" : "bg-gray-200"
+                }`}
             >
               <span
-                className={`${
-                  theme === "dark" ? "translate-x-6" : "translate-x-1"
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+                className={`${theme === "dark" ? "translate-x-6" : "translate-x-1"
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
               />
             </button>
           </div>
@@ -230,18 +224,17 @@ const Profile = () => {
                   key={key}
                   // @ts-ignore
                   onClick={() => setAccentColor(key)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 ${
-                    accentColor === key
-                      ? "ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110 shadow-md"
-                      : "ring-1 ring-black/5 dark:ring-white/10"
-                  }`}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 ${accentColor === key
+                    ? "ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110 shadow-md"
+                    : "ring-1 ring-black/5 dark:ring-white/10"
+                    }`}
                   // @ts-ignore
                   style={{ backgroundColor: colors.default }}
                   aria-label={`Select ${colors.name} accent color`}
                   title={colors.name}
                 >
                   {accentColor === key && (
-                    <Checkmark color="#ffffff" height="20px" width="20px" />
+                    <Check color="#ffffff" size={20} />
                   )}
                 </button>
               ))}
@@ -253,7 +246,7 @@ const Profile = () => {
         <Card>
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-accent/10 rounded-lg text-accent">
-              <WalletOutline height="20px" width="20px" />
+              <Wallet size={20} />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               Monthly Budget
@@ -275,8 +268,6 @@ const Profile = () => {
                     const {
                       collection,
                       query,
-                      where,
-                      orderBy,
                       limit,
                       getDocs,
                     } = await import("firebase/firestore");
@@ -373,15 +364,14 @@ const Profile = () => {
                 disabled={loading}
                 className="bg-black dark:bg-white text-white dark:text-black px-6 rounded-xl font-medium hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                {loading ? "..." : <SaveOutline height="16px" width="16px" />}
+                {loading ? "..." : <Save size={16} />}
                 {loading ? "" : "Save"}
               </button>
             </div>
             {message && (
               <p
-                className={`text-xs mt-3 ${
-                  message.includes("Failed") ? "text-red-500" : "text-green-600"
-                } font-medium whitespace-pre-wrap leading-relaxed`}
+                className={`text-xs mt-3 ${message.includes("Failed") ? "text-red-500" : "text-green-600"
+                  } font-medium whitespace-pre-wrap leading-relaxed`}
               >
                 {message}
               </p>
@@ -394,7 +384,7 @@ const Profile = () => {
           onClick={handleLogout}
           className="w-full p-4 flex items-center justify-center gap-2 text-red-600 font-bold bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
         >
-          <LogOutOutline height="20px" width="20px" />
+          <LogOut size={20} />
           Sign Out
         </button>
       </motion.div>

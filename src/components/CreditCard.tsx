@@ -4,7 +4,7 @@ import CountUp from "./CountUp";
 import TrajectoryChart from "./TrajectoryChart";
 import { formatCurrency } from "../utils/formatUtils";
 import { format } from "date-fns";
-import { TrendingDownOutline, TrendingUpOutline } from "react-ionicons";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 interface CreditCardProps {
   currentBalance: number;
@@ -336,16 +336,14 @@ const CreditCard: React.FC<CreditCardProps> = ({
                          ${trendDirection === "down" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-rose-500/10 text-rose-600 dark:text-rose-400"}`}
               >
                 {trendDirection === "down" ? (
-                  <TrendingDownOutline
+                  <TrendingDown
                     color="currentColor"
-                    height="14px"
-                    width="14px"
+                    size={14}
                   />
                 ) : (
-                  <TrendingUpOutline
+                  <TrendingUp
                     color="currentColor"
-                    height="14px"
-                    width="14px"
+                    size={14}
                   />
                 )}
                 <span className="text-xs font-bold">{percentageChange}%</span>
@@ -374,11 +372,10 @@ const CreditCard: React.FC<CreditCardProps> = ({
             <div>
               <div className="text-xs text-tertiary/80 leading-relaxed mb-1">
                 <span
-                  className={`font-bold text-sm ${
-                    trendDirection === "down"
+                  className={`font-bold text-sm ${trendDirection === "down"
                       ? "text-emerald-500"
                       : "text-rose-500"
-                  }`}
+                    }`}
                 >
                   {formatCurrency(diff)}
                 </span>{" "}

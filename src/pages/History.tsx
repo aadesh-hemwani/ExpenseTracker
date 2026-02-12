@@ -13,7 +13,6 @@ import {
 } from "date-fns";
 import "../components/ui/LiquidGlass.css";
 import { LiquidBack } from "../components/ui/LiquidBack";
-import CalendarOutline from "react-ionicons/lib/CalendarOutline";
 import { AnimatePresence } from "framer-motion";
 import Card from "../components/Card";
 import {
@@ -26,7 +25,7 @@ import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
 import CategoryDonutChart from "../components/CategoryDonutChart";
-import CloudDownloadOutline from "react-ionicons/lib/CloudDownloadOutline";
+import { Download, Calendar } from "lucide-react";
 // import html2canvas from "html2canvas";
 import { generateMonthlyReport } from "../utils/reportGenerator";
 import { useRef } from "react";
@@ -206,9 +205,8 @@ const CalendarView = ({
           {isGeneratingPDF ? (
             <IOSSpinner size={20} />
           ) : (
-            <CloudDownloadOutline
-              height="24px"
-              width="24px"
+            <Download
+              size={24}
               color="currentColor"
             />
           )}
@@ -250,16 +248,14 @@ const CalendarView = ({
               className={`
                     relative h-14 md:h-24 rounded-xl flex flex-col items-center justify-start pt-2 transition-all border
                     ${!isCurrentMonth ? "opacity-30" : "opacity-100"}
-                    ${
-                      isSelected
-                        ? "bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10"
-                        : "bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent"
-                    }
-                    ${
-                      isToday(day) && !isSelected
-                        ? "text-accent font-bold bg-accent/10"
-                        : ""
-                    }
+                    ${isSelected
+                  ? "bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10"
+                  : "bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent"
+                }
+                    ${isToday(day) && !isSelected
+                  ? "text-accent font-bold bg-accent/10"
+                  : ""
+                }
                   `}
             >
               <span className="text-sm">{format(day, "d")}</span>
@@ -268,11 +264,10 @@ const CalendarView = ({
                 <>
                   {/* Desktop Amount */}
                   <span
-                    className={`block md:text-[10px] text-[8px] mt-1 font-medium ${
-                      isSelected
-                        ? "text-gray-300 dark:text-gray-600"
-                        : amountColor
-                    }`}
+                    className={`block md:text-[10px] text-[8px] mt-1 font-medium ${isSelected
+                      ? "text-gray-300 dark:text-gray-600"
+                      : amountColor
+                      }`}
                   >
                     ₹{roundedTotal}
                   </span>
@@ -434,11 +429,10 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
 
           {monthGroups.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-              <CalendarOutline
-                color="inherit"
-                height="48px"
-                width="48px"
-                cssClasses="mb-4 opacity-20"
+              <Calendar
+                color="currentColor"
+                size={48}
+                className="mb-4 opacity-20"
               />
               <p>No history yet.</p>
             </div>

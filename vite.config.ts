@@ -13,7 +13,7 @@ export default defineConfig({
         name: 'Expenses.',
         short_name: 'Expenses',
         description: 'Track your daily expenses with function and form.',
-        display: 'standalone', 
+        display: 'standalone',
         scope: '/',
         start_url: '/',
         orientation: 'portrait',
@@ -78,7 +78,7 @@ export default defineConfig({
         manualChunks: {
           'vendor': ['react', 'react-dom', 'react-router-dom'],
           'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/analytics'],
-          'ui': ['framer-motion', 'react-ionicons', 'clsx', 'tailwind-merge'],
+          'ui': ['framer-motion', 'clsx', 'tailwind-merge'],
           'charts': ['recharts']
         }
       }

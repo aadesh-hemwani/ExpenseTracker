@@ -2,10 +2,7 @@ import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import CalendarOutline from "react-ionicons/lib/CalendarOutline";
-import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
-import CheckmarkOutline from "react-ionicons/lib/CheckmarkOutline";
-import ColorWandOutline from "react-ionicons/lib/ColorWandOutline";
+import { Calendar, Delete, Check, Wand2 } from "lucide-react";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
 import { parseTransactionText } from "../utils/smsParser";
@@ -223,10 +220,9 @@ const GlobalAddExpense = memo(() => {
       }}
       className={`
         relative h-20 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
-        ${
-          primary
-            ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 active:shadow-none"
-            : "bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
+        ${primary
+          ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 active:shadow-none"
+          : "bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
         }
       `}
     >
@@ -245,7 +241,7 @@ const GlobalAddExpense = memo(() => {
       {isSubmitting ? (
         <IOSSpinner size={32} color="#fff" />
       ) : (
-        <CheckmarkOutline height="32px" width="32px" color="#fff" />
+        <Check size={32} color="#fff" />
       )}
     </motion.button>
   );
@@ -293,9 +289,8 @@ const GlobalAddExpense = memo(() => {
                   <div className="flex justify-between items-center">
                     <div className="relative">
                       <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
-                        <CalendarOutline
-                          height="16px"
-                          width="16px"
+                        <Calendar
+                          size={16}
                           color="currentColor"
                         />
                         <span>{format(date, "MMM dd, yyyy")}</span>
@@ -352,21 +347,19 @@ const GlobalAddExpense = memo(() => {
                               className={`
                                 w-14 h-14 rounded-2xl flex items-center justify-center
                                 shadow-sm transition-all duration-300
-                                ${
-                                  isSelected
-                                    ? "bg-gradient-to-br from-gray-800 to-black dark:from-white dark:to-gray-200 text-white dark:text-black shadow-lg shadow-gray-200 dark:shadow-none ring-2 ring-offset-2 ring-gray-900 dark:ring-white ring-offset-white dark:ring-offset-black"
-                                    : "bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-white/5"
+                                ${isSelected
+                                  ? "bg-gradient-to-br from-gray-800 to-black dark:from-white dark:to-gray-200 text-white dark:text-black shadow-lg shadow-gray-200 dark:shadow-none ring-2 ring-offset-2 ring-gray-900 dark:ring-white ring-offset-white dark:ring-offset-black"
+                                  : "bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-white/5"
                                 }
                               `}
                             >
                               {getCategoryIcon(cat, "24px")}
                             </div>
                             <span
-                              className={`text-xs font-semibold ${
-                                isSelected
+                              className={`text-xs font-semibold ${isSelected
                                   ? "text-gray-900 dark:text-white"
                                   : "text-gray-400 dark:text-gray-600"
-                              }`}
+                                }`}
                             >
                               {cat}
                             </span>
@@ -399,9 +392,8 @@ const GlobalAddExpense = memo(() => {
                     <NumKey
                       val="BACKSPACE"
                       label={
-                        <BackspaceOutline
-                          height="24px"
-                          width="24px"
+                        <Delete
+                          size={24}
                           color="currentColor"
                         />
                       }
@@ -421,9 +413,8 @@ const GlobalAddExpense = memo(() => {
                         }}
                         className="relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200 bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
                       >
-                        <ColorWandOutline
-                          height="24px"
-                          width="24px"
+                        <Wand2
+                          size={24}
                           color="currentColor"
                         />
                       </motion.button>

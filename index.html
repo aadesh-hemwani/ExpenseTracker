@@ -1,63 +1,81 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=auto"
-    />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta
-      name="apple-mobile-web-app-status-bar-style"
-      content="black-translucent"
-    />
-    <meta name="theme-color" content="#3178c6" />
-    <title>Expenses.</title>
-    <meta name="description" content="Minimalist Expense Tracker" />
-  </head>
 
-  <body>
-    <div id="root">
-      <!-- Immediate Pre-loader (inline for speed) -->
-      <style>
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=auto" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#3178c6" />
+  <title>Expenses.</title>
+  <meta name="description" content="Minimalist Expense Tracker" />
+  <script>
+    console.log("Index HTML Executing");
+    window.onerror = function (msg, url, line, col, error) {
+      console.error("Global Error:", msg, url, line, col, error);
+    };
+
+    // Check if main.tsx is reachable
+    fetch('/src/main.tsx').then(response => {
+      console.log("Main.tsx fetch status:", response.status);
+    }).catch(err => console.error("Main.tsx fetch error:", err));
+
+    // Check DOM content after a small delay
+    setTimeout(() => {
+      const root = document.getElementById('root');
+      console.log("Root content:", root ? root.innerHTML.substring(0, 100) : "No root");
+    }, 3000);
+  </script>
+</head>
+
+<body>
+  <div id="root">
+    <!-- Immediate Pre-loader (inline for speed) -->
+    <style>
+      .initial-loader {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #000000;
+        z-index: 9999;
+        transition: opacity 0.4s ease-out;
+      }
+
+      .initial-sp {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        border-top-color: #6366f1;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-color-scheme: light) {
         .initial-loader {
-          position: fixed;
-          inset: 0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: #000000;
-          z-index: 9999;
-          transition: opacity 0.4s ease-out;
+          background-color: #ffffff;
         }
+
         .initial-sp {
-          width: 40px;
-          height: 40px;
-          border: 3px solid rgba(255, 255, 255, 0.1);
-          border-radius: 50%;
+          border-color: rgba(0, 0, 0, 0.1);
           border-top-color: #6366f1;
-          animation: spin 1s ease-in-out infinite;
         }
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        @media (prefers-color-scheme: light) {
-          .initial-loader {
-            background-color: #ffffff;
-          }
-          .initial-sp {
-            border-color: rgba(0, 0, 0, 0.1);
-            border-top-color: #6366f1;
-          }
-        }
-      </style>
-      <div class="initial-loader">
-        <div class="initial-sp"></div>
-      </div>
+      }
+    </style>
+    <div class="initial-loader">
+      <div class="initial-sp"></div>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

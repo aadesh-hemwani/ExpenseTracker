@@ -1,15 +1,6 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import HomeOutline from "react-ionicons/lib/HomeOutline";
-import Home from "react-ionicons/lib/Home";
-import CalendarOutline from "react-ionicons/lib/CalendarClearOutline";
-import Calendar from "react-ionicons/lib/CalendarClear";
-import BarChartOutline from "react-ionicons/lib/BarChartOutline";
-import BarChart from "react-ionicons/lib/BarChart";
-import PersonOutline from "react-ionicons/lib/PersonOutline";
-import Person from "react-ionicons/lib/Person";
-import BulbOutline from "react-ionicons/lib/BulbOutline";
-import Bulb from "react-ionicons/lib/Bulb";
+import { Home, Calendar, BarChart3, User } from "lucide-react";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion } from "framer-motion";
@@ -17,7 +8,6 @@ import { motion } from "framer-motion";
 interface NavItemProps {
   to: string;
   icon: any;
-  activeIcon: any;
   label: string;
   activeColor: string;
 }
@@ -25,7 +15,6 @@ interface NavItemProps {
 const NavItem = ({
   to,
   icon: Icon,
-  activeIcon: ActiveIcon,
   label,
   activeColor,
 }: NavItemProps) => (
@@ -36,33 +25,22 @@ const NavItem = ({
           whileTap={{ scale: 0.9 }}
           className={`
             relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300
-            ${
-              isActive
-                ? "bg-primary text-white shadow-soft"
-                : "text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/10"
+            ${isActive
+              ? "bg-primary text-white shadow-soft"
+              : "text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/10"
             }
           `}
         >
-          {isActive ? (
-            <ActiveIcon
-              color={activeColor}
-              height="24px" // Slightly larger active
-              width="24px"
-              cssClasses="text-current"
-            />
-          ) : (
-            <Icon
-              color="inherit"
-              height="24px" // Larger inactive (was 20px)
-              width="24px"
-              cssClasses="text-current stroke-[2px]" // Try to enforce stroke width if possible, or just size
-            />
-          )}
+          <Icon
+            color={isActive ? activeColor : "currentColor"}
+            size={24}
+            className={`transition-all duration-300`}
+            strokeWidth={isActive ? 2.5 : 2}
+          />
         </motion.div>
         <span
-          className={`text-[10px] font-bold mt-1 transition-colors ${
-            isActive ? "" : "text-gray-400 dark:text-gray-500"
-          }`}
+          className={`text-[10px] font-bold mt-1 transition-colors ${isActive ? "" : "text-gray-400 dark:text-gray-500"
+            }`}
           style={isActive ? { color: activeColor } : {}}
         >
           {label}
@@ -73,23 +51,20 @@ const NavItem = ({
 );
 
 const NAV_ITEMS = [
-  { path: "/", icon: HomeOutline, activeIcon: Home, label: "Home" },
+  { path: "/", icon: Home, label: "Home" },
   {
     path: "/history",
-    icon: CalendarOutline,
-    activeIcon: Calendar,
+    icon: Calendar,
     label: "History",
   },
   {
     path: "/analytics",
-    icon: BulbOutline,
-    activeIcon: Bulb,
+    icon: BarChart3,
     label: "Insights",
   },
   {
     path: "/profile",
-    icon: PersonOutline,
-    activeIcon: Person,
+    icon: User,
     label: "Profile",
   },
 ];
@@ -113,29 +88,25 @@ const Layout = () => {
         <nav className="flex flex-col space-y-6">
           <NavItem
             to="/"
-            icon={HomeOutline}
-            activeIcon={Home}
+            icon={Home}
             label="Dashboard"
             activeColor={activeColor}
           />
           <NavItem
             to="/history"
-            icon={CalendarOutline}
-            activeIcon={Calendar}
+            icon={Calendar}
             label="History"
             activeColor={activeColor}
           />
           <NavItem
             to="/analytics"
-            icon={BarChartOutline}
-            activeIcon={BarChart}
+            icon={BarChart3}
             label="Insights"
             activeColor={activeColor}
           />
           <NavItem
             to="/profile"
-            icon={PersonOutline}
-            activeIcon={Person}
+            icon={User}
             label="Profile"
             activeColor={activeColor}
           />
@@ -145,11 +116,10 @@ const Layout = () => {
       {/* Main Content Area */}
       <main className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain">
         <div
-          className={`relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 ${
-            location.pathname === "/history"
-              ? "pt-0"
-              : "pt-[calc(env(safe-area-inset-top)+1.5rem)]"
-          }`}
+          className={`relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 ${location.pathname === "/history"
+            ? "pt-0"
+            : "pt-[calc(env(safe-area-inset-top)+1.5rem)]"
+            }`}
         >
           {/* <AnimatePresence mode="wait"> */}
           <motion.div

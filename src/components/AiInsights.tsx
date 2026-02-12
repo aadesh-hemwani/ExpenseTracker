@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import HardwareChipOutline from "react-ionicons/lib/HardwareChipOutline";
+import { Cpu } from "lucide-react";
 import { Insight } from "../utils/insights";
 
 interface AiInsightsProps {
@@ -29,11 +29,10 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
     <div className="pt-2">
       <div className="flex items-center gap-2">
         <div className="p-1.5 bg-indigo-500/10 rounded-lg">
-          <HardwareChipOutline
+          <Cpu
             color="var(--color-accent)"
-            height="20px"
-            width="20px"
-            cssClasses={`text-accent ${isLoading ? "animate-spin-slow" : ""}`}
+            size={20}
+            className={`text-accent ${isLoading ? "animate-spin-slow" : ""}`}
           />
         </div>
         <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">
@@ -103,11 +102,10 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
               key={i}
               className={`
                                 h-1 rounded-full transition-all duration-300
-                                ${
-                                  i === activeIndex
-                                    ? "w-4 bg-indigo-500/80 shadow-[0_0_8px_rgba(99,102,241,0.5)]"
-                                    : "w-1 bg-gray-300/50 dark:bg-gray-700/50"
-                                }
+                                ${i === activeIndex
+                  ? "w-4 bg-indigo-500/80 shadow-[0_0_8px_rgba(99,102,241,0.5)]"
+                  : "w-1 bg-gray-300/50 dark:bg-gray-700/50"
+                }
                             `}
             />
           ))}
