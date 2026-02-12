@@ -6,7 +6,7 @@ import { Expense } from "../types";
 import { getCategoryIcon, CATEGORY_COLORS } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import { LiquidClose } from "./ui/LiquidClose";
-import TrashOutline from "react-ionicons/lib/TrashOutline";
+import { Trash2 } from "lucide-react";
 import QRCode from "react-qr-code";
 
 interface ExpenseDetailsModalProps {
@@ -193,7 +193,7 @@ const ExpenseDetailsModal = ({
               onClick={handleDelete}
               className="flex items-center gap-2 px-5 py-3 rounded-full bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors shadow-lg active:scale-95"
             >
-              <TrashOutline color="currentColor" width="18px" height="18px" />
+              <Trash2 size={18} className="text-current" />
               <span className="text-sm font-bold">Delete Receipt</span>
             </button>
           </motion.div>

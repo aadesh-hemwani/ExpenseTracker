@@ -2,11 +2,7 @@ import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import CalendarOutline from "react-ionicons/lib/CalendarOutline";
-import TimeOutline from "react-ionicons/lib/TimeOutline";
-import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
-
-import ColorWandOutline from "react-ionicons/lib/ColorWandOutline";
+import { Calendar, Clock, Delete, Wand2 } from "lucide-react";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
 import { parseTransactionText } from "../utils/smsParser";
@@ -286,11 +282,7 @@ const GlobalAddExpense = memo(() => {
                       {/* Date Picker */}
                       <div className="relative">
                         <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
-                          <CalendarOutline
-                            height="16px"
-                            width="16px"
-                            color="currentColor"
-                          />
+                          <Calendar size={16} className="text-current" />
                           <span>{format(date, "MMM dd, yyyy")}</span>
                         </button>
                         <input
@@ -314,11 +306,7 @@ const GlobalAddExpense = memo(() => {
                       {/* Time Picker */}
                       <div className="relative">
                         <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
-                          <TimeOutline
-                            height="16px"
-                            width="16px"
-                            color="currentColor"
-                          />
+                          <Clock size={16} className="text-current" />
                           <span>{format(date, "hh:mm a")}</span>
                         </button>
                         <input
@@ -442,11 +430,7 @@ const GlobalAddExpense = memo(() => {
                         val="BACKSPACE"
                         transparent
                         label={
-                          <BackspaceOutline
-                            height="28px"
-                            width="28px"
-                            color="currentColor"
-                          />
+                          <Delete size={28} className="text-current" />
                         }
                       />
                     </motion.div>
@@ -462,11 +446,7 @@ const GlobalAddExpense = memo(() => {
                           }}
                           className="w-full py-4 rounded-[1.2rem] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 flex items-center justify-center text-white shadow-lg text-lg font-bold gap-2 transition-all"
                         >
-                          <ColorWandOutline
-                            color="#fff"
-                            height="24px"
-                            width="24px"
-                          />
+                          <Wand2 size={24} color="#fff" />
                           <span>Auto-Fill from Clipboard</span>
                         </motion.button>
                       ) : (

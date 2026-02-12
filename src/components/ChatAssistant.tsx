@@ -5,9 +5,7 @@ import { format, subMonths } from "date-fns";
 import { chatWithFinancialAssistant } from "../services/gemini";
 import { useRecentExpenses } from "../hooks/useExpenses";
 import IOSSpinner from "./ui/IOSSpinner";
-import PaperPlaneOutline from "react-ionicons/lib/PaperPlaneOutline";
-import Planet from "react-ionicons/lib/Planet";
-import CloseOutline from "react-ionicons/lib/CloseOutline";
+import { Send, Sparkles, X } from "lucide-react";
 
 interface ChatAssistantProps {
   userId?: string;
@@ -94,23 +92,21 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
 
   const chatUi = (
     <div
-      className={`flex flex-col overflow-hidden bg-white dark:bg-[#1c1c1e] ${
-        mode === "card" && isOpen
+      className={`flex flex-col overflow-hidden bg-white dark:bg-[#1c1c1e] ${mode === "card" && isOpen
           ? "w-full h-full rounded-none"
           : mode === "card"
             ? "w-full h-[600px] rounded-[32px] border border-gray-100 dark:border-white/10 shadow-sm"
             : "fixed inset-x-4 bottom-4 top-20 md:top-auto md:bottom-24 md:right-24 md:left-auto md:w-[400px] md:h-[600px] rounded-[32px] shadow-2xl z-[10000] border border-gray-100 dark:border-white/10"
-      }`}
+        }`}
     >
       {/* Header */}
       <div className="px-5 py-4 border-b border-gray-200/50 dark:border-white/5 flex justify-between items-center bg-white/50 dark:bg-white/5">
         <div className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-            <Planet
+            <Sparkles
               color="#fff"
-              height="22px"
-              width="22px"
-              classes="animate-pulse"
+              size={22}
+              className="animate-pulse"
             />
           </div>
           <div>
@@ -131,11 +127,9 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
             }}
             className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
           >
-            <CloseOutline
-              color="currentColor"
-              height="20px"
-              width="20px"
-              cssClasses="text-gray-500 dark:text-gray-400"
+            <X
+              size={20}
+              className="text-gray-500 dark:text-gray-400"
             />
           </button>
         )}
@@ -154,11 +148,10 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
             className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] p-3.5 px-4 rounded-2xl shadow-sm ${
-                msg.sender === "user"
+              className={`max-w-[85%] p-3.5 px-4 rounded-2xl shadow-sm ${msg.sender === "user"
                   ? "bg-gradient-to-br from-gray-900 to-black dark:from-white dark:to-gray-200 text-white dark:text-black rounded-br-sm"
                   : "bg-white dark:bg-[#1c1c1e] text-gray-700 dark:text-gray-200 border border-gray-100 dark:border-white/5 rounded-bl-sm"
-              }`}
+                }`}
             >
               <p className="text-[13px] leading-relaxed whitespace-pre-wrap font-medium">
                 {msg.text}
@@ -215,10 +208,9 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
             {isTyping ? (
               <IOSSpinner size={16} color="currentColor" />
             ) : (
-              <PaperPlaneOutline
-                color="currentColor"
-                height="16px"
-                width="16px"
+              <Send
+                size={16}
+                className="text-current"
               />
             )}
           </button>
@@ -237,7 +229,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
           className="w-full bg-white dark:bg-[#1c1c1e] rounded-[24px] p-4 flex items-center shadow-sm border border-gray-100 dark:border-white/5 cursor-pointer hover:shadow-md transition-shadow"
         >
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 mr-4 shrink-0">
-            <Planet color="#fff" height="24px" width="24px" />
+            <Sparkles color="#fff" size={24} />
           </div>
           <div className="flex-1">
             <h3 className="font-bold text-gray-900 dark:text-white text-lg">
@@ -248,11 +240,9 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
             </p>
           </div>
           <div className="p-2 bg-gray-50 dark:bg-white/5 rounded-full">
-            <PaperPlaneOutline
-              color="currentColor"
-              height="20px"
-              width="20px"
-              cssClasses="text-gray-400"
+            <Send
+              size={20}
+              className="text-gray-400"
             />
           </div>
         </motion.div>
@@ -288,7 +278,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
           onClick={() => setIsOpen(true)}
           className="fixed bottom-24 right-5 w-14 h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-xl flex items-center justify-center pointer-events-auto border border-white/10"
         >
-          <Planet color="currentColor" height="28px" width="28px" />
+          <Sparkles size={28} className="text-current" />
         </motion.button>
       </div>
 
@@ -310,7 +300,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 100, scale: 0.95 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              // No wrapper div needed as chatUi has the styles
+            // No wrapper div needed as chatUi has the styles
             >
               {chatUi}
             </motion.div>
