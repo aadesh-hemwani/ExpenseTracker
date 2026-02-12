@@ -19,8 +19,9 @@ const Card = ({
   return (
     <MotionComponent
       whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 15 }}
-      className={`bg-surface p-6 rounded-3xl border border-subtle shadow-sm transition-colors duration-300 ${className}`}
+      whileHover={{ scale: 1.01 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      className={`glass-card p-6 rounded-3xl border border-subtle shadow-sm ${className}`}
       {...props}
     >
       {children}

@@ -1,8 +1,12 @@
 import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Delete, Check, Wand2 } from "lucide-react";
+import { motion, AnimatePresence, useAnimation } from "framer-motion";
+import CalendarOutline from "react-ionicons/lib/CalendarOutline";
+import TimeOutline from "react-ionicons/lib/TimeOutline";
+import BackspaceOutline from "react-ionicons/lib/BackspaceOutline";
+
+import ColorWandOutline from "react-ionicons/lib/ColorWandOutline";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
 import { parseTransactionText } from "../utils/smsParser";
@@ -26,6 +30,7 @@ const GlobalAddExpense = memo(() => {
   const [date, setDate] = useState(new Date());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasClipboard, setHasClipboard] = useState(false);
+  const controls = useAnimation();
 
   // Check clipboard permission/content when modal opens
   useEffect(() => {
@@ -138,12 +143,19 @@ const GlobalAddExpense = memo(() => {
         });
       }
     },
-    [amountStr]
+    [amountStr],
   );
 
   const handleSave = useCallback(async () => {
     const amountVal = parseFloat(amountStr);
-    if (amountVal <= 0) return;
+    if (amountVal <= 0) {
+      if (navigator.vibrate) navigator.vibrate(200);
+      controls.start({
+        x: [0, -10, 10, -10, 10, 0],
+        transition: { duration: 0.4 },
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -158,7 +170,7 @@ const GlobalAddExpense = memo(() => {
         note,
         date,
         localIcon,
-        localIcon ? "lucide" : undefined
+        localIcon ? "lucide" : undefined,
       );
 
       // 🎉 Fire Confetti!
@@ -204,45 +216,28 @@ const GlobalAddExpense = memo(() => {
   const NumKey = ({
     val,
     label,
-    primary = false,
+    transparent = false,
   }: {
     val: string;
     label?: React.ReactNode;
-    primary?: boolean;
+    transparent?: boolean;
   }) => (
     <motion.button
-      whileTap={{ scale: 0.92 }}
-      transition={{ duration: 0.05 }} // Instant response
+      whileTap={{
+        scale: 0.95,
+        backgroundColor: transparent ? "transparent" : "rgba(255,255,255,0.15)",
+      }}
+      transition={{ duration: 0.05 }}
       onClick={() => {
-        // Haptic feedback
         if (navigator.vibrate) navigator.vibrate(10);
         val === "DONE" ? handleSave() : handleNumpadPress(val);
       }}
       className={`
-        relative h-20 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200
-        ${primary
-          ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95 active:shadow-none"
-          : "bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
-        }
+        relative h-16 rounded-[1rem] flex items-center justify-center text-3xl font-normal select-none touch-manipulation transition-colors duration-200
+        ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white"}
       `}
     >
       {label || val}
-    </motion.button>
-  );
-
-  // Submit Button Component
-  const SubmitButton = ({ rowSpan }: { rowSpan: string }) => (
-    <motion.button
-      whileTap={{ scale: 0.95 }}
-      onClick={handleSave}
-      className={`${rowSpan} bg-accent rounded-3xl flex items-center justify-center text-white shadow-xl shadow-accent/25 active:brightness-110`}
-      disabled={isSubmitting || amountStr === "0"}
-    >
-      {isSubmitting ? (
-        <IOSSpinner size={32} color="#fff" />
-      ) : (
-        <Check size={32} color="#fff" />
-      )}
     </motion.button>
   );
 
@@ -287,25 +282,62 @@ const GlobalAddExpense = memo(() => {
                 <div className="px-6 pb-4 pt-2 flex flex-col h-full space-y-4">
                   {/* Top Bar: Date & Close */}
                   <div className="flex justify-between items-center">
-                    <div className="relative">
-                      <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
-                        <Calendar
-                          size={16}
-                          color="currentColor"
+                    <div className="flex items-center space-x-2">
+                      {/* Date Picker */}
+                      <div className="relative">
+                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
+                          <CalendarOutline
+                            height="16px"
+                            width="16px"
+                            color="currentColor"
+                          />
+                          <span>{format(date, "MMM dd, yyyy")}</span>
+                        </button>
+                        <input
+                          type="date"
+                          value={format(date, "yyyy-MM-dd")}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) return;
+                            const [y, m, d] = val.split("-").map(Number);
+                            setDate((prev) => {
+                              const newDate = new Date(y, m - 1, d);
+                              newDate.setHours(prev.getHours());
+                              newDate.setMinutes(prev.getMinutes());
+                              return newDate;
+                            });
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         />
-                        <span>{format(date, "MMM dd, yyyy")}</span>
-                      </button>
-                      <input
-                        type="date"
-                        value={format(date, "yyyy-MM-dd")}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (!val) return;
-                          const [y, m, d] = val.split("-").map(Number);
-                          setDate(new Date(y, m - 1, d));
-                        }}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      />
+                      </div>
+
+                      {/* Time Picker */}
+                      <div className="relative">
+                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
+                          <TimeOutline
+                            height="16px"
+                            width="16px"
+                            color="currentColor"
+                          />
+                          <span>{format(date, "hh:mm a")}</span>
+                        </button>
+                        <input
+                          type="time"
+                          value={format(date, "HH:mm")}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (!val) return;
+                            const [hours, minutes] = val.split(":").map(Number);
+                            setDate((prev) => {
+                              const newDate = new Date(prev);
+                              newDate.setHours(hours);
+                              newDate.setMinutes(minutes);
+                              return newDate;
+                            });
+                          }}
+                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                      </div>
                     </div>
                     <LiquidClose onClick={handleCloseModal} />
                   </div>
@@ -315,13 +347,19 @@ const GlobalAddExpense = memo(() => {
                     <span className="text-gray-400 dark:text-gray-500 text-sm font-medium tracking-widest uppercase mb-1">
                       {category}
                     </span>
-                    <div className="text-6xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline">
+                    <motion.div
+                      animate={controls}
+                      className="text-6xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline"
+                    >
                       <span className="text-3xl font-medium text-gray-400 dark:text-gray-600 mr-2">
                         ₹
                       </span>
                       {/* Custom formatting for the input string */}
                       {amountStr}
-                    </div>
+                      <span className="text-3xl font-medium opacity-0 ml-2">
+                        ₹
+                      </span>
+                    </motion.div>
                   </div>
 
                   {/* Categories Horizontal Scroll */}
@@ -357,8 +395,8 @@ const GlobalAddExpense = memo(() => {
                             </div>
                             <span
                               className={`text-xs font-semibold ${isSelected
-                                  ? "text-gray-900 dark:text-white"
-                                  : "text-gray-400 dark:text-gray-600"
+                                ? "text-gray-900 dark:text-white"
+                                : "text-gray-400 dark:text-gray-600"
                                 }`}
                             >
                               {cat}
@@ -370,7 +408,7 @@ const GlobalAddExpense = memo(() => {
                   </div>
 
                   {/* Note Input (Optional) */}
-                  <div className="relative px-2">
+                  <div className="relative w-full">
                     <input
                       type="text"
                       value={note}
@@ -380,67 +418,79 @@ const GlobalAddExpense = memo(() => {
                     />
                   </div>
 
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="grid grid-cols-4 gap-2 mt-auto"
-                  >
-                    <NumKey val="1" />
-                    <NumKey val="2" />
-                    <NumKey val="3" />
-                    <NumKey
-                      val="BACKSPACE"
-                      label={
-                        <Delete
-                          size={24}
-                          color="currentColor"
-                        />
-                      }
-                    />
+                  {/* Numpad & Actions Container */}
+                  <div className="mt-auto pb-6 w-full flex flex-col gap-4">
+                    {/* Grid */}
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: 0.1 }}
+                      className="grid grid-cols-3 gap-3"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                        <NumKey key={num} val={num.toString()} />
+                      ))}
+                      <NumKey
+                        val="."
+                        transparent
+                        label={
+                          <span className="text-2xl font-bold pb-2">.</span>
+                        }
+                      />
+                      <NumKey val="0" />
+                      <NumKey
+                        val="BACKSPACE"
+                        transparent
+                        label={
+                          <BackspaceOutline
+                            height="28px"
+                            width="28px"
+                            color="currentColor"
+                          />
+                        }
+                      />
+                    </motion.div>
 
-                    <NumKey val="4" />
-                    <NumKey val="5" />
-                    <NumKey val="6" />
-
-                    {/* Conditional Magic Wand or Submit */}
-                    {hasClipboard ? (
-                      <motion.button
-                        whileTap={{ scale: 0.92 }}
-                        onClick={() => {
-                          if (navigator.vibrate) navigator.vibrate(10);
-                          handleSmartPaste();
-                        }}
-                        className="relative h-14 rounded-2xl flex items-center justify-center text-2xl font-bold select-none touch-manipulation transition-all duration-200 bg-gray-100/50 dark:bg-white/5 backdrop-blur-md border border-black/5 dark:border-white/10 text-gray-900 dark:text-white shadow-sm hover:bg-gray-100/80 dark:hover:bg-white/10 active:scale-95 active:bg-gray-200 dark:active:bg-white/20"
-                      >
-                        <Wand2
-                          size={24}
-                          color="currentColor"
-                        />
-                      </motion.button>
-                    ) : (
-                      <SubmitButton rowSpan="row-span-3" />
-                    )}
-
-                    <NumKey val="7" />
-                    <NumKey val="8" />
-                    <NumKey val="9" />
-
-                    {/* Submit Button (only if Magic Wand is present) */}
-                    {hasClipboard && <SubmitButton rowSpan="row-span-2" />}
-
-                    <div className="col-span-1" />
-                    {/* Empty spacer or custom key */}
-
-                    <NumKey val="0" />
-                    <NumKey val="." />
-                  </motion.div>
+                    {/* Action Button */}
+                    <div className="mt-2">
+                      {hasClipboard ? (
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => {
+                            if (navigator.vibrate) navigator.vibrate(10);
+                            handleSmartPaste();
+                          }}
+                          className="w-full py-4 rounded-[1.2rem] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 flex items-center justify-center text-white shadow-lg text-lg font-bold gap-2 transition-all"
+                        >
+                          <ColorWandOutline
+                            color="#fff"
+                            height="24px"
+                            width="24px"
+                          />
+                          <span>Auto-Fill from Clipboard</span>
+                        </motion.button>
+                      ) : (
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSave}
+                          disabled={isSubmitting}
+                          className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
+                        >
+                          {isSubmitting ? (
+                            <IOSSpinner size={24} color="#fff" />
+                          ) : (
+                            "Add Expense"
+                          )}
+                        </motion.button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>,
-        document.body
+        document.body,
       )}
     </>
   );

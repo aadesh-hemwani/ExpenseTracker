@@ -116,9 +116,9 @@ export const generateAnalyticsInsights = async (
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const recentTxns = expenses.slice(0, 30).map(e => {
-      const dateStr = format(e.date instanceof Date ? e.date : (e.date as any).toDate(), "MMM dd");
-      const noteStr = e.note ? ` (Note: "${e.note}")` : "";
-      return `${e.category}: ${e.amount} on ${dateStr}${noteStr}`;
+        const dateStr = format(e.date instanceof Date ? e.date : (e.date as any).toDate(), "MMM dd");
+        const noteStr = e.note ? ` (Note: "${e.note}")` : "";
+        return `${e.category}: ${e.amount} on ${dateStr}${noteStr}`;
     }).join("\n      - ");
 
     const prompt = `
@@ -266,5 +266,93 @@ export const suggestIcon = async (note: string): Promise<string | null> => {
   } catch (error) {
     console.error("Gemini Icon Suggestion Error:", error);
     return null;
+  }
+};
+
+export const chatWithFinancialAssistant = async (
+  message: string,
+  expenses: Expense[],
+  monthlyLimit: number = 0
+): Promise<string> => {
+  if (!API_KEY) return "Sorry, I can't connect to my brain right now.";
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    
+    // Summarize data for context
+    // 1. Organize data into a structured JSON format helper
+    const monthlyData: Record<string, {
+      month: string;
+      total: number;
+      categoryTotals: Record<string, number>;
+      transactions: Array<{ date: string; amount: number; category: string; note: string }>;
+    }> = {};
+
+    expenses.forEach((e) => {
+      let dateObj: Date;
+      if (e.date && typeof (e.date as any).toDate === 'function') {
+        dateObj = (e.date as any).toDate();
+      } else {
+        dateObj = new Date(e.date as any);
+      }
+      
+      const monthKey = format(dateObj, "MMMM yyyy"); // e.g., "February 2026"
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          month: monthKey,
+          total: 0,
+          categoryTotals: {},
+          transactions: []
+        };
+      }
+      
+      const data = monthlyData[monthKey];
+      const val = Number(e.amount);
+
+      // Update aggregates
+      data.total += val;
+      data.categoryTotals[e.category] = (data.categoryTotals[e.category] || 0) + val;
+
+      // Add transaction detail
+      data.transactions.push({
+        date: format(dateObj, "yyyy-MM-dd"),
+        amount: val,
+        category: e.category,
+        note: e.note || ""
+      });
+    });
+
+    // Convert to array
+    const structuredContext = Object.values(monthlyData);
+    const jsonContext = JSON.stringify(structuredContext, null, 2);
+
+    const prompt = `
+      You are a specific, helpful, and friendly financial assistant for an Expense Tracker app.
+      
+      USER SETTINGS:
+      - Monthly Budget Cap: ${monthlyLimit > 0 ? monthlyLimit : "Not set"}
+
+      DATA CONTEXT (JSON Format):
+      ${jsonContext}
+
+      USER QUESTION: "${message}"
+
+      INSTRUCTIONS:
+      - Answer based ONLY on the provided JSON data.
+      - The JSON contains a list of months. Each month has a 'total', 'categoryTotals', and 'transactions'.
+      - Use 'categoryTotals' for high-level summaries and 'transactions' for specific details.
+      - If answering about a specific month, use the data from that detailed object.
+      - Be concise but conversational.
+      - Use INR (₹) symbol.
+      - If you can't find the answer in the data, honestly say so.
+    `;
+
+    const result = await model.generateContent(prompt);
+    return result.response.text();
+
+  } catch (error) {
+    console.error("Chat Error:", error);
+    return "I'm having trouble analyzing your finances right now. Please try again.";
   }
 };

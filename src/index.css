@@ -27,18 +27,11 @@
   --accent-exact: #5c6ac4;
 }
 
-/* SF Pro Font Stack */
+/* SF Pro Font Stack (Native System Fonts) */
 body {
   font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "SF Pro Display",
-    "SF Pro Text",
-    "Helvetica Neue",
-    Helvetica,
-    Arial,
-    sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+    "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: hsl(var(--bg-body));
@@ -47,11 +40,11 @@ body {
     background-color 0.3s ease,
     color 0.3s ease;
 
-  /* Mesh Gradient Background (Subtle) */
+  /* Mesh Gradient Background (Extremely Subtle / Native Feel) */
   background-image:
-    radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 0) 0, transparent 50%),
-    radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 0) 0, transparent 50%),
-    radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 0) 0, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.03) 0, transparent 50%),
+    radial-gradient(at 50% 0%, rgba(168, 85, 247, 0.02) 0, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.03) 0, transparent 50%);
   background-attachment: fixed;
 
   /* iOS Mobile Behaviors */
@@ -100,28 +93,34 @@ body {
 
 .dark body {
   background-color: hsl(var(--bg-body));
-  /* Dark Mode Gradient */
+  /* Dark Mode Gradient (Subtle) */
   background-image:
     radial-gradient(
       circle at 50% 0%,
-      rgba(99, 102, 241, 0.15),
+      rgba(99, 102, 241, 0.08),
       transparent 40%
     ),
-    radial-gradient(circle at 80% 10%, rgba(236, 72, 153, 0.1), transparent 30%);
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(236, 72, 153, 0.05),
+      transparent 30%
+    );
 }
 
 /* Utilities */
 @layer utilities {
   .glass {
-    @apply backdrop-blur-xl bg-white/60 dark:bg-black/40 border border-white/40 dark:border-white/5 shadow-soft dark:shadow-none;
+    /* Crystalline Glass - clearer, stronger blur */
+    @apply backdrop-blur-2xl bg-white/70 dark:bg-[#1c1c1e]/70 border border-white/40 dark:border-white/5 shadow-sm;
   }
 
   .glass-card {
-    @apply backdrop-blur-lg bg-white/70 dark:bg-gray-900/60 border border-white/50 dark:border-white/10 shadow-sm transition-all duration-300;
+    /* Tactile Card - Subtle border, smooth background */
+    @apply backdrop-blur-xl bg-white/80 dark:bg-[#1c1c1e]/80 border border-white/60 dark:border-white/5 shadow-sm transition-all duration-300;
   }
 
   .glass-nav {
-    @apply backdrop-blur-2xl bg-white/80 dark:bg-black/60 border-t border-white/20 dark:border-white/10 shadow-lg;
+    @apply backdrop-blur-2xl bg-white/85 dark:bg-[#1c1c1e]/85 border-t border-white/20 dark:border-white/5 shadow-lg;
   }
 
   .text-balance {

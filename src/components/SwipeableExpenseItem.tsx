@@ -19,6 +19,7 @@ interface SwipeableExpenseItemProps {
   cardClassName?: string;
   readOnly?: boolean;
   hideDate?: boolean;
+  onClick?: (expense: Expense) => void;
 }
 
 const SwipeableExpenseItem = memo(
@@ -30,6 +31,7 @@ const SwipeableExpenseItem = memo(
     cardClassName = "",
     readOnly = false,
     hideDate = false,
+    onClick,
   }: SwipeableExpenseItemProps) => {
     const controls = useAnimation();
     const x = useMotionValue(0);
@@ -93,10 +95,12 @@ const SwipeableExpenseItem = memo(
           dragMomentum={false}
           onDragEnd={handleDragEnd}
           whileTap={{ scale: 0.98 }}
-          className={`relative z-10 flex items-center justify-between p-4 
+          onClick={() => onClick && onClick(t)}
+          className={`relative z-10 flex items-center justify-between p-5 
             bg-white dark:bg-[#1c1c1e] 
             border border-gray-100 dark:border-white/10 
-            rounded-3xl shadow-sm
+            rounded-[2rem] shadow-sm
+            ${onClick ? "cursor-pointer active:scale-95 transition-transform" : ""}
             ${cardClassName}`}
         >
           <div className="flex items-center space-x-4 flex-1 min-w-0">
@@ -123,11 +127,11 @@ const SwipeableExpenseItem = memo(
               </p>
               <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">
                 <span className="opacity-80">{t.category}</span>
-                {!hideDate && (
+                {!hideDate && t.date && (
                   <>
                     <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
                     <span className="opacity-80">
-                      {t.date ? format(getDate(t.date), "MMM dd") : "Just now"}
+                      {format(getDate(t.date), "MMM dd")}
                     </span>
                   </>
                 )}
@@ -135,10 +139,13 @@ const SwipeableExpenseItem = memo(
             </div>
           </div>
 
-          {/* Amount (Right Aligned) */}
-          <div className="text-right shrink-0">
+          {/* Amount & Time (Right Aligned) */}
+          <div className="text-right shrink-0 flex flex-col justify-center">
             <span className="font-bold text-gray-900 dark:text-white block text-lg tracking-tight">
               {formatCurrency(t.amount)}
+            </span>
+            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-0.5">
+              {t.date ? format(getDate(t.date), "hh:mm a") : ""}
             </span>
           </div>
         </motion.div>

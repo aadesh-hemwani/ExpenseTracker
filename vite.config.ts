@@ -67,6 +67,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
+        globIgnores: ['**/*react-ionicons_lib*'],
         navigateFallbackDenylist: [/^\/.*\.js$/, /^\/.*\.css$/, /^\/.*\.png$/, /^\/.*\.json$/]
       },
     })

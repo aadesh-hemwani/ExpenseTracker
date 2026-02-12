@@ -16,6 +16,7 @@ import {
   DocumentData,
   QuerySnapshot,
   writeBatch,
+  limit,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
@@ -279,6 +280,57 @@ export const useExpensesForMonth = (
   return { expenses, loading };
 };
 
+// 3.5. Hook for fetching RECENT expenses based on time range (for Chat/AI)
+// Default: Current Month + Last Month (monthsLookback = 1)
+export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) => {
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const { user } = useAuth();
+  const targetUserId = userId || user?.uid;
+
+  useEffect(() => {
+    if (!targetUserId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    const collectionRef = collection(db, "users", targetUserId, "expenses");
+    
+    // Calculate start date: 1st day of (CurrentMonth - monthsLookback)
+    const now = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - monthsLookback, 1);
+    startDate.setHours(0, 0, 0, 0);
+
+    const q = query(
+      collectionRef, 
+      where("date", ">=", Timestamp.fromDate(startDate)),
+      orderBy("date", "desc")
+    );
+
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot: QuerySnapshot<DocumentData>) => {
+        const docs = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date?.toDate(),
+        })) as Expense[];
+        setExpenses(docs);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("useRecentExpenses error:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [targetUserId, monthsLookback]);
+
+  return { expenses, loading };
+};
+
 // 4. Global Action Hook (Add/Delete/Sync) - Exposed as 'useExpenses'
 export const useExpenses = () => {
   const { user } = useAuth();
@@ -303,8 +355,7 @@ export const useExpenses = () => {
 
       if (customDate) {
         dateObj = new Date(customDate);
-        const now = new Date();
-        dateObj.setHours(now.getHours(), now.getMinutes(), now.getSeconds());
+        // Do not override time; use the time provided in customDate
         finalDate = Timestamp.fromDate(dateObj);
       }
 
