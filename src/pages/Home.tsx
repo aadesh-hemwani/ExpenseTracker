@@ -15,7 +15,7 @@ import { getCategoryIcon } from "../utils/uiUtils";
 import IOSSpinner from "../components/ui/IOSSpinner";
 import { useAuth } from "../context/AuthContext";
 import CreditCard from "../components/CreditCard";
-import ExpenseDetailsModal from "../components/ExpenseDetailsModal";
+import { useGlobalModal } from "../context/GlobalModalContext";
 
 const container = {
   hidden: { opacity: 0 },
@@ -38,7 +38,7 @@ const Home = () => {
 
   const { user } = useAuth();
   const [showInsightSheet, setShowInsightSheet] = useState(false);
-  const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
+  const { openModal } = useGlobalModal();
 
   const now = useMemo(() => new Date(), []);
   const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
@@ -244,7 +244,7 @@ const Home = () => {
                             getCategoryIcon={getCategoryIcon}
                             onDelete={deleteExpense}
                             hideDate={true}
-                            onClick={setSelectedExpense}
+                            onClick={(expense) => openModal("view", expense)}
                           />
                         </motion.div>
                       ))}
@@ -260,12 +260,6 @@ const Home = () => {
       {/* AI Chat Assistant removed - moved to Analytics */
       /* <ChatAssistant userId={user?.uid} monthlyLimit={user?.monthlyBudgetCap} /> */}
 
-      <ExpenseDetailsModal
-        isOpen={!!selectedExpense}
-        onClose={() => setSelectedExpense(null)}
-        expense={selectedExpense}
-        onDelete={deleteExpense}
-      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import { ThemeProvider } from "./context/ThemeContext";
+import { GlobalModalProvider } from "./context/GlobalModalContext";
 
 import ReloadPrompt from "./components/ReloadPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -51,7 +52,9 @@ function App() {
                 <Route
                   element={
                     <ProtectedRoute>
-                      <Layout />
+                      <GlobalModalProvider>
+                        <Layout />
+                      </GlobalModalProvider>
                     </ProtectedRoute>
                   }
                 >

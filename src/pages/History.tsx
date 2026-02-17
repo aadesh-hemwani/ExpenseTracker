@@ -32,6 +32,7 @@ import { useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import IOSSpinner from "../components/ui/IOSSpinner";
 import { Timestamp } from "firebase/firestore";
+import { useGlobalModal } from "../context/GlobalModalContext";
 
 interface MonthCardProps {
   monthKey: string;
@@ -93,6 +94,7 @@ const CalendarView = ({
 }: CalendarViewProps) => {
   // Expenses are now passed down!
   const { deleteExpense } = useExpenses();
+  const { openModal } = useGlobalModal();
   const { user } = useAuth(); // Access user for PDF report
 
   // Optimized: Create a map of daily totals to avoid repeated filtering
@@ -340,6 +342,7 @@ const CalendarView = ({
                         onDelete={deleteExpense}
                         readOnly={readOnly}
                         hideDate={true}
+                        onClick={(expense) => openModal("view", expense)}
                       />
                     ))}
                   </div>

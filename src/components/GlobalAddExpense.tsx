@@ -2,21 +2,24 @@ import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import { Calendar, Clock, Delete, Wand2 } from "lucide-react";
+import { Calendar, Clock, Delete, Wand2, Edit2 } from "lucide-react";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
 import { parseTransactionText } from "../utils/smsParser";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { LiquidClose } from "./ui/LiquidClose";
-import { format } from "date-fns";
 import IOSSpinner from "./ui/IOSSpinner";
-import confetti from "canvas-confetti";
+import { LissajousArt } from "./ui/LissajousArt";
+import { useGlobalModal } from "../context/GlobalModalContext";
 import { findLucideIcon } from "../utils/uiUtils";
 import { suggestIcon } from "../services/gemini";
+import { format } from "date-fns";
+import confetti from "canvas-confetti";
+
 
 const GlobalAddExpense = memo(() => {
   const { addExpense, updateExpense } = useExpenses();
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const { isOpen, mode, expenseData, closeModal, setMode, openModal, updateExpenseData } = useGlobalModal();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Inputs
@@ -24,19 +27,16 @@ const GlobalAddExpense = memo(() => {
   const [category, setCategory] = useState("Food");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date());
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasClipboard, setHasClipboard] = useState(false);
   const controls = useAnimation();
 
   // Check clipboard permission/content when modal opens
   useEffect(() => {
-    if (isAddModalOpen) {
-      // Small delay to allow focus transition
+    if (isOpen && mode === "add") {
       const checkClipboard = async () => {
         try {
-          // We only check if we CAN read, or just try reading if permission is granted.
-          // Note: Browser might block this without user gesture.
-          // We use a try-catch to allow silent failure.
           const permission = await navigator.permissions.query({
             name: "clipboard-read" as PermissionName,
           });
@@ -49,23 +49,21 @@ const GlobalAddExpense = memo(() => {
             }
           }
         } catch (err) {
-          // Clipboard access denied or not supported
           setHasClipboard(false);
         }
       };
       checkClipboard();
     }
-  }, [isAddModalOpen]);
+  }, [isOpen, mode]);
 
-  // Check for deep link to open modal
+  // Handle Deep Links
   useEffect(() => {
     const action = searchParams.get("action");
     const text = searchParams.get("text");
 
     if (action === "add") {
-      setIsAddModalOpen(true);
+      openModal("add");
 
-      // Handle shared text (from SMS/Share Target)
       if (text) {
         const parsed = parseTransactionText(text);
         if (parsed) {
@@ -75,28 +73,39 @@ const GlobalAddExpense = memo(() => {
         }
       }
     }
-  }, [searchParams]);
+  }, [searchParams, openModal]);
+
+  // Sync Data on Open
+  useEffect(() => {
+    if (isOpen) {
+      if (mode === "add") {
+        setAmountStr("0");
+        setCategory("Food");
+        setNote("");
+        setDate(new Date());
+      } else if (expenseData) {
+        setAmountStr(expenseData.amount.toString());
+        setCategory(expenseData.category);
+        setNote(expenseData.note || "");
+
+        // Handle Firestore Timestamp or Date
+        // @ts-ignore
+        const d = expenseData.date?.toDate ? expenseData.date.toDate() : new Date(expenseData.date);
+        setDate(d);
+      }
+      setIsSubmitting(false);
+    }
+  }, [isOpen, mode, expenseData]);
 
   const handleCloseModal = useCallback(() => {
-    setIsAddModalOpen(false);
+    closeModal();
     if (searchParams.get("action") === "add") {
       setSearchParams((params) => {
         params.delete("action");
         return params;
       });
     }
-  }, [searchParams, setSearchParams]);
-
-  // Reset form when opening
-  useEffect(() => {
-    if (isAddModalOpen) {
-      setAmountStr("0");
-      setCategory("Food");
-      setNote("");
-      setDate(new Date());
-      setIsSubmitting(false);
-    }
-  }, [isAddModalOpen]);
+  }, [closeModal, searchParams, setSearchParams]);
 
   const handleSmartPaste = useCallback(async () => {
     try {
@@ -106,10 +115,8 @@ const GlobalAddExpense = memo(() => {
         setAmountStr(parsed.amount);
         if (parsed.note) setNote(parsed.note);
         if (parsed.category) setCategory(parsed.category);
-        // Haptic feedback for success
         if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
       } else {
-        // Haptic feedback for failure
         if (navigator.vibrate) navigator.vibrate(50);
       }
     } catch (err) {
@@ -131,9 +138,7 @@ const GlobalAddExpense = memo(() => {
       } else {
         setAmountStr((prev) => {
           if (prev === "0") return val;
-          // Limit total length to prevent overflows
           if (prev.length > 8) return prev;
-          // Limit decimals to 2
           if (prev.includes(".") && prev.split(".")[1].length >= 2) return prev;
           return prev + val;
         });
@@ -155,46 +160,69 @@ const GlobalAddExpense = memo(() => {
 
     setIsSubmitting(true);
     try {
-      // 1. Hybrid: Try Local Cache First
-      const localIcon = findLucideIcon(note);
-
-      // 2. Save Immediately (Optimistic)
-      // If local icon found, save it. If not, save undefined & fetch later.
-      const newId = await addExpense(
-        amountVal.toString(),
-        category,
-        note,
-        date,
-        localIcon,
-        localIcon ? "lucide" : undefined,
-      );
-
-      // 🎉 Fire Confetti!
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        zIndex: 10001,
-      });
-
-      // 3. Background: AI Fallback (If no local icon found)
-      // Only runs if note exists AND local search failed
-      if (newId && !localIcon && note.trim().length > 2) {
-        // Fire and forget
-        suggestIcon(note).then((aiIcon) => {
-          if (aiIcon) {
-            updateExpense(newId, { icon: aiIcon, iconType: "lucide" });
-          }
+      if (mode === "edit" && expenseData) {
+        await updateExpense(expenseData.id, {
+          amount: amountVal,
+          category,
+          note,
+          date,
         });
+        await updateExpense(expenseData.id, {
+          amount: amountVal,
+          category,
+          note,
+          date,
+        });
+
+        // Update local context data so View mode reflects changes
+        updateExpenseData({
+          amount: amountVal,
+          category,
+          note,
+          date
+        });
+
+        confetti({
+          particleCount: 50,
+          spread: 60,
+          origin: { y: 0.6 },
+          zIndex: 10001,
+          colors: ['#4ade80', '#22c55e'] // Greenish for update
+        });
+        setMode("view");
+      } else {
+        // ADD MODE
+        const localIcon = findLucideIcon(note);
+        const newId = await addExpense(
+          amountVal.toString(),
+          category,
+          note,
+          date,
+          localIcon,
+          localIcon ? "lucide" : undefined,
+        );
+
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          zIndex: 10001,
+        });
+
+        if (newId && !localIcon && note.trim().length > 2) {
+          suggestIcon(note).then((aiIcon) => {
+            if (aiIcon) {
+              updateExpense(newId, { icon: aiIcon, iconType: "lucide" });
+            }
+          });
+        }
+        setTimeout(() => {
+          handleCloseModal();
+        }, 500);
       }
 
-      // Small delay to let user see success state before closing
-      // This also gives Firestore a moment to sync local cache if needed
-      setTimeout(() => {
-        handleCloseModal();
-      }, 500);
     } catch (error) {
-      console.error("Failed to add expense", error);
+      console.error("Failed to save expense", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -204,8 +232,11 @@ const GlobalAddExpense = memo(() => {
     note,
     date,
     addExpense,
-    updateExpense, // Deduped destructuring
+    updateExpense,
     handleCloseModal,
+    mode,
+    expenseData,
+    controls
   ]);
 
   // Numpad Button Component
@@ -237,13 +268,15 @@ const GlobalAddExpense = memo(() => {
     </motion.button>
   );
 
+  const isReadOnly = mode === "view";
+
   return (
     <>
-      <LiquidFAB onClick={() => setIsAddModalOpen(true)} />
+      <LiquidFAB onClick={() => openModal("add")} />
 
       {createPortal(
         <AnimatePresence>
-          {isAddModalOpen && (
+          {isOpen && (
             <div
               className={`fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 items-end`}
             >
@@ -257,7 +290,7 @@ const GlobalAddExpense = memo(() => {
                 onClick={handleCloseModal}
               />
 
-              {/* Modal Content - Bottom Sheet style */}
+              {/* Modal Content */}
               <motion.div
                 initial={{ y: "110%" }}
                 animate={{ y: 0 }}
@@ -276,7 +309,7 @@ const GlobalAddExpense = memo(() => {
                 </div>
 
                 <div className="px-6 pb-4 pt-2 flex flex-col h-full space-y-4">
-                  {/* Top Bar: Date & Close */}
+                  {/* Top Bar */}
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       {/* Date Picker */}
@@ -285,22 +318,24 @@ const GlobalAddExpense = memo(() => {
                           <Calendar size={16} className="text-current" />
                           <span>{format(date, "MMM dd, yyyy")}</span>
                         </button>
-                        <input
-                          type="date"
-                          value={format(date, "yyyy-MM-dd")}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (!val) return;
-                            const [y, m, d] = val.split("-").map(Number);
-                            setDate((prev) => {
-                              const newDate = new Date(y, m - 1, d);
-                              newDate.setHours(prev.getHours());
-                              newDate.setMinutes(prev.getMinutes());
-                              return newDate;
-                            });
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                        />
+                        {!isReadOnly && (
+                          <input
+                            type="date"
+                            value={format(date, "yyyy-MM-dd")}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) return;
+                              const [y, m, d] = val.split("-").map(Number);
+                              setDate((prev) => {
+                                const newDate = new Date(y, m - 1, d);
+                                newDate.setHours(prev.getHours());
+                                newDate.setMinutes(prev.getMinutes());
+                                return newDate;
+                              });
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                        )}
                       </div>
 
                       {/* Time Picker */}
@@ -309,25 +344,48 @@ const GlobalAddExpense = memo(() => {
                           <Clock size={16} className="text-current" />
                           <span>{format(date, "hh:mm a")}</span>
                         </button>
-                        <input
-                          type="time"
-                          value={format(date, "HH:mm")}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (!val) return;
-                            const [hours, minutes] = val.split(":").map(Number);
-                            setDate((prev) => {
-                              const newDate = new Date(prev);
-                              newDate.setHours(hours);
-                              newDate.setMinutes(minutes);
-                              return newDate;
-                            });
-                          }}
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                        />
+                        {!isReadOnly && (
+                          <input
+                            type="time"
+                            value={format(date, "HH:mm")}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              if (!val) return;
+                              const [hours, minutes] = val.split(":").map(Number);
+                              setDate((prev) => {
+                                const newDate = new Date(prev);
+                                newDate.setHours(hours);
+                                newDate.setMinutes(minutes);
+                                return newDate;
+                              });
+                            }}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                          />
+                        )}
                       </div>
                     </div>
-                    <LiquidClose onClick={handleCloseModal} />
+
+                    <div className="flex items-center gap-2">
+                      {mode === "view" && (
+                        <button
+                          onClick={() => setMode("edit")}
+                          className="liquid-close-btn"
+                          aria-label="Edit"
+                        >
+                          <Edit2 size={20} />
+                        </button>
+                      )}
+                      {mode === "edit" ? (
+                        <button
+                          onClick={() => setMode("view")}
+                          className="liquid-pill text-sm font-semibold text-gray-900 dark:text-white"
+                        >
+                          Cancel
+                        </button>
+                      ) : (
+                        <LiquidClose onClick={handleCloseModal} />
+                      )}
+                    </div>
                   </div>
 
                   {/* Main Amount Display */}
@@ -342,27 +400,37 @@ const GlobalAddExpense = memo(() => {
                       <span className="text-3xl font-medium text-gray-400 dark:text-gray-600 mr-2">
                         ₹
                       </span>
-                      {/* Custom formatting for the input string */}
                       {amountStr}
-                      <span className="text-3xl font-medium opacity-0 ml-2">
-                        ₹
-                      </span>
                     </motion.div>
                   </div>
 
                   {/* Categories Horizontal Scroll */}
-                  <div className="w-full overflow-x-auto no-scrollbar py-3 pl-4">
+                  <div
+                    ref={(el) => {
+                      // Scroll to selected category on mount/update
+                      if (el && isOpen) {
+                        const index = CATEGORIES.indexOf(category);
+                        if (index !== -1) {
+                          const itemWidth = 88; // 72px width + 16px gap approx
+                          const scrollLeft = index * itemWidth - (el.clientWidth / 2) + (itemWidth / 2);
+                          el.scrollTo({ left: scrollLeft, behavior: "smooth" });
+                        }
+                      }
+                    }}
+                    className={`w-full overflow-x-auto no-scrollbar py-3 pl-4 ${isReadOnly ? 'pointer-events-none' : ''}`}
+                  >
                     <div className="flex space-x-4 pr-4">
                       {CATEGORIES.map((cat) => {
                         const isSelected = category === cat;
                         return (
                           <motion.button
                             key={cat}
-                            onClick={() => setCategory(cat)}
+                            onClick={() => !isReadOnly && setCategory(cat)}
                             whileTap={{ scale: 0.95 }}
                             animate={{
                               scale: isSelected ? 1.05 : 1,
-                              opacity: isSelected ? 1 : 0.7,
+                              opacity: isSelected ? 1 : (isReadOnly ? 0.3 : 0.7),
+                              filter: isSelected ? "grayscale(0%)" : (isReadOnly ? "grayscale(100%)" : "grayscale(0%)")
                             }}
                             className={`
                               flex flex-col items-center justify-center space-y-2 min-w-[72px]
@@ -395,81 +463,114 @@ const GlobalAddExpense = memo(() => {
                     </div>
                   </div>
 
-                  {/* Note Input (Optional) */}
+                  {/* Note Input */}
                   <div className="relative w-full">
                     <input
                       type="text"
                       value={note}
                       onChange={(e) => setNote(e.target.value)}
-                      placeholder="Add note..."
-                      className="w-full bg-gray-50 dark:bg-white/5 rounded-2xl py-3 px-4 text-center text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium"
+                      placeholder={isReadOnly ? "No note" : "Add note..."}
+                      readOnly={isReadOnly}
+                      className={`w-full bg-gray-50 dark:bg-white/5 rounded-2xl py-3 px-4 text-center text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
                     />
                   </div>
 
                   {/* Numpad & Actions Container */}
-                  <div className="mt-auto pb-6 w-full flex flex-col gap-4">
-                    {/* Grid */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 0.1 }}
-                      className="grid grid-cols-3 gap-3"
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                        <NumKey key={num} val={num.toString()} />
-                      ))}
-                      <NumKey
-                        val="."
-                        transparent
-                        label={
-                          <span className="text-2xl font-bold pb-2">.</span>
-                        }
-                      />
-                      <NumKey val="0" />
-                      <NumKey
-                        val="BACKSPACE"
-                        transparent
-                        label={
-                          <Delete size={28} className="text-current" />
-                        }
-                      />
-                    </motion.div>
+                  <div className="mt-auto pb-6 w-full relative">
+                    {/* View Mode Actions (Visible only in View Mode) */}
+                    {isReadOnly && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-10"
+                      >
+                        {/* Lissajous Art Background */}
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none -z-10 translate-y-[-20%] opacity-60">
+                          <LissajousArt
+                            amount={parseFloat(amountStr || "0")}
+                            hour={date.getHours()}
+                            minute={date.getMinutes()}
+                            day={date.getDate()}
+                            category={category}
+                          />
+                        </div>
 
-                    {/* Action Button */}
-                    <div className="mt-2">
-                      {hasClipboard ? (
-                        <motion.button
-                          whileTap={{ scale: 0.98 }}
-                          onClick={() => {
-                            if (navigator.vibrate) navigator.vibrate(10);
-                            handleSmartPaste();
-                          }}
-                          className="w-full py-4 rounded-[1.2rem] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 flex items-center justify-center text-white shadow-lg text-lg font-bold gap-2 transition-all"
-                        >
-                          <Wand2 size={24} color="#fff" />
-                          <span>Auto-Fill from Clipboard</span>
-                        </motion.button>
-                      ) : (
-                        <motion.button
-                          whileTap={{ scale: 0.98 }}
-                          onClick={handleSave}
-                          disabled={isSubmitting}
-                          className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
-                        >
-                          {isSubmitting ? (
-                            <IOSSpinner size={24} color="#fff" />
-                          ) : (
-                            "Add Expense"
-                          )}
-                        </motion.button>
-                      )}
+
+                        {/* Buttons Removed */}
+
+                        <div className="absolute bottom-0 w-full text-center pb-2">
+                          <p className="text-[10px] text-gray-300 dark:text-gray-700 font-medium uppercase tracking-widest opacity-50">
+                            Created on {format(date, "MMM dd, yyyy • hh:mm a")}
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {/* Numpad Grid (Hidden in View Mode but keeps height if we use visibility, but here we use absolute overlay or conditional rendering with fixed height wrapper) */}
+                    {/* Actually, to keep height perfectly, we can render Numpad with opacity-0 pointer-events-none in view mode, AND overlay the actions */}
+
+                    <div className={`flex flex-col gap-4 transition-all duration-300 ${isReadOnly ? 'opacity-0 pointer-events-none filter blur-sm' : 'opacity-100'}`}>
+                      {/* Grid */}
+                      <motion.div
+                        className="grid grid-cols-3 gap-3"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                          <NumKey key={num} val={num.toString()} />
+                        ))}
+                        <NumKey
+                          val="."
+                          transparent
+                          label={
+                            <span className="text-2xl font-bold pb-2">.</span>
+                          }
+                        />
+                        <NumKey val="0" />
+                        <NumKey
+                          val="BACKSPACE"
+                          transparent
+                          label={
+                            <Delete size={28} className="text-current" />
+                          }
+                        />
+                      </motion.div>
+
+                      {/* Action Button */}
+                      <div className="mt-2">
+                        {mode === "add" && hasClipboard ? (
+                          <motion.button
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => {
+                              if (navigator.vibrate) navigator.vibrate(10);
+                              handleSmartPaste();
+                            }}
+                            className="w-full py-4 rounded-[1.2rem] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 flex items-center justify-center text-white shadow-lg text-lg font-bold gap-2 transition-all"
+                          >
+                            <Wand2 size={24} color="#fff" />
+                            <span>Auto-Fill from Clipboard</span>
+                          </motion.button>
+                        ) : (
+                          <motion.button
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleSave}
+                            disabled={isSubmitting}
+                            className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
+                          >
+                            {isSubmitting ? (
+                              <IOSSpinner size={24} color="#fff" />
+                            ) : (
+                              mode === "edit" ? "Update Expense" : "Add Expense"
+                            )}
+                          </motion.button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               </motion.div>
-            </div>
+            </div >
           )}
-        </AnimatePresence>,
+        </AnimatePresence >,
         document.body,
       )}
     </>
