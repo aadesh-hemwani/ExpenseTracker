@@ -53,8 +53,8 @@ const ExpenseListModal = ({
           <div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               {CATEGORIES.includes(title) && (
-                <span className="p-2 bg-gray-100 dark:bg-white/10 rounded-full">
-                  {getCategoryIcon(title)}
+                <span className="p-2">
+                  {getCategoryIcon(title, "40px")}
                 </span>
               )}
               {title}
@@ -76,11 +76,10 @@ const ExpenseListModal = ({
               {expenses.map((expense, index) => (
                 <div
                   key={expense.id}
-                  className={`flex justify-between items-center py-4 ${
-                    index !== expenses.length - 1
-                      ? "border-b border-gray-100 dark:border-white/5"
-                      : ""
-                  }`}
+                  className={`flex justify-between items-center py-4 ${index !== expenses.length - 1
+                    ? "border-b border-gray-100 dark:border-white/5"
+                    : ""
+                    }`}
                 >
                   <div className="flex flex-col gap-1">
                     <span className="text-gray-900 dark:text-white font-medium text-[15px]">

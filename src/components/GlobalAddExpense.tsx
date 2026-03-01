@@ -23,6 +23,7 @@ const GlobalAddExpense = memo(() => {
   const [category, setCategory] = useState("Food");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date());
+  const [expenseType, setExpenseType] = useState<"expense" | "One-off">("expense");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const controls = useAnimation();
@@ -55,6 +56,7 @@ const GlobalAddExpense = memo(() => {
         setAmountStr(expenseData.amount.toString());
         setCategory(expenseData.category);
         setNote(expenseData.note || "");
+        setExpenseType(expenseData.type === "One-off" ? "One-off" : "expense");
 
         // Handle Firestore Timestamp or Date
         // @ts-ignore
@@ -117,12 +119,7 @@ const GlobalAddExpense = memo(() => {
           category,
           note,
           date,
-        });
-        await updateExpense(expenseData.id, {
-          amount: amountVal,
-          category,
-          note,
-          date,
+          type: expenseType,
         });
 
         // Update local context data so View mode reflects changes
@@ -130,7 +127,8 @@ const GlobalAddExpense = memo(() => {
           amount: amountVal,
           category,
           note,
-          date
+          date,
+          type: expenseType,
         });
 
         setMode("view");
@@ -140,7 +138,10 @@ const GlobalAddExpense = memo(() => {
           amountVal.toString(),
           category,
           note,
-          date
+          date,
+          undefined, // icon
+          undefined, // iconType
+          expenseType // type
         );
 
         setTimeout(() => {
@@ -158,6 +159,7 @@ const GlobalAddExpense = memo(() => {
     category,
     note,
     date,
+    expenseType,
     addExpense,
     updateExpense,
     handleCloseModal,
@@ -187,7 +189,7 @@ const GlobalAddExpense = memo(() => {
         val === "DONE" ? handleSave() : handleNumpadPress(val);
       }}
       className={`
-        relative h-16 rounded-[1rem] flex items-center justify-center text-3xl font-normal select-none touch-manipulation transition-colors duration-200
+        relative h-12 sm:h-14 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-normal select-none touch-manipulation transition-colors duration-200
         ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white"}
       `}
     >
@@ -235,13 +237,13 @@ const GlobalAddExpense = memo(() => {
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full" />
                 </div>
 
-                <div className="px-6 pb-4 pt-2 flex flex-col h-full space-y-4">
+                <div className="px-5 pb-3 pt-1 flex flex-col h-full space-y-3">
                   {/* Top Bar */}
                   <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
                       {/* Date Picker */}
                       <div className="relative">
-                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
+                        <button className={`flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none ${isReadOnly ? 'text-xs' : 'text-sm'}`}>
                           <Calendar size={16} className="text-current" />
                           <span>{format(date, "MMM dd, yyyy")}</span>
                         </button>
@@ -267,7 +269,7 @@ const GlobalAddExpense = memo(() => {
 
                       {/* Time Picker */}
                       <div className="relative">
-                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full text-sm font-semibold text-gray-600 dark:text-gray-300 pointer-events-none">
+                        <button className={`flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none ${isReadOnly ? 'text-xs' : 'text-sm'}`}>
                           <Clock size={16} className="text-current" />
                           <span>{format(date, "hh:mm a")}</span>
                         </button>
@@ -322,7 +324,7 @@ const GlobalAddExpense = memo(() => {
                     </span>
                     <motion.div
                       animate={controls}
-                      className="text-6xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline"
+                      className="text-5xl font-bold text-gray-900 dark:text-white tracking-tight flex items-baseline"
                     >
                       <span className="text-3xl font-medium text-gray-400 dark:text-gray-600 mr-2">
                         ₹
@@ -344,7 +346,7 @@ const GlobalAddExpense = memo(() => {
                         }
                       }
                     }}
-                    className={`w-full overflow-x-auto no-scrollbar py-3 pl-4 ${isReadOnly ? 'pointer-events-none' : ''}`}
+                    className={`w-full overflow-x-auto no-scrollbar py-2 pl-4 ${isReadOnly ? 'pointer-events-none' : ''}`}
                   >
                     <div className="flex space-x-4 pr-4">
                       {CATEGORIES.map((cat) => {
@@ -366,15 +368,12 @@ const GlobalAddExpense = memo(() => {
                           >
                             <div
                               className={`
-                                w-14 h-14 rounded-2xl flex items-center justify-center
-                                shadow-sm transition-all duration-300
-                                ${isSelected
-                                  ? "bg-gradient-to-br from-gray-800 to-black dark:from-white dark:to-gray-200 text-white dark:text-black shadow-lg shadow-gray-200 dark:shadow-none ring-2 ring-offset-2 ring-gray-900 dark:ring-white ring-offset-white dark:ring-offset-black"
-                                  : "bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-white/5"
-                                }
+                                w-12 h-12 flex items-center justify-center
+                                transition-all duration-300
+                                ${isSelected ? "scale-125 drop-shadow-xl" : "scale-110 opacity-90"}
                               `}
                             >
-                              {getCategoryIcon(cat, "24px")}
+                              {getCategoryIcon(cat, "40px")}
                             </div>
                             <span
                               className={`text-xs font-semibold ${isSelected
@@ -398,12 +397,34 @@ const GlobalAddExpense = memo(() => {
                       onChange={(e) => setNote(e.target.value)}
                       placeholder={isReadOnly ? "No note" : "Add note..."}
                       readOnly={isReadOnly}
-                      className={`w-full bg-gray-50 dark:bg-white/5 rounded-2xl py-3 px-4 text-center text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
+                      className={`w-full bg-gray-50 dark:bg-white/5 rounded-xl py-2 px-4 text-center text-sm md:text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
                     />
                   </div>
 
+                  <div className="flex w-full bg-gray-100 dark:bg-white/5 rounded-xl p-1 relative">
+                    <div
+                      className="absolute inset-y-1 rounded-xl bg-white dark:bg-[#2c2c2e] shadow-sm transition-all duration-300"
+                      style={{
+                        width: 'calc(50% - 4px)',
+                        left: expenseType === 'expense' ? '4px' : 'calc(50%)'
+                      }}
+                    />
+                    <button
+                      onClick={() => !isReadOnly && setExpenseType("expense")}
+                      className={`flex-1 py-1.5 text-sm font-semibold relative z-10 transition-colors ${expenseType === 'expense' ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}
+                    >
+                      Regular
+                    </button>
+                    <button
+                      onClick={() => !isReadOnly && setExpenseType("One-off")}
+                      className={`flex-1 py-1.5 text-sm font-semibold relative z-10 transition-colors ${expenseType === 'One-off' ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}
+                    >
+                      One-off
+                    </button>
+                  </div>
+
                   {/* Numpad & Actions Container */}
-                  <div className="mt-auto pb-6 w-full relative">
+                  <div className="mt-auto pb-4 w-full relative">
                     {/* View Mode Actions (Visible only in View Mode) */}
                     {isReadOnly && (
                       <motion.div
@@ -440,7 +461,7 @@ const GlobalAddExpense = memo(() => {
                     <div className={`flex flex-col gap-4 transition-all duration-300 ${isReadOnly ? 'opacity-0 pointer-events-none filter blur-sm' : 'opacity-100'}`}>
                       {/* Grid */}
                       <motion.div
-                        className="grid grid-cols-3 gap-3"
+                        className="grid grid-cols-3 gap-2"
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
                           <NumKey key={num} val={num.toString()} />
@@ -468,7 +489,7 @@ const GlobalAddExpense = memo(() => {
                           whileTap={{ scale: 0.98 }}
                           onClick={handleSave}
                           disabled={isSubmitting}
-                          className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
+                          className="w-full py-3 rounded-xl bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-md shadow-accent/25 text-lg font-semibold transition-all"
                         >
                           {isSubmitting ? (
                             <IOSSpinner size={24} color="#fff" />

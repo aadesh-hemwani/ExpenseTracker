@@ -1,5 +1,5 @@
 import { ReactNode, memo } from "react";
-import { motion, useMotionValue, useAnimation } from "framer-motion";
+import { motion, useAnimation } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { formatCurrency } from "../utils/formatUtils";
@@ -34,18 +34,17 @@ const SwipeableExpenseItem = memo(
     onClick,
   }: SwipeableExpenseItemProps) => {
     const controls = useAnimation();
-    const x = useMotionValue(0);
 
-    const handleDragEnd = async (_: any, info: any) => {
+    const handleDragEnd = (_: any, info: any) => {
       const offset = info.offset.x;
       const velocity = info.velocity.x;
       if (offset < -60 || velocity < -500) {
-        await controls.start({
+        controls.start({
           x: -80,
           transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
         });
       } else {
-        await controls.start({
+        controls.start({
           x: 0,
           transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
         });
@@ -62,7 +61,7 @@ const SwipeableExpenseItem = memo(
     return (
       <motion.div
         className={`relative ${className}`}
-        layout
+        layout="position"
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -87,14 +86,15 @@ const SwipeableExpenseItem = memo(
 
         {/* Foreground Card */}
         <motion.div
-          style={{ x }}
           animate={controls}
           drag={readOnly ? false : "x"}
+          dragDirectionLock={true}
           dragConstraints={{ left: -100, right: 0 }}
-          dragElastic={0.5}
+          dragElastic={0.0}
           dragMomentum={false}
           onDragEnd={handleDragEnd}
-          whileTap={{ scale: 0.98 }}
+          style={{ touchAction: "pan-y", willChange: "transform" }}
+          whileTap={!readOnly ? { scale: 0.96 } : undefined}
           onClick={() => onClick && onClick(t)}
           className={`relative z-10 flex items-center justify-between p-5 
             bg-white dark:bg-[#1c1c1e] 
@@ -103,17 +103,13 @@ const SwipeableExpenseItem = memo(
             ${onClick ? "cursor-pointer active:scale-95 transition-transform" : ""}
             ${cardClassName}`}
         >
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
+          <div className="flex items-center flex-1 min-w-0">
             {/* Illuminated Icon Container */}
-            <div className="shrink-0 relative group">
-              <div
-                className="absolute inset-0 bg-current opacity-20 dark:opacity-20 blur-xl rounded-full scale-75 group-hover:scale-110 transition-transform duration-500"
-                style={{ color: "var(--icon-color, currentColor)" }}
-              />
-              <div className="relative w-12 h-12 flex items-center justify-center rounded-2xl bg-white dark:bg-white/10 border border-black/5 dark:border-white/10 shadow-sm">
+            <div className="shrink-0 relative group w-16 h-16 -ml-2 -mt-2 -mb-2 mr-2">
+              <div className="relative w-full h-full flex items-center justify-center">
                 {getCategoryIcon(
                   t.category,
-                  "24px",
+                  "64px",
                   t.note || t.description,
                   t.icon,
                 )}
@@ -121,20 +117,12 @@ const SwipeableExpenseItem = memo(
             </div>
 
             {/* Note & Date/Category */}
-            <div className="flex flex-col flex-1 min-w-0 pr-4">
+            <div className="flex flex-col flex-1 min-w-0 pr-4 pl-3">
               <p className="font-semibold text-gray-900 dark:text-white text-[15px] truncate leading-tight">
-                {t.note || t.description || t.category}
+                {t.note}
               </p>
               <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">
                 <span className="opacity-80">{t.category}</span>
-                {!hideDate && t.date && (
-                  <>
-                    <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
-                    <span className="opacity-80">
-                      {format(getDate(t.date), "MMM dd")}
-                    </span>
-                  </>
-                )}
               </div>
             </div>
           </div>

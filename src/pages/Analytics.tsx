@@ -428,8 +428,8 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
                 }`}
             >
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-gray-50 dark:bg-white/5 rounded-full flex items-center justify-center border border-gray-100 dark:border-white/5">
-                  {getCategoryIcon(cat.name)}
+                <div className="w-9 h-9 flex items-center justify-center scale-125">
+                  {getCategoryIcon(cat.name, "36px")}
                 </div>
                 <span className="font-medium text-gray-700 dark:text-gray-300">
                   {cat.name}

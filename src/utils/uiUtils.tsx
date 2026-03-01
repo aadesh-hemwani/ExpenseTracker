@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import { Activity, Briefcase, Car, Grid2x2, Receipt, ShoppingCart, Ticket, Utensils } from "lucide-react";
+import { Activity, Briefcase, Grid2x2, Receipt, ShoppingCart, Ticket, Utensils } from "lucide-react";
 
 export const CATEGORIES = [
   "Food",
@@ -31,23 +31,90 @@ export const getCategoryIcon = (
 ): ReactElement => {
   const color = CATEGORY_COLORS[cat] || "#6b7280";
   const sizeNum = parseInt(size.replace("px", "")) || 20;
-
+  const dropShadow = "drop-shadow-[0_5px_4px_rgba(100,100,100,0.3)] dark:drop-shadow-[0_5px_4px_rgba(200,200,200,0.25)]drop-shadow-[0_5px_4px_rgba(100,100,100,0.3)] dark:drop-shadow-[0_5px_4px_rgba(200,200,200,0.25)]";
   switch (cat) {
     case "Food":
-      return <Utensils color={color} size={sizeNum} />;
+      return (
+        <img
+          src="/category/food.png"
+          alt="Food"
+          width={sizeNum}
+          height={sizeNum}
+          style={{
+            objectFit: "contain",
+            transform: "scale(2)"
+          }}
+          className={dropShadow}
+        />
+      );
     case "Shopping":
-      return <ShoppingCart color={color} size={sizeNum} />;
+      return <img
+        src="/category/shopping.png"
+        alt="Shopping"
+        width={sizeNum}
+        height={sizeNum}
+        style={{ objectFit: "contain", transform: "scale(1.8)" }}
+        className={dropShadow}
+      />;
     case "Transport":
-      return <Car color={color} size={sizeNum} />;
+      return (
+        <img
+          src="/category/transport.png"
+          alt="Transport"
+          width={sizeNum}
+          height={sizeNum}
+          style={{ objectFit: "contain", transform: "scale(1.4)" }}
+          className={dropShadow}
+        />
+      );
     case "Entertainment":
-      return <Ticket color={color} size={sizeNum} />;
+      return <img
+        src="/category/entertainment.png"
+        alt="Entertainment"
+        width={sizeNum}
+        height={sizeNum}
+        style={{ objectFit: "contain", transform: "scale(1.8)" }}
+        className={dropShadow}
+
+      />;
     case "Health":
-      return <Activity color={color} size={sizeNum} />;
+      return <img
+        src="/category/health.png"
+        alt="Health"
+        width={sizeNum}
+        height={sizeNum}
+        style={{ objectFit: "contain", transform: "scale(2)" }}
+        className={dropShadow}
+
+      />;
     case "Bills":
-      return <Receipt color={color} size={sizeNum} />;
+      return <img
+        src="/category/bills.png"
+        alt="Bills"
+        width={sizeNum}
+        height={sizeNum}
+        style={{ objectFit: "contain", transform: "scale(1)" }}
+        className={dropShadow}
+
+      />;
     case "Misc":
-      return <Grid2x2 color={color} size={sizeNum} />;
+      return <img
+        src="/category/misc.png"
+        alt="Misc"
+        width={sizeNum}
+        height={sizeNum}
+        style={{ objectFit: "contain", transform: "scale(2)" }}
+        className={dropShadow}
+
+      />;
     default:
-      return <Briefcase color={color} size={sizeNum} />;
+      return <img
+        src="/category/shopping.png"
+        alt="Shopping"
+        width={sizeNum}
+        height={sizeNum}
+        style={{ objectFit: "contain", transform: "scale(1.8)" }}
+        className={dropShadow}
+      />;;
   }
 };

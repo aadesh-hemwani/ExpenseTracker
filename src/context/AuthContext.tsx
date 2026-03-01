@@ -98,9 +98,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     firebaseUser: FirebaseUser
   ): Promise<any | null> => {
     try {
-      // 0. Fetch latest data from Firestore
+      // 0. Fetch latest data from Firestore (from cache first if offline)
       const userRef = doc(db, "users", firebaseUser.uid);
-      const userSnap = await getDoc(userRef);
+
+      const isOffline = !navigator.onLine;
+      let userSnap;
+
+      if (isOffline) {
+        try {
+          // @ts-ignore - 'cache' option exists in some Firebase versions/typings
+          userSnap = await getDoc(userRef, { source: 'cache' });
+        } catch (e) {
+          userSnap = await getDoc(userRef); // Fallback to normal if cache read fails
+        }
+      } else {
+        userSnap = await getDoc(userRef);
+      }
+
       const firestoreData = userSnap.exists() ? userSnap.data() : {};
 
       // 1. Fetch image as blob and convert to base64
@@ -164,10 +178,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(currentUser);
         setLoading(false);
 
-        // Background: Check Cache -> If Valid, Merge -> Else Fetch -> Cache
         const checkProfile = async () => {
           try {
-            // 1. Check Local Cache
+            // 1. Check Local Cache FIRST
             const cached = getCachedProfile(currentUser.uid);
             if (cached) {
               console.log("Applied cached profile");
@@ -175,7 +188,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               setUser((prev) => ({ ...prev, ...cached }));
             }
 
-            // 2. Fetch Fresh Data (Always, to catch isAdmin/Budget changes)
+            // 2. If Offline, stop here and just use cache
+            if (!navigator.onLine) {
+              console.log("App is offline, skipping fresh profile fetch");
+              return;
+            }
+
+            // 3. Fetch Fresh Data
             const freshData = await cacheProfile(currentUser);
             if (freshData) {
               // @ts-ignore

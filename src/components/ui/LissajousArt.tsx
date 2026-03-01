@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { CATEGORY_COLORS } from "../../utils/uiUtils";
+import { motion } from "framer-motion";
 
 type Props = {
     amount: number;
@@ -21,72 +22,73 @@ export function LissajousArt({
     const primaryColor = CATEGORY_COLORS[category] || "currentColor";
     const uniqueId = useMemo(() => `lissajous-${hour}-${minute}-${day}-${amount}`, [hour, minute, day, amount]);
 
-    // Generate Multiple Layers for Depth and Complexity
-    const layers = useMemo(() => {
-        // Base parameters (Deterministic)
-        const a = (hour % 5) + 1;       // Frequency X (1-5)
-        const b = (minute % 7) + 1;     // Frequency Y (1-7)
-        const delta = (day / 31) * Math.PI; // Phase shift
+    // Generate paths
+    const { primaryPath } = useMemo(() => {
+        const numAmount = Math.floor(amount || 0);
 
-        // Amplitude scales with amount but stays within bounds
-        const baseRadius = 100;
-        const amplitude = baseRadius * Math.min(Math.max(amount / 500, 0.7), 1.2);
+        // Dynamic frequencies based on time & amount
+        const a = ((hour + numAmount) % 4) + 2; // X Freq
+        const b = ((minute + Math.floor(numAmount / 10)) % 5) + 3; // Y Freq
+        const finalB = a === b ? b + 1 : b;
 
-        const steps = 600; // Resolution
-        const layerConfigs = [
-            { opacity: 1.0, width: 2, scale: 1.0, phaseOffset: 0 },    // Primary (Brighter)
-            { opacity: 0.6, width: 1, scale: 1.1, phaseOffset: 0.2 },  // Echo 1 (More visible)
-            { opacity: 0.2, width: 4, scale: 0.9, phaseOffset: -0.2 }  // Glow/Background
-        ];
+        const delta = ((day + numAmount) % 31 / 31) * Math.PI; // Phase shift
 
-        return layerConfigs.map((config) => {
-            const pts = [];
-            for (let i = 0; i <= steps; i++) {
-                const t = (i / steps) * Math.PI * 2;
+        const amplitude = 120;
+        const steps = 400;
 
-                // Add subtle modulation for "fun" detail
-                const mod = 1 + 0.05 * Math.sin(t * 10); // Ripple effect
+        const pts = [];
+        for (let i = 0; i <= steps; i++) {
+            const t = (i / steps) * Math.PI * 2;
+            const x = center + amplitude * Math.sin(a * t + delta);
+            const y = center + amplitude * Math.sin(finalB * t);
+            pts.push(`${x},${y}`);
+        }
 
-                const x = center + (amplitude * config.scale * mod) * Math.sin(a * t + delta + config.phaseOffset);
-                const y = center + (amplitude * config.scale * mod) * Math.sin(b * t);
-
-                pts.push(`${x},${y}`);
-            }
-            return { path: pts.join(" "), ...config };
-        });
+        const pathString = pts.join(" ");
+        return { primaryPath: pathString, bgPath: pathString };
     }, [amount, hour, minute, day, center]);
 
     return (
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] pointer-events-none z-0 opacity-60 dark:opacity-40 mix-blend-multiply dark:mix-blend-screen transition-all duration-500">
-            <svg
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-[40%] pointer-events-none z-0 mix-blend-multiply dark:mix-blend-screen transition-all duration-700">
+            <motion.svg
                 width={size}
                 height={size}
                 viewBox={`0 0 ${size} ${size}`}
                 className="overflow-visible"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1.2, ease: "easeOut" }}
             >
                 <defs>
-                    <linearGradient id={`${uniqueId}-gradient`} x1="0%" y1="0%" x2="100%" y2="100%">
+                    <linearGradient id={`${uniqueId}-glow`} x1="0%" y1="0%" x2="100%" y2="100%">
                         <stop offset="0%" stopColor={primaryColor} stopOpacity="0.1" />
-                        <stop offset="50%" stopColor={primaryColor} stopOpacity="1" />
+                        <stop offset="50%" stopColor={primaryColor} stopOpacity="0.5" />
                         <stop offset="100%" stopColor={primaryColor} stopOpacity="0.1" />
                     </linearGradient>
+                    <filter id={`${uniqueId}-blur`} x="-20%" y="-20%" width="140%" height="140%">
+                        <feGaussianBlur stdDeviation="6" />
+                    </filter>
                 </defs>
 
-                {layers.map((layer, index) => (
-                    <polyline
-                        key={index}
-                        fill="none"
-                        stroke={index === 0 ? `url(#${uniqueId}-gradient)` : primaryColor}
-                        strokeWidth={layer.width}
-                        strokeOpacity={layer.opacity}
-                        strokeLinejoin="round"
-                        strokeLinecap="round"
-                        points={layer.path}
-                    />
-                ))}
-
-
-            </svg>
+                {/* Primary Animated Core Stroke */}
+                <motion.polyline
+                    fill="none"
+                    stroke={`url(#${uniqueId}-glow)`}
+                    strokeWidth={3}
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                    points={primaryPath}
+                    initial={{ pathLength: 0, pathOffset: 1 }}
+                    animate={{
+                        pathLength: 1,
+                        pathOffset: 0,
+                    }}
+                    transition={{
+                        duration: 2.5,
+                        ease: "easeOut",
+                    }}
+                />
+            </motion.svg>
         </div>
     );
 }

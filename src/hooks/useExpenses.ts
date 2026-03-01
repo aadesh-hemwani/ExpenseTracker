@@ -245,7 +245,13 @@ export const useExpensesForMonth = (
           }
         }
 
-        // B. Fetch from Network
+        // B. Fetch from Network (Skip if offline)
+        if (!navigator.onLine) {
+          console.log(`[Offline Bypass] ${monthKey}`);
+          setLoading(false);
+          return;
+        }
+
         console.log(`[Network Fetch] ${monthKey}`);
         const start = new Date(date.getFullYear(), date.getMonth(), 1);
         const end = new Date(
@@ -379,7 +385,8 @@ export const useExpenses = () => {
       note: string,
       customDate?: Date | string,
       icon?: string,
-      iconType?: 'lucide' | 'ion' | 'emoji'
+      iconType?: 'lucide' | 'ion' | 'emoji',
+      type?: 'income' | 'expense' | 'One-off' | string
     ) => {
       if (!user) return;
 
@@ -413,6 +420,7 @@ export const useExpenses = () => {
           date: finalDate,
           ...(icon && { icon }),
           ...(iconType && { iconType }),
+          type: type || 'expense',
         });
 
         // 2. Update Aggregated Stats (Optimistic with increment)
@@ -435,20 +443,111 @@ export const useExpenses = () => {
     [user]
   );
 
-  const updateExpense = useCallback(async (id: string, updates: Partial<Expense>) => {
-    if (!user) return;
+  const updateExpense = useCallback(
+    async (id: string, updates: Partial<Expense>) => {
+      if (!user) return;
 
-    const docRef = doc(db, "users", user.uid, "expenses", id);
-    try {
-      // Removes undefined values to avoid Firestore errors
-      const sanitized = Object.fromEntries(
-        Object.entries(updates).filter(([_, v]) => v !== undefined)
-      );
-      await setDoc(docRef, sanitized, { merge: true });
-    } catch (e) {
-      console.error("Failed to update expense", e);
-    }
-  }, [user]);
+      const docRef = doc(db, "users", user.uid, "expenses", id);
+      const statsRef = collection(db, "users", user.uid, "stats");
+
+      try {
+        await runTransaction(db, async (transaction) => {
+          // 1. Get current expense
+          const expenseDoc = await transaction.get(docRef);
+          if (!expenseDoc.exists()) throw "Expense document does not exist!";
+          const currentData = expenseDoc.data() as Expense;
+
+          // 2. Determine if amount or date changed
+          const oldAmount = Number(currentData.amount);
+          const newAmount =
+            updates.amount !== undefined ? Number(updates.amount) : oldAmount;
+          const amountChanged = oldAmount !== newAmount;
+
+          let oldDateObj = new Date();
+          // @ts-ignore
+          if (currentData.date && currentData.date.toDate) {
+            // @ts-ignore
+            oldDateObj = currentData.date.toDate();
+          } else if (currentData.date) {
+            oldDateObj = new Date(currentData.date as any);
+          }
+          const oldMonthKey = format(oldDateObj, "yyyy-MM");
+
+          let newMonthKey = oldMonthKey;
+          let dateChanged = false;
+          let finalNewDate = currentData.date;
+
+          if (updates.date) {
+            let newDateObj = new Date();
+            if (updates.date instanceof Timestamp) {
+              newDateObj = updates.date.toDate();
+            } else {
+              newDateObj = new Date(updates.date);
+            }
+            newMonthKey = format(newDateObj, "yyyy-MM");
+            dateChanged = oldMonthKey !== newMonthKey;
+            finalNewDate = updates.date; // Use the provided date format (likely Date object, will be converted by Firestore)
+          }
+
+          // 3. Update Stats if needed
+          if (amountChanged || dateChanged) {
+            const oldStatDocRef = doc(statsRef, oldMonthKey);
+            const newStatDocRef = doc(statsRef, newMonthKey);
+
+            if (dateChanged) {
+              // Moved to a different month
+              // Decrement from old month
+              transaction.set(
+                oldStatDocRef,
+                {
+                  total: increment(-oldAmount),
+                  count: increment(-1),
+                },
+                { merge: true }
+              );
+              // Increment to new month
+              transaction.set(
+                newStatDocRef,
+                {
+                  total: increment(newAmount),
+                  count: increment(1),
+                },
+                { merge: true }
+              );
+            } else if (amountChanged) {
+              // Same month, different amount
+              const diff = newAmount - oldAmount;
+              if (diff !== 0) {
+                transaction.set(
+                  oldStatDocRef,
+                  {
+                    total: increment(diff),
+                  },
+                  { merge: true }
+                );
+              }
+            }
+          }
+
+          // 4. Update the actual expense document
+          // Removes undefined values to avoid Firestore errors
+          const sanitized = Object.fromEntries(
+            Object.entries(updates).filter(([_, v]) => v !== undefined)
+          );
+
+          // Make sure we write the final date correctly if it was passed
+          if (updates.date !== undefined) {
+            sanitized.date = finalNewDate;
+          }
+
+          transaction.set(docRef, sanitized, { merge: true });
+        });
+      } catch (e) {
+        console.error("Failed to update expense", e);
+      }
+    },
+    [user]
+  );
 
   const deleteExpense = useCallback(
     async (id: string, amount?: number, date?: Date | Timestamp) => {

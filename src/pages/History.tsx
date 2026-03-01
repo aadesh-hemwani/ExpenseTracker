@@ -80,6 +80,8 @@ interface CalendarViewProps {
   calendarDays: Date[];
   readOnly?: boolean;
   isLoading?: boolean;
+  expenseTypeFilter: "all" | "regular" | "one-off";
+  setExpenseTypeFilter: (filter: "all" | "regular" | "one-off") => void;
 }
 
 const CalendarView = ({
@@ -91,16 +93,27 @@ const CalendarView = ({
   calendarDays,
   readOnly = false,
   isLoading = false,
+  expenseTypeFilter,
+  setExpenseTypeFilter,
 }: CalendarViewProps) => {
   // Expenses are now passed down!
   const { deleteExpense } = useExpenses();
   const { openModal } = useGlobalModal();
   const { user } = useAuth(); // Access user for PDF report
 
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter(e => {
+      if (expenseTypeFilter === "all") return true;
+      if (expenseTypeFilter === "one-off") return e.type === "One-off";
+      if (expenseTypeFilter === "regular") return e.type !== "One-off";
+      return true;
+    });
+  }, [expenses, expenseTypeFilter]);
+
   // Optimized: Create a map of daily totals to avoid repeated filtering
   const dailyTotalsMap = useMemo(() => {
     const map: Record<string, number> = {};
-    expenses.forEach((e) => {
+    filteredExpenses.forEach((e) => {
       // @ts-ignore
       if (!e.date) return;
       // @ts-ignore
@@ -109,11 +122,11 @@ const CalendarView = ({
       map[dayKey] = (map[dayKey] || 0) + Number(e.amount);
     });
     return map;
-  }, [expenses]);
+  }, [filteredExpenses]);
 
   const groupedExpenses = useMemo(() => {
     return Object.entries(
-      expenses.reduce((acc, expense) => {
+      filteredExpenses.reduce((acc, expense) => {
         const date =
           expense.date instanceof Timestamp
             ? expense.date.toDate()
@@ -191,7 +204,7 @@ const CalendarView = ({
       }
 
       await generateMonthlyReport(
-        expenses,
+        filteredExpenses,
         {
           userName: user?.displayName || "User",
           email: user?.email || undefined,
@@ -239,6 +252,22 @@ const CalendarView = ({
             />
           )}
         </button>
+      </div>
+
+      {/* Expense Type Filter */}
+      <div className="flex items-center space-x-2 mb-6 overflow-x-auto no-scrollbar pb-1">
+        {(['all', 'regular', 'one-off'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setExpenseTypeFilter(f)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${expenseTypeFilter === f
+              ? "bg-black text-white dark:bg-white dark:text-black"
+              : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+              }`}
+          >
+            {f === 'one-off' ? 'One-off' : f.charAt(0).toUpperCase() + f.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Charts Section with Ref: REMOVED as per user request to avoid duplicate. 
@@ -310,12 +339,12 @@ const CalendarView = ({
       <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
         <div ref={chartContainerRef} className="mb-8 min-h-[250px] flex items-center justify-center">
           <Suspense fallback={<IOSSpinner size={32} />}>
-            <CategoryDonutChart expenses={expenses} animate={!isGeneratingPDF} />
+            <CategoryDonutChart expenses={filteredExpenses} animate={!isGeneratingPDF} />
           </Suspense>
         </div>
 
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          All Expenses in {format(currentMonth, "MMMM")}
+          {expenseTypeFilter === "all" ? "All" : expenseTypeFilter === "one-off" ? "One-off" : "Regular"} Expenses in {format(currentMonth, "MMMM")}
         </h3>
         <div className="space-y-4">
           <div className="flex flex-col space-y-6">
@@ -362,6 +391,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
   const [view, setView] = useState<"list" | "calendar">("list"); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState<Date | null>(null); // The specific day clicked in calendar
+  const [expenseTypeFilter, setExpenseTypeFilter] = useState<"all" | "regular" | "one-off">("all");
 
   const handleCloseModal = () => {
     setSelectedDate(null);
@@ -378,12 +408,30 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
     );
 
   // 1. Group Data for the "Month Grid" View
-  const monthGroups = useMemo(() => {
-    // We can use the 'stats' directly now!
-    // stats array: [{ monthKey: '2023-11', total: 500, count: 2 }, ...]
-
+  const { monthGroups, yearlyTotals } = useMemo(() => {
     // Sort by date descending (newest months first)
-    return stats.sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+    const sortedStats = [...stats].sort((a, b) => b.monthKey.localeCompare(a.monthKey));
+
+    const yearly: Record<string, number> = {};
+    const groupedByYear: Record<string, typeof sortedStats> = {};
+
+    sortedStats.forEach((stat) => {
+      const year = stat.monthKey.substring(0, 4);
+      if (!yearly[year]) yearly[year] = 0;
+      if (!groupedByYear[year]) groupedByYear[year] = [];
+
+      yearly[year] += stat.total;
+      groupedByYear[year].push(stat);
+    });
+
+    return {
+      monthGroups: sortedStats,
+      yearlyTotals: Object.entries(yearly).map(([year, total]) => ({
+        year,
+        total,
+        months: groupedByYear[year],
+      })).sort((a, b) => b.year.localeCompare(a.year))
+    };
   }, [stats]);
 
   // 2. Calendar Logic Helpers
@@ -434,14 +482,29 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
               <p>No history yet.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {monthGroups.map(({ monthKey, total }: any) => (
-                <MonthCard
-                  key={monthKey}
-                  monthKey={monthKey}
-                  total={total}
-                  onClick={openMonthCalendar}
-                />
+            <div className="space-y-8">
+              {yearlyTotals.map(({ year, total, months }) => (
+                <div key={year} className="space-y-4">
+                  <div className="flex justify-between items-end border-b border-gray-100 dark:border-gray-800 pb-2">
+                    <h2 className="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">
+                      {year}
+                    </h2>
+                    <div className="text-right">
+                      <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">Total</span>
+                      <span className="text-lg font-bold text-gray-900 dark:text-white">₹{total.toLocaleString("en-IN")}</span>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    {months.map(({ monthKey, total }: any) => (
+                      <MonthCard
+                        key={monthKey}
+                        monthKey={monthKey}
+                        total={total}
+                        onClick={openMonthCalendar}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -459,6 +522,8 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
           calendarDays={calendarDays}
           readOnly={readOnly}
           isLoading={monthLoading}
+          expenseTypeFilter={expenseTypeFilter}
+          setExpenseTypeFilter={setExpenseTypeFilter}
         />
       )}
 
@@ -467,9 +532,11 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
         {selectedDate && (
           <ExpenseListModal
             title={format(selectedDate, "EEEE, MMM do")}
-            expenses={monthExpenses.filter((e) =>
-              isSameDay(getDate(e.date), selectedDate),
-            )}
+            expenses={monthExpenses.filter((e) => {
+              if (expenseTypeFilter === "one-off" && e.type !== "One-off") return false;
+              if (expenseTypeFilter === "regular" && e.type === "One-off") return false;
+              return isSameDay(getDate(e.date), selectedDate);
+            })}
             onClose={handleCloseModal}
           />
         )}

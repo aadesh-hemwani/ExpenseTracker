@@ -225,36 +225,28 @@ const CreditCard: React.FC<CreditCardProps> = ({
 
           {/* Middle: Balance */}
           <div className="relative z-10 py-1">
-            <span className="text-[9px] font-bold dark:text-white/50 text-zinc-900/50 uppercase tracking-widest block mb-1">
+            <span className="text-[10px] font-bold dark:text-white/70 text-zinc-700 uppercase tracking-widest block mb-1">
               Current Spendings
             </span>
             <div className="flex items-baseline space-x-1">
-              <span className="text-5xl font-light tracking-tight dark:text-white text-zinc-900 drop-shadow-sm font-sans">
+              <span className="text-6xl tracking-tight dark:text-white text-zinc-900 drop-shadow-sm font-sans">
                 <CountUp value={Math.trunc(currentBalance)} />
               </span>
-              <span className="text-xl dark:text-white/50 text-zinc-900/50 font-light">
+              <span className="text-4xl dark:text-white/70 text-zinc-700 font-light">
                 .{currentBalance.toFixed(2).split(".")[1]}
               </span>
             </div>
           </div>
 
-          {/* Bottom: Card Number & Details */}
+          {/* Bottom: Details */}
           <div className="relative z-10 mt-auto pt-2">
             <div className="flex justify-between items-end">
-              <div className="flex flex-col space-y-0.5">
-                <div className="flex items-center space-x-3 dark:text-white/50 text-zinc-900 font-mono text-sm tracking-widest mb-1.5">
-                  <span>••••</span>
-                  <span>••••</span>
-                  <span>••••</span>
-                  <span className="text-zinc-900/90 dark:text-white/50">
-                    4029
-                  </span>
-                </div>
+              <div className="flex flex-col space-y-1">
                 <div className="flex flex-col">
-                  <span className="text-[9px] uppercase dark:text-white/50 text-zinc-900/20 tracking-widest font-bold mb-0.5">
+                  <span className="text-[10px] uppercase dark:text-white/70 text-zinc-700 tracking-widest font-bold mb-0.5">
                     Account Holder
                   </span>
-                  <span className="text-sm font-medium dark:text-white text-zinc-900 tracking-widest uppercase truncate max-w-[180px]">
+                  <span className="text-[14px] font-medium dark:text-white text-zinc-900 tracking-widest uppercase truncate max-w-[180px]">
                     {accountName || "MY WALLET"}
                   </span>
                 </div>

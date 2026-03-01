@@ -10,7 +10,7 @@ export interface Expense {
     note?: string;
     icon?: string;
     iconType?: 'lucide' | 'ion' | 'emoji';
-    type: 'income' | 'expense';
+    type?: 'income' | 'expense' | 'One-off' | string;
     userId: string;
     createdAt?: Timestamp;
 }

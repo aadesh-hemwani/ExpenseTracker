@@ -68,8 +68,7 @@ export default defineConfig({
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
-        globIgnores: ['**/assets/*-*.js'],
-        navigateFallbackDenylist: [/^\/.*\.js$/, /^\/.*\.css$/, /^\/.*\.png$/, /^\/.*\.json$/]
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}']
       },
     })
   ],
