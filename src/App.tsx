@@ -10,9 +10,6 @@ import { GlobalModalProvider } from "./context/GlobalModalContext";
 import ReloadPrompt from "./components/ReloadPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-import SplashScreen from "./components/SplashScreen";
-import { useState } from "react";
-
 // Static Imports
 import Home from "./pages/Home";
 import History from "./pages/History";
@@ -22,8 +19,6 @@ import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 
 function App() {
-  const [loading, setLoading] = useState(true);
-
   // Prevent Zoom on iOS
   useEffect(() => {
     const handleGestureStart = (e: Event) => {
@@ -39,36 +34,32 @@ function App() {
 
   return (
     <ThemeProvider>
-      {loading ? (
-        <SplashScreen onComplete={() => setLoading(false)} />
-      ) : (
-        <ErrorBoundary>
-          <ReloadPrompt />
-          <BrowserRouter>
-            <AuthProvider>
-              <Routes>
-                <Route path="/login" element={<Login />} />
-                {/* Protected Routes */}
-                <Route
-                  element={
-                    <ProtectedRoute>
-                      <GlobalModalProvider>
-                        <Layout />
-                      </GlobalModalProvider>
-                    </ProtectedRoute>
-                  }
-                >
-                  <Route path="/" element={<Home />} />
-                  <Route path="/history" element={<History />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/admin" element={<Admin />} />
-                </Route>
-              </Routes>
-            </AuthProvider>
-          </BrowserRouter>
-        </ErrorBoundary>
-      )}
+      <ErrorBoundary>
+        <ReloadPrompt />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              {/* Protected Routes */}
+              <Route
+                element={
+                  <ProtectedRoute>
+                    <GlobalModalProvider>
+                      <Layout />
+                    </GlobalModalProvider>
+                  </ProtectedRoute>
+                }
+              >
+                <Route path="/" element={<Home />} />
+                <Route path="/history" element={<History />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/admin" element={<Admin />} />
+              </Route>
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }

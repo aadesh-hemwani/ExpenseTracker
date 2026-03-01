@@ -111,6 +111,32 @@ const CalendarView = ({
     return map;
   }, [expenses]);
 
+  const groupedExpenses = useMemo(() => {
+    return Object.entries(
+      expenses.reduce((acc, expense) => {
+        const date =
+          expense.date instanceof Timestamp
+            ? expense.date.toDate()
+            : new Date(expense.date);
+
+        let dateLabel = format(date, "MMM dd");
+        const todayStr = format(new Date(), "yyyy-MM-dd");
+        const yesterdayStr = format(new Date(Date.now() - 86400000), "yyyy-MM-dd");
+        const dateStr = format(date, "yyyy-MM-dd");
+
+        if (dateStr === todayStr) {
+          dateLabel = "Today";
+        } else if (dateStr === yesterdayStr) {
+          dateLabel = "Yesterday";
+        }
+
+        if (!acc[dateLabel]) acc[dateLabel] = [];
+        acc[dateLabel].push(expense);
+        return acc;
+      }, {} as Record<string, Expense[]>)
+    );
+  }, [expenses]);
+
   // PDF Export Logic
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
@@ -292,62 +318,29 @@ const CalendarView = ({
         </h3>
         <div className="space-y-4">
           <div className="flex flex-col space-y-6">
-            {Object.entries(
-              expenses.reduce(
-                (acc, expense) => {
-                  const date =
-                    expense.date instanceof Timestamp
-                      ? expense.date.toDate()
-                      : new Date(expense.date);
-
-                  let dateLabel = format(date, "MMM dd");
-                  if (
-                    format(date, "yyyy-MM-dd") ===
-                    format(new Date(), "yyyy-MM-dd")
-                  ) {
-                    dateLabel = "Today";
-                  } else if (
-                    format(date, "yyyy-MM-dd") ===
-                    format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
-                  ) {
-                    dateLabel = "Yesterday";
-                  }
-
-                  if (!acc[dateLabel]) acc[dateLabel] = [];
-                  acc[dateLabel].push(expense);
-                  return acc;
-                  // Sort keys so newest dates come first in the object iteration?
-                  // Object.entries doesn't guarantee order, but usually follows insertion for strings.
-                  // Ideally we map over sorted unique dates.
-                },
-                {} as Record<string, Expense[]>,
-              ),
-            )
-              // We need to ensure sorting. The Home implementation relied on reduce insertion order of pre-sorted list.
-              // Since 'expenses' is already sorted by date desc in hook, we should be fine.
-              .map(([label, groupExpenses], index) => (
-                <div
-                  key={label}
-                  className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
-                >
-                  <h4 className="sticky top-[calc(env(safe-area-inset-top)+4.9rem)] z-20 pt-0 pb-2 -mx-5 px-5 liquid-sticky-header flex items-center justify-between transition-all">
-                    {label}
-                  </h4>
-                  <div className="space-y-2">
-                    {groupExpenses.map((expense) => (
-                      <SwipeableExpenseItem
-                        key={expense.id}
-                        t={expense}
-                        getCategoryIcon={getCategoryIcon}
-                        onDelete={deleteExpense}
-                        readOnly={readOnly}
-                        hideDate={true}
-                        onClick={(expense) => openModal("view", expense)}
-                      />
-                    ))}
-                  </div>
+            {groupedExpenses.map(([label, groupExpenses], index) => (
+              <div
+                key={label}
+                className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
+              >
+                <h4 className="sticky top-[calc(env(safe-area-inset-top)+4.9rem)] z-20 pt-0 pb-2 -mx-5 px-5 liquid-sticky-header flex items-center justify-between transition-all">
+                  {label}
+                </h4>
+                <div className="space-y-2">
+                  {groupExpenses.map((expense) => (
+                    <SwipeableExpenseItem
+                      key={expense.id}
+                      t={expense}
+                      getCategoryIcon={getCategoryIcon}
+                      onDelete={deleteExpense}
+                      readOnly={readOnly}
+                      hideDate={true}
+                      onClick={(expense) => openModal("view", expense)}
+                    />
+                  ))}
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
         </div>
       </div>

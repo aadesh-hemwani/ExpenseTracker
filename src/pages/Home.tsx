@@ -144,6 +144,33 @@ const Home = () => {
     };
   }, [lastMonthExpenses, thisMonthFullExpenses]);
 
+  // Memoize grouped recent expenses
+  const groupedRecentExpenses = useMemo(() => {
+    return Object.entries(
+      recentExpenses.reduce((acc, expense) => {
+        const date =
+          expense.date instanceof Timestamp
+            ? expense.date.toDate()
+            : new Date(expense.date);
+
+        let dateLabel = format(date, "MMM dd");
+        const todayStr = format(now, "yyyy-MM-dd");
+        const yesterdayStr = format(new Date(now.getTime() - 86400000), "yyyy-MM-dd");
+        const dateStr = format(date, "yyyy-MM-dd");
+
+        if (dateStr === todayStr) {
+          dateLabel = "Today";
+        } else if (dateStr === yesterdayStr) {
+          dateLabel = "Yesterday";
+        }
+
+        if (!acc[dateLabel]) acc[dateLabel] = [];
+        acc[dateLabel].push(expense);
+        return acc;
+      }, {} as Record<string, Expense[]>)
+    );
+  }, [recentExpenses, now]);
+
   // Loading State
   if (loadingCurrent || loadingStats) {
     return (
@@ -200,34 +227,7 @@ const Home = () => {
               className="flex flex-col space-y-2"
               layout
             >
-              {Object.entries(
-                recentExpenses.reduce(
-                  (acc, expense) => {
-                    const date =
-                      expense.date instanceof Timestamp
-                        ? expense.date.toDate()
-                        : new Date(expense.date);
-
-                    let dateLabel = format(date, "MMM dd");
-                    if (
-                      format(date, "yyyy-MM-dd") ===
-                      format(new Date(), "yyyy-MM-dd")
-                    ) {
-                      dateLabel = "Today";
-                    } else if (
-                      format(date, "yyyy-MM-dd") ===
-                      format(new Date(Date.now() - 86400000), "yyyy-MM-dd")
-                    ) {
-                      dateLabel = "Yesterday";
-                    }
-
-                    if (!acc[dateLabel]) acc[dateLabel] = [];
-                    acc[dateLabel].push(expense);
-                    return acc;
-                  },
-                  {} as Record<string, Expense[]>,
-                ),
-              ).map(([label, expenses], index) => (
+              {groupedRecentExpenses.map(([label, expenses], index) => (
                 <div
                   key={label}
                   className={`space-y-2 ${index > 0 ? "pt-3" : ""}`}

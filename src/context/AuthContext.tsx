@@ -17,6 +17,8 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "../firebase"; // Import from your firebase setup
 import { AuthContextType, User } from "../types";
+import { AnimatePresence } from "framer-motion";
+import SplashScreen from "../components/SplashScreen";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -204,13 +206,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      {loading ? (
-        <div className="flex justify-center items-center h-screen bg-gray-50 dark:bg-black transition-colors">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
-        </div>
-      ) : (
-        children
-      )}
+      <AnimatePresence mode="wait">
+        {loading && <SplashScreen key="splash" />}
+      </AnimatePresence>
+      {!loading && children}
     </AuthContext.Provider>
   );
 };

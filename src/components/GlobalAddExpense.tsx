@@ -11,10 +11,7 @@ import { LiquidClose } from "./ui/LiquidClose";
 import IOSSpinner from "./ui/IOSSpinner";
 import { LissajousArt } from "./ui/LissajousArt";
 import { useGlobalModal } from "../context/GlobalModalContext";
-import { findLucideIcon } from "../utils/uiUtils";
-import { suggestIcon } from "../services/gemini";
 import { format } from "date-fns";
-import confetti from "canvas-confetti";
 
 
 const GlobalAddExpense = memo(() => {
@@ -182,40 +179,16 @@ const GlobalAddExpense = memo(() => {
           date
         });
 
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.6 },
-          zIndex: 10001,
-          colors: ['#4ade80', '#22c55e'] // Greenish for update
-        });
         setMode("view");
       } else {
         // ADD MODE
-        const localIcon = findLucideIcon(note);
-        const newId = await addExpense(
+        await addExpense(
           amountVal.toString(),
           category,
           note,
-          date,
-          localIcon,
-          localIcon ? "lucide" : undefined,
+          date
         );
 
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 },
-          zIndex: 10001,
-        });
-
-        if (newId && !localIcon && note.trim().length > 2) {
-          suggestIcon(note).then((aiIcon) => {
-            if (aiIcon) {
-              updateExpense(newId, { icon: aiIcon, iconType: "lucide" });
-            }
-          });
-        }
         setTimeout(() => {
           handleCloseModal();
         }, 500);
