@@ -28,7 +28,6 @@ import { doc, getDoc } from "firebase/firestore";
 import Card from "../components/Card";
 import ExpenseListModal from "../components/ExpenseListModal";
 import AiInsights from "../components/AiInsights";
-import ChatAssistant from "../components/ChatAssistant";
 import { generateInsights } from "../utils/insights";
 
 const container = {
@@ -377,11 +376,6 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
 
       <motion.div variants={item}>
         <AiInsights insights={insights} isLoading={aiLoading} />
-      </motion.div>
-
-      {/* Chat Assistant Card */}
-      <motion.div variants={item}>
-        <ChatAssistant userId={userId} monthlyLimit={budget} mode="card" />
       </motion.div>
 
       <motion.div variants={item} className="pt-2">

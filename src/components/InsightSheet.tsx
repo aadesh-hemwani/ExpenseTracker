@@ -1,9 +1,9 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { format } from "date-fns";
-import TrajectoryChart from "./TrajectoryChart";
+const TrajectoryChart = lazy(() => import("./TrajectoryChart"));
 import { LiquidClose } from "./ui/LiquidClose";
 import { formatCurrency } from "../utils/formatUtils";
 
@@ -93,15 +93,15 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
 
                     <div
                       className={`p-4 rounded-2xl ${data.trendDirection === "down"
-                          ? "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400"
-                          : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
+                        ? "bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400"
+                        : "bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400"
                         }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
                           className={`p-3 rounded-full shrink-0 ${data.trendDirection === "down"
-                              ? "bg-green-100 dark:bg-green-500/20"
-                              : "bg-red-100 dark:bg-red-500/20"
+                            ? "bg-green-100 dark:bg-green-500/20"
+                            : "bg-red-100 dark:bg-red-500/20"
                             }`}
                         >
                           {data.trendDirection === "down" ? (
@@ -126,12 +126,14 @@ const InsightSheet: React.FC<InsightSheetProps> = ({
                   </div>
 
                   {/* Visual Chart */}
-                  <div className="pt-2">
-                    <TrajectoryChart
-                      currentMonthData={data.thisMonthGraphData || []}
-                      lastMonthData={data.lastMonthGraphData || []}
-                      trendDirection={data.trendDirection}
-                    />
+                  <div className="pt-2 min-h-[140px] flex items-center justify-center">
+                    <Suspense fallback={<div className="w-full h-[120px] animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" />}>
+                      <TrajectoryChart
+                        currentMonthData={data.thisMonthGraphData || []}
+                        lastMonthData={data.lastMonthGraphData || []}
+                        trendDirection={data.trendDirection}
+                      />
+                    </Suspense>
                   </div>
                 </div>
               </motion.div>

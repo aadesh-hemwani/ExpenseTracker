@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { motion, useMotionValue, useMotionTemplate } from "framer-motion";
+import React, { Suspense, lazy } from "react";
+import { motion } from "framer-motion";
 import CountUp from "./CountUp";
-import TrajectoryChart from "./TrajectoryChart";
+const TrajectoryChart = lazy(() => import("./TrajectoryChart"));
 import { formatCurrency } from "../utils/formatUtils";
 import { format } from "date-fns";
 import { TrendingDown, TrendingUp } from "lucide-react";
@@ -34,80 +34,10 @@ const CreditCard: React.FC<CreditCardProps> = ({
   lastMonthGraphData,
   lastMonthDate,
 }) => {
-  const [isGyroActive, setIsGyroActive] = useState(false);
-
-  // Holographic Effect Motion Values
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
-
   // Holographic Gradient - Apple Cash Style (Green/Gold/Cyan/Purple)
-  const bg = useMotionTemplate`radial-gradient(circle at calc(50% + ${x}px) calc(50% + ${y}px), #d4d4d8, #eab308, #22c55e, #06b6d4, #8b5cf6, transparent 65%)`;
-
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const width = rect.width;
-    const height = rect.height;
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    // Center coordinate system - Amplify movement slightly for effect
-    const xPct = (mouseX - width / 2) * 1.2;
-    const yPct = (mouseY - height / 2) * 1.2;
-
-    x.set(xPct);
-    y.set(yPct);
-  };
-
-  const handleMouseLeave = () => {
-    x.set(0);
-    y.set(0);
-  };
-
-  useEffect(() => {
-    const handleOrientation = (e: DeviceOrientationEvent) => {
-      if (e.gamma === null || e.beta === null) return;
-
-      setIsGyroActive(true);
-
-      // Gamma: Left/Right tilt (-90 to 90) -> Map to X axis
-      const gamma = e.gamma;
-      // Beta: Front/Back tilt (-180 to 180) -> Map to Y axis
-      const beta = e.beta;
-
-      // Clamp values to a reasonable range for effect (e.g., +/- 45 degrees)
-      const clampedGamma = Math.max(-45, Math.min(45, gamma));
-      const clampedBeta = Math.max(-45, Math.min(45, beta));
-
-      // Map to pixel offsets (e.g., +/- 100px)
-      const xOffset = (clampedGamma / 45) * 100;
-      const yOffset = (clampedBeta / 45) * 100;
-
-      x.set(xOffset);
-      y.set(yOffset);
-    };
-
-    window.addEventListener("deviceorientation", handleOrientation);
-    return () =>
-      window.removeEventListener("deviceorientation", handleOrientation);
-  }, [x, y]);
+  const bg = "radial-gradient(circle at 50% 50%, #d4d4d8, #eab308, #22c55e, #06b6d4, #8b5cf6, transparent 65%)";
 
   const handleCardClick = () => {
-    // Only request permission if we aren't actively receiving data
-    if (
-      !isGyroActive &&
-      typeof DeviceOrientationEvent !== "undefined" &&
-      typeof (DeviceOrientationEvent as any).requestPermission === "function"
-    ) {
-      (DeviceOrientationEvent as any)
-        .requestPermission()
-        .then((response: string) => {
-          if (response === "granted") {
-            // Listener will wake up
-          }
-        })
-        .catch(console.error);
-    }
-
     onFlip();
   };
 
@@ -123,8 +53,6 @@ const CreditCard: React.FC<CreditCardProps> = ({
       }}
       role="button"
       tabIndex={0}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       style={{ perspective: "1000px" }}
     >
       <motion.div
@@ -373,8 +301,8 @@ const CreditCard: React.FC<CreditCardProps> = ({
               <div className="text-xs text-tertiary/80 leading-relaxed mb-1">
                 <span
                   className={`font-bold text-sm ${trendDirection === "down"
-                      ? "text-emerald-500"
-                      : "text-rose-500"
+                    ? "text-emerald-500"
+                    : "text-rose-500"
                     }`}
                 >
                   {formatCurrency(diff)}
@@ -392,13 +320,15 @@ const CreditCard: React.FC<CreditCardProps> = ({
           </div>
 
           {/* Graph Wrapper */}
-          <div className="w-full flex-1 min-h-0 flex items-end justify-center pb-4">
+          <div className="w-full flex-1 min-h-[80px] flex items-end justify-center pb-4">
             <div className="w-full">
-              <TrajectoryChart
-                currentMonthData={thisMonthGraphData || []}
-                lastMonthData={lastMonthGraphData || []}
-                trendDirection={trendDirection}
-              />
+              <Suspense fallback={<div className="w-full h-[60px] animate-pulse bg-black/5 dark:bg-white/5 rounded-xl" />}>
+                <TrajectoryChart
+                  currentMonthData={thisMonthGraphData || []}
+                  lastMonthData={lastMonthGraphData || []}
+                  trendDirection={trendDirection}
+                />
+              </Suspense>
             </div>
           </div>
         </div>

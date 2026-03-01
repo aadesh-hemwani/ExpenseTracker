@@ -1,4 +1,4 @@
-import { useState, useMemo, memo } from "react";
+import { useState, useMemo, memo, lazy, Suspense } from "react";
 import {
   format,
   startOfMonth,
@@ -24,7 +24,7 @@ import ExpenseListModal from "../components/ExpenseListModal";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
-import CategoryDonutChart from "../components/CategoryDonutChart";
+const CategoryDonutChart = lazy(() => import("../components/CategoryDonutChart"));
 import { Download, Calendar } from "lucide-react";
 // import html2canvas from "html2canvas";
 import { generateMonthlyReport } from "../utils/reportGenerator";
@@ -308,9 +308,10 @@ const CalendarView = ({
 
       {/* Monthly Expenses List */}
       <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-        {/* Chart Section */}
-        <div ref={chartContainerRef} className="mb-8">
-          <CategoryDonutChart expenses={expenses} animate={!isGeneratingPDF} />
+        <div ref={chartContainerRef} className="mb-8 min-h-[250px] flex items-center justify-center">
+          <Suspense fallback={<IOSSpinner size={32} />}>
+            <CategoryDonutChart expenses={expenses} animate={!isGeneratingPDF} />
+          </Suspense>
         </div>
 
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">

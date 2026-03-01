@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, memo } from "react";
 import { motion } from "framer-motion";
 import { Cpu } from "lucide-react";
 import { Insight } from "../utils/insights";
@@ -115,4 +115,4 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
   );
 };
 
-export default AiInsights;
+export default memo(AiInsights);

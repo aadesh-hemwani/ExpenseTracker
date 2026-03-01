@@ -2,10 +2,9 @@ import React, { useState, memo, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import { Calendar, Clock, Delete, Wand2, Edit2 } from "lucide-react";
+import { Calendar, Clock, Delete, Edit2 } from "lucide-react";
 import { useExpenses } from "../hooks/useExpenses";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
-import { parseTransactionText } from "../utils/smsParser";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { LiquidClose } from "./ui/LiquidClose";
 import IOSSpinner from "./ui/IOSSpinner";
@@ -26,49 +25,21 @@ const GlobalAddExpense = memo(() => {
   const [date, setDate] = useState(new Date());
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hasClipboard, setHasClipboard] = useState(false);
   const controls = useAnimation();
-
-  // Check clipboard permission/content when modal opens
-  useEffect(() => {
-    if (isOpen && mode === "add") {
-      const checkClipboard = async () => {
-        try {
-          const permission = await navigator.permissions.query({
-            name: "clipboard-read" as PermissionName,
-          });
-          if (permission.state === "granted" || permission.state === "prompt") {
-            const text = await navigator.clipboard.readText();
-            if (parseTransactionText(text)) {
-              setHasClipboard(true);
-            } else {
-              setHasClipboard(false);
-            }
-          }
-        } catch (err) {
-          setHasClipboard(false);
-        }
-      };
-      checkClipboard();
-    }
-  }, [isOpen, mode]);
 
   // Handle Deep Links
   useEffect(() => {
     const action = searchParams.get("action");
-    const text = searchParams.get("text");
+    const amountParam = searchParams.get("amount");
+    const noteParam = searchParams.get("note");
+    const categoryParam = searchParams.get("category");
 
     if (action === "add") {
       openModal("add");
 
-      if (text) {
-        const parsed = parseTransactionText(text);
-        if (parsed) {
-          setAmountStr(parsed.amount);
-          if (parsed.note) setNote(parsed.note);
-          if (parsed.category) setCategory(parsed.category);
-        }
-      }
+      if (amountParam) setAmountStr(amountParam);
+      if (noteParam) setNote(noteParam);
+      if (categoryParam) setCategory(categoryParam);
     }
   }, [searchParams, openModal]);
 
@@ -103,23 +74,6 @@ const GlobalAddExpense = memo(() => {
       });
     }
   }, [closeModal, searchParams, setSearchParams]);
-
-  const handleSmartPaste = useCallback(async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      const parsed = parseTransactionText(text);
-      if (parsed) {
-        setAmountStr(parsed.amount);
-        if (parsed.note) setNote(parsed.note);
-        if (parsed.category) setCategory(parsed.category);
-        if (navigator.vibrate) navigator.vibrate([10, 30, 10]);
-      } else {
-        if (navigator.vibrate) navigator.vibrate(50);
-      }
-    } catch (err) {
-      console.error("Failed to read clipboard", err);
-    }
-  }, []);
 
   const handleNumpadPress = useCallback(
     (val: string) => {
@@ -510,32 +464,18 @@ const GlobalAddExpense = memo(() => {
 
                       {/* Action Button */}
                       <div className="mt-2">
-                        {mode === "add" && hasClipboard ? (
-                          <motion.button
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => {
-                              if (navigator.vibrate) navigator.vibrate(10);
-                              handleSmartPaste();
-                            }}
-                            className="w-full py-4 rounded-[1.2rem] bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 flex items-center justify-center text-white shadow-lg text-lg font-bold gap-2 transition-all"
-                          >
-                            <Wand2 size={24} color="#fff" />
-                            <span>Auto-Fill from Clipboard</span>
-                          </motion.button>
-                        ) : (
-                          <motion.button
-                            whileTap={{ scale: 0.98 }}
-                            onClick={handleSave}
-                            disabled={isSubmitting}
-                            className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
-                          >
-                            {isSubmitting ? (
-                              <IOSSpinner size={24} color="#fff" />
-                            ) : (
-                              mode === "edit" ? "Update Expense" : "Add Expense"
-                            )}
-                          </motion.button>
-                        )}
+                        <motion.button
+                          whileTap={{ scale: 0.98 }}
+                          onClick={handleSave}
+                          disabled={isSubmitting}
+                          className="w-full py-4 rounded-[1.2rem] bg-accent hover:brightness-110 active:scale-95 flex items-center justify-center text-white shadow-lg shadow-accent/25 text-xl font-semibold transition-all"
+                        >
+                          {isSubmitting ? (
+                            <IOSSpinner size={24} color="#fff" />
+                          ) : (
+                            mode === "edit" ? "Update Expense" : "Add Expense"
+                          )}
+                        </motion.button>
                       </div>
                     </div>
                   </div>
