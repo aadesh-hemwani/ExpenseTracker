@@ -9,16 +9,22 @@
   --base-l: 100%;
 
   /* Semantic Colors (Light Mode) */
-  --bg-body: 210 20% 98%; /* Cool Gray/Blue Tint */
-  --bg-surface: 0 0% 100%; /* Pure White */
+  --bg-body: 210 20% 98%;
+  /* Cool Gray/Blue Tint */
+  --bg-surface: 0 0% 100%;
+  /* Pure White */
   --bg-elevated: 0 0% 100%;
 
   /* Premium "Ink" Grays */
-  --text-primary: 220 40% 10%; /* Deep Blue-Black */
-  --text-secondary: 220 10% 40%; /* Cool Gray */
-  --text-tertiary: 220 10% 65%; /* Lighter Cool Gray */
+  --text-primary: 220 40% 10%;
+  /* Deep Blue-Black */
+  --text-secondary: 220 10% 40%;
+  /* Cool Gray */
+  --text-tertiary: 220 10% 65%;
+  /* Lighter Cool Gray */
 
-  --border-subtle: 220 15% 90%; /* Cool Gray Border */
+  --border-subtle: 220 15% 90%;
+  /* Cool Gray Border */
 
   /* Accent Colors - Indigo default */
   --accent-h: 245;
@@ -50,9 +56,18 @@ body {
   /* iOS Mobile Behaviors */
   touch-action: manipulation;
   user-select: none;
+  -webkit-user-select: none;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+}
+
+/* Re-enable selection for inputs and text areas */
+input,
+textarea,
+p {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 html {
@@ -80,13 +95,18 @@ body {
 /* Dark Mode Overrides */
 .dark {
   /* OLED Friendly but with depth */
-  --bg-body: 222 47% 4%; /* Dark Navy/Black */
-  --bg-surface: 222 47% 8%; /* Slightly Lighter */
+  --bg-body: 222 47% 4%;
+  /* Dark Navy/Black */
+  --bg-surface: 222 47% 8%;
+  /* Slightly Lighter */
   --bg-elevated: 222 47% 12%;
 
-  --text-primary: 210 40% 98%; /* White-ish */
-  --text-secondary: 215 20% 65%; /* Cool Gray */
-  --text-tertiary: 215 15% 45%; /* Darker Cool Gray */
+  --text-primary: 210 40% 98%;
+  /* White-ish */
+  --text-secondary: 215 20% 65%;
+  /* Cool Gray */
+  --text-tertiary: 215 15% 45%;
+  /* Darker Cool Gray */
 
   --border-subtle: 217 33% 15%;
 }
@@ -95,16 +115,12 @@ body {
   background-color: hsl(var(--bg-body));
   /* Dark Mode Gradient (Subtle) */
   background-image:
-    radial-gradient(
-      circle at 50% 0%,
+    radial-gradient(circle at 50% 0%,
       rgba(99, 102, 241, 0.08),
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at 80% 10%,
+      transparent 40%),
+    radial-gradient(circle at 80% 10%,
       rgba(236, 72, 153, 0.05),
-      transparent 30%
-    );
+      transparent 30%);
 }
 
 /* Utilities */
@@ -130,13 +146,16 @@ body {
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
+
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
   .pt-safe {
     padding-top: max(20px, env(safe-area-inset-top));
   }
@@ -148,6 +167,7 @@ body {
     opacity: 0;
     transform: translateY(20px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -160,10 +180,12 @@ body {
 
 /* Custom Glows (More subtle now) */
 @keyframes pulse-soft {
+
   0%,
   100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.7;
   }
@@ -175,11 +197,13 @@ body {
 
 /* Insight Glow Animations */
 @keyframes glow-pulse-green {
+
   0%,
   100% {
     box-shadow: 0 0 0px rgba(16, 185, 129, 0);
     border-color: rgba(16, 185, 129, 0.2);
   }
+
   50% {
     box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
     border-color: rgba(16, 185, 129, 0.6);
@@ -187,11 +211,13 @@ body {
 }
 
 @keyframes glow-pulse-red {
+
   0%,
   100% {
     box-shadow: 0 0 0px rgba(244, 63, 94, 0);
     border-color: rgba(244, 63, 94, 0.2);
   }
+
   50% {
     box-shadow: 0 0 15px rgba(244, 63, 94, 0.3);
     border-color: rgba(244, 63, 94, 0.6);
@@ -211,6 +237,7 @@ body {
   0% {
     opacity: 1;
   }
+
   100% {
     opacity: 0;
   }

@@ -54,7 +54,7 @@ const ExpenseListModal = ({
             <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               {CATEGORIES.includes(title) && (
                 <span className="p-2">
-                  {getCategoryIcon(title, "40px")}
+                  {getCategoryIcon(title, "30px")}
                 </span>
               )}
               {title}

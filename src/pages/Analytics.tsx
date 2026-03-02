@@ -1,4 +1,5 @@
-import { useMemo, useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useMemo, useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import {
   useMonthlyStats,
   useExpensesForMonth,
@@ -24,7 +25,7 @@ import { useTheme } from "../context/ThemeContext";
 import CountUp from "../components/CountUp";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import Card from "../components/Card";
 import ExpenseListModal from "../components/ExpenseListModal";
 import AiInsights from "../components/AiInsights";
@@ -46,6 +47,7 @@ const item = {
 };
 
 const MonthlyTrendChart = lazy(() => import("../components/MonthlyTrendChart"));
+const TrajectoryChart = lazy(() => import("../components/TrajectoryChart"));
 
 interface AnalyticsProps {
   userId?: string;
@@ -54,6 +56,9 @@ interface AnalyticsProps {
 
 const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const { user } = useAuth();
+  const location = useLocation();
+  const trajectoryChartRef = useRef<HTMLDivElement>(null);
+
   // 1. Get High-Level Stats for Trend Chart
   const { stats, loading: statsLoading } = useMonthlyStats(userId);
 
@@ -172,6 +177,76 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     [monthlyExpenses],
   );
 
+  // C. Calculate Trajectory Chart Data
+  const lastMonthDate = useMemo(() => subMonths(targetDate, 1), [targetDate]);
+  const { expenses: lastMonthExpenses } = useExpensesForMonth(
+    lastMonthDate,
+    stats,
+    !statsLoading,
+    false,
+    userId
+  );
+
+  const {
+    thisMonthGraphData,
+    lastMonthGraphData,
+    trendDirection,
+    percentageChange,
+    diff,
+    lastMonthPartialSum
+  } = useMemo(() => {
+    const currentDay = targetDate.getDate();
+    const daysInMonth = 31;
+
+    // 1. Current Month Total
+    const thisSum = monthlyExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
+
+    // 2. Last Month Partial (Compare up to same day)
+    const lastPartialSum = lastMonthExpenses.reduce((acc, e) => {
+      const d = e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
+      if (d && d.getDate() <= currentDay) return acc + Number(e.amount);
+      return acc;
+    }, 0);
+
+    // 3. Trends
+    let pctChange = 0;
+    if (lastPartialSum > 0) {
+      pctChange = ((thisSum - lastPartialSum) / lastPartialSum) * 100;
+    }
+    const isTrendingUp = thisSum > lastPartialSum;
+
+    // 4. Graph Data Helpers
+    const getDailyCumulative = (list: any[]) => {
+      const totals = new Array(daysInMonth).fill(0);
+      list.forEach((e) => {
+        const d = e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
+        if (d) {
+          const day = d.getDate() - 1;
+          if (day >= 0 && day < daysInMonth) totals[day] += Number(e.amount);
+        }
+      });
+      const cumulative: number[] = [];
+      let sum = 0;
+      totals.forEach((val) => {
+        sum += val;
+        cumulative.push(sum);
+      });
+      return cumulative;
+    };
+
+    const thisGraph = getDailyCumulative(monthlyExpenses).slice(0, currentDay);
+    const lastGraph = getDailyCumulative(lastMonthExpenses).slice(0, currentDay);
+
+    return {
+      percentageChange: Math.abs(pctChange).toFixed(0),
+      trendDirection: (isTrendingUp ? "up" : "down") as "up" | "down",
+      thisMonthGraphData: [0, ...thisGraph],
+      lastMonthGraphData: [0, ...lastGraph],
+      diff: Math.abs(thisSum - lastPartialSum),
+      lastMonthPartialSum: lastPartialSum,
+    };
+  }, [monthlyExpenses, lastMonthExpenses, targetDate]);
+
   // Current Month KPI (Calculated from detailed expenses for accuracy/liveliness)
   const currentMonthTotal = useMemo(() => {
     return monthlyExpenses.reduce((sum, item) => sum + Number(item.amount), 0);
@@ -245,6 +320,15 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   }, [stats, monthlyExpenses, currentMonthTotal, budget, analyticsInsights]);
 
   const topCategory = categoryData[0];
+
+  // Auto-scroll to Trajectory Chart if coming from Home's trend pill
+  useEffect(() => {
+    if (location.state?.scrollToTrajectory && trajectoryChartRef.current) {
+      setTimeout(() => {
+        trajectoryChartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300); // Small delay to let the page render
+    }
+  }, [location.state]);
 
   // Chart Colors based on Theme
   const gridColor = theme === "dark" ? "#374151" : "#f3f4f6";
@@ -378,6 +462,52 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
         <AiInsights insights={insights} isLoading={aiLoading} />
       </motion.div>
 
+      {/* Trajectory Chart from Home Hero Card */}
+      <motion.div variants={item} className="pt-2" ref={trajectoryChartRef}>
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 bg-accent/10 rounded-lg">
+            {trendDirection === "up" ? (
+              <TrendingUp color="var(--color-accent)" size={20} className="text-accent" />
+            ) : (
+              <TrendingDown color="var(--color-accent)" size={20} className="text-accent" />
+            )}
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">
+            Current Spend Trajectory
+          </h2>
+        </div>
+        <Card className="mt-0 pt-8 pb-4">
+          <div className="h-48 w-full px-2">
+            <Suspense fallback={<div className="w-full h-full flex items-center justify-center"><div className="animate-pulse w-full h-full bg-gray-100 dark:bg-gray-800 rounded-xl" /></div>}>
+              <TrajectoryChart
+                currentMonthData={thisMonthGraphData || []}
+                lastMonthData={lastMonthGraphData || []}
+                trendDirection={trendDirection}
+              />
+            </Suspense>
+          </div>
+
+          <div className="mt-8 flex justify-between items-start w-full px-2">
+            <div className="flex-1 pr-4">
+              <div className="text-sm text-gray-700 dark:text-gray-300 leading-snug mb-0.5">
+                <span
+                  className={`font-bold ${trendDirection === "down" ? "text-emerald-500" : "text-rose-500"}`}
+                >
+                  {formatCurrency(diff)}
+                </span>{" "}
+                {trendDirection === "down" ? "lower" : "higher"} than last month
+              </div>
+              <p className="text-xs text-gray-500 leading-tight">
+                By {format(lastMonthDate, "MMMM do")}, you had spent{" "}
+                <span className="font-medium text-gray-500 dark:text-gray-400">
+                  {formatCurrency(lastMonthPartialSum)}
+                </span>
+              </p>
+            </div>
+          </div>
+        </Card>
+      </motion.div>
+
       <motion.div variants={item} className="pt-2">
         {/* Monthly Trend Chart */}
         <div className="flex items-center gap-2 mb-4">
@@ -429,7 +559,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
             >
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 flex items-center justify-center scale-125">
-                  {getCategoryIcon(cat.name, "36px")}
+                  {getCategoryIcon(cat.name, "25px")}
                 </div>
                 <span className="font-medium text-gray-700 dark:text-gray-300">
                   {cat.name}

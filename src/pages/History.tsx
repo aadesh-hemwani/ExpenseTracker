@@ -70,6 +70,40 @@ const MonthCard = memo(({ monthKey, total, onClick }: MonthCardProps) => {
   );
 });
 
+// --- Sub-Component: Memoized Expense List ---
+interface MemoizedExpenseListProps {
+  label: string;
+  expenses: Expense[];
+  onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
+  onView: (expense: Expense) => void;
+  readOnly: boolean;
+}
+
+const MemoizedExpenseList = memo(
+  ({ label, expenses, onDelete, onView, readOnly }: MemoizedExpenseListProps) => {
+    return (
+      <div className="space-y-2">
+        <h4 className="sticky top-[calc(env(safe-area-inset-top)+4.9rem)] z-20 pt-0 pb-2 -mx-5 px-5 liquid-sticky-header flex items-center justify-between transition-all">
+          {label}
+        </h4>
+        <div className="space-y-2">
+          {expenses.map((expense) => (
+            <SwipeableExpenseItem
+              key={expense.id}
+              t={expense}
+              getCategoryIcon={getCategoryIcon}
+              onDelete={onDelete}
+              readOnly={readOnly}
+              hideDate={true}
+              onClick={(expense) => onView(expense)}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+);
+
 // --- Sub-Component: Calendar View ---
 interface CalendarViewProps {
   currentMonth: Date;
@@ -353,22 +387,13 @@ const CalendarView = ({
                 key={label}
                 className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
               >
-                <h4 className="sticky top-[calc(env(safe-area-inset-top)+4.9rem)] z-20 pt-0 pb-2 -mx-5 px-5 liquid-sticky-header flex items-center justify-between transition-all">
-                  {label}
-                </h4>
-                <div className="space-y-2">
-                  {groupExpenses.map((expense) => (
-                    <SwipeableExpenseItem
-                      key={expense.id}
-                      t={expense}
-                      getCategoryIcon={getCategoryIcon}
-                      onDelete={deleteExpense}
-                      readOnly={readOnly}
-                      hideDate={true}
-                      onClick={(expense) => openModal("view", expense)}
-                    />
-                  ))}
-                </div>
+                <MemoizedExpenseList
+                  label={label}
+                  expenses={groupExpenses}
+                  onDelete={deleteExpense}
+                  onView={(expense) => openModal("view", expense)}
+                  readOnly={readOnly}
+                />
               </div>
             ))}
           </div>

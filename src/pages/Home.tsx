@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
@@ -11,6 +12,7 @@ import { Timestamp } from "firebase/firestore";
 import { Expense } from "../types";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon } from "../utils/uiUtils";
+import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 
 import IOSSpinner from "../components/ui/IOSSpinner";
 import { useAuth } from "../context/AuthContext";
@@ -33,12 +35,22 @@ const item = {
 };
 
 const Home = () => {
+  const navigate = useNavigate();
   const { stats, loading: loadingStats } = useMonthlyStats();
   const { deleteExpense } = useExpenses();
 
   const { user } = useAuth();
-  const [showInsightSheet, setShowInsightSheet] = useState(false);
   const { openModal } = useGlobalModal();
+
+  const [greeting, setGreeting] = useState("Good day");
+  const firstName = user?.displayName ? user.displayName.split(" ")[0] : "";
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) setGreeting("Good morning");
+    else if (hour >= 12 && hour < 17) setGreeting("Good afternoon");
+    else setGreeting("Good evening");
+  }, []);
 
   const now = useMemo(() => new Date(), []);
   const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
@@ -72,13 +84,10 @@ const Home = () => {
     currentMonthTotal,
     percentageChange,
     trendDirection,
-    lastMonthPartialSum,
-    diff,
-    thisMonthGraphData,
-    lastMonthGraphData,
+    topCategory,
+    dailyAverage,
   } = useMemo(() => {
     const currentDay = now.getDate();
-    const daysInMonth = 31; // Simplification for graph visuals
 
     // 1. Current Month Total
     const thisMonthSum = thisMonthFullExpenses.reduce(
@@ -102,45 +111,17 @@ const Home = () => {
     }
     const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
-    // 4. Graph Data Helpers
-    const getDailyCumulative = (list: Expense[]) => {
-      const totals = new Array(daysInMonth).fill(0);
-      list.forEach((e) => {
-        const d =
-          e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
-        if (d) {
-          const day = d.getDate() - 1;
-          if (day >= 0 && day < daysInMonth) totals[day] += Number(e.amount);
-        }
-      });
-
-      const cumulative: number[] = [];
-      let sum = 0;
-      totals.forEach((val) => {
-        sum += val;
-        cumulative.push(sum);
-      });
-      return cumulative;
-    };
-
-    const thisGraph = getDailyCumulative(thisMonthFullExpenses).slice(
-      0,
-      currentDay,
-    );
-    const lastGraph = getDailyCumulative(lastMonthExpenses).slice(
-      0,
-      currentDay,
-    );
+    // 4. Analytics Extras
+    const categoryData = getCategoryBreakdown(thisMonthFullExpenses);
+    const topCat = categoryData.length > 0 ? categoryData[0].name : "None";
+    const avg = currentDay > 0 ? thisMonthSum / currentDay : 0;
 
     return {
       currentMonthTotal: thisMonthSum,
       percentageChange: Math.abs(pctChange).toFixed(0),
       trendDirection: (isTrendingUp ? "up" : "down") as "up" | "down",
-      lastMonthPartialSum,
-      lastMonthDate,
-      diff: Math.abs(thisMonthSum - lastMonthPartialSum),
-      thisMonthGraphData: [0, ...thisGraph],
-      lastMonthGraphData: [0, ...lastGraph],
+      topCategory: topCat,
+      dailyAverage: avg,
     };
   }, [lastMonthExpenses, thisMonthFullExpenses]);
 
@@ -182,37 +163,29 @@ const Home = () => {
 
   return (
     <div className="space-y-10 animate-fade-in">
-      <header className="flex flex-col space-y-6 pt-4 relative">
-        <div className="flex items-center justify-between px-2">
-          <div>
-            <p className="text-lg font-bold text-tertiary uppercase tracking-widest">
-              {format(new Date(), "MMMM yyyy")}
-            </p>
-          </div>
+      <header className="flex flex-col space-y-6 pt-6 relative">
+        <div className="flex flex-col px-2 mb-2">
+          <p className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+            {greeting}{firstName ? `, ${firstName}` : ""}
+          </p>
         </div>
 
-        {/* Balance Card */}
-        {/* Credit Card Component */}
+        {/* Balance Card Component */}
         <CreditCard
           currentBalance={currentMonthTotal}
-          accountName={user?.displayName || "MY WALLET"}
-          isFlipped={showInsightSheet}
-          onFlip={() => setShowInsightSheet(!showInsightSheet)}
-          diff={diff}
-          lastMonthPartialSum={lastMonthPartialSum}
           trendDirection={trendDirection}
           percentageChange={percentageChange}
-          thisMonthGraphData={thisMonthGraphData}
-          lastMonthGraphData={lastMonthGraphData}
-          lastMonthDate={lastMonthDate}
+          topCategory={topCategory}
+          dailyAverage={dailyAverage}
+          onTrendClick={() =>
+            navigate("/analytics", { state: { scrollToTrajectory: true } })
+          }
         />
       </header>
 
       {/* Grouped Transactions */}
       <section className="space-y-4">
-        <h3 className="text-xs font-bold text-tertiary px-1 uppercase tracking-wider">
-          Recent Transactions
-        </h3>
+
 
         <div className="space-y-2">
           {recentExpenses.length === 0 ? (

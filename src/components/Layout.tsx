@@ -114,7 +114,10 @@ const Layout = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain">
+      <main
+        className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain"
+        style={{ WebkitOverflowScrolling: "touch" }}
+      >
         <div
           className={`relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 ${location.pathname === "/history"
             ? "pt-0"

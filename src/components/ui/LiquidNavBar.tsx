@@ -68,7 +68,7 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
         setActiveIndex(index);
         // Trigger animation
         setAnimClass("liquid-move-anim");
-        const timer = setTimeout(() => setAnimClass(""), 500); // 500ms match css
+        const timer = setTimeout(() => setAnimClass(""), 200); // 200ms match css
         return () => clearTimeout(timer);
       }
     }, [location.pathname, items, activeIndex]);
@@ -76,7 +76,7 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(
     // Cleanup animation class if double triggered
     useEffect(() => {
       if (animClass) {
-        const timer = setTimeout(() => setAnimClass(""), 500);
+        const timer = setTimeout(() => setAnimClass(""), 200);
         return () => clearTimeout(timer);
       }
     }, [animClass]);

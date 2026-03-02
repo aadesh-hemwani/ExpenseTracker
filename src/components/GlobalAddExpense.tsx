@@ -346,6 +346,7 @@ const GlobalAddExpense = memo(() => {
                         }
                       }
                     }}
+                    style={{ WebkitOverflowScrolling: "touch" }}
                     className={`w-full overflow-x-auto no-scrollbar py-2 pl-4 ${isReadOnly ? 'pointer-events-none' : ''}`}
                   >
                     <div className="flex space-x-4 pr-4">
@@ -370,10 +371,10 @@ const GlobalAddExpense = memo(() => {
                               className={`
                                 w-12 h-12 flex items-center justify-center
                                 transition-all duration-300
-                                ${isSelected ? "scale-125 drop-shadow-xl" : "scale-110 opacity-90"}
+                                ${isSelected ? "scale-125 drop-shadow-xl" : "opacity-50"}
                               `}
                             >
-                              {getCategoryIcon(cat, "40px")}
+                              {getCategoryIcon(cat, "30px")}
                             </div>
                             <span
                               className={`text-xs font-semibold ${isSelected

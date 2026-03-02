@@ -38,15 +38,15 @@ const SwipeableExpenseItem = memo(
     const handleDragEnd = (_: any, info: any) => {
       const offset = info.offset.x;
       const velocity = info.velocity.x;
-      if (offset < -60 || velocity < -500) {
+      if (offset < -50 || velocity < -300) {
         controls.start({
           x: -80,
-          transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
+          transition: { type: "spring", stiffness: 350, damping: 30, mass: 1 },
         });
       } else {
         controls.start({
           x: 0,
-          transition: { type: "spring", stiffness: 400, damping: 40, mass: 1 },
+          transition: { type: "spring", stiffness: 350, damping: 30, mass: 1 },
         });
       }
     };
@@ -90,11 +90,11 @@ const SwipeableExpenseItem = memo(
           drag={readOnly ? false : "x"}
           dragDirectionLock={true}
           dragConstraints={{ left: -100, right: 0 }}
-          dragElastic={0.0}
+          dragElastic={0.15}
           dragMomentum={false}
           onDragEnd={handleDragEnd}
-          style={{ touchAction: "pan-y", willChange: "transform" }}
-          whileTap={!readOnly ? { scale: 0.96 } : undefined}
+          style={{ touchAction: "pan-y", transform: "translateZ(0)" }}
+          whileTap={!readOnly ? { scale: 0.97 } : undefined}
           onClick={() => onClick && onClick(t)}
           className={`relative z-10 flex items-center justify-between p-5 
             bg-white dark:bg-[#1c1c1e] 
@@ -109,7 +109,7 @@ const SwipeableExpenseItem = memo(
               <div className="relative w-full h-full flex items-center justify-center">
                 {getCategoryIcon(
                   t.category,
-                  "64px",
+                  "35px",
                   t.note || t.description,
                   t.icon,
                 )}
@@ -117,7 +117,7 @@ const SwipeableExpenseItem = memo(
             </div>
 
             {/* Note & Date/Category */}
-            <div className="flex flex-col flex-1 min-w-0 pr-4 pl-3">
+            <div className="flex flex-col flex-1 min-w-0 pr-4">
               <p className="font-semibold text-gray-900 dark:text-white text-[15px] truncate leading-tight">
                 {t.note}
               </p>
