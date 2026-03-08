@@ -386,7 +386,7 @@ export const useExpenses = () => {
       customDate?: Date | string,
       icon?: string,
       iconType?: 'lucide' | 'ion' | 'emoji',
-      type?: 'income' | 'expense' | 'One-off' | string
+      type?: 'Regular' | 'One-off'
     ) => {
       if (!user) return;
 
@@ -420,7 +420,7 @@ export const useExpenses = () => {
           date: finalDate,
           ...(icon && { icon }),
           ...(iconType && { iconType }),
-          type: type || 'expense',
+          type: type || 'Regular',
         });
 
         // 2. Update Aggregated Stats (Optimistic with increment)

@@ -45,10 +45,10 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
             value={Math.trunc(currentBalance)}
             currency={false}
             prefix="₹"
-            prefixClassName="text-4xl font-light text-zinc-400 dark:text-zinc-500 tracking-normal mr-1"
-            className="text-7xl tracking-tighter text-zinc-900 dark:text-white font-semibold font-sans"
+            prefixClassName="text-5xl font-light text-zinc-400 dark:text-zinc-500 tracking-normal mr-1"
+            className="text-6xl tracking-tighter text-zinc-900 dark:text-white font-semibold font-sans"
           />
-          <span className="text-4xl text-zinc-400 dark:text-zinc-500 font-medium tracking-tight">
+          <span className="text-5xl text-zinc-400 dark:text-zinc-500 font-medium tracking-tight">
             .{currentBalance.toFixed(2).split(".")[1]}
           </span>
         </div>

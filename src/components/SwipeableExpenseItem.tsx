@@ -30,7 +30,6 @@ const SwipeableExpenseItem = memo(
     className = "",
     cardClassName = "",
     readOnly = false,
-    hideDate = false,
     onClick,
   }: SwipeableExpenseItemProps) => {
     const controls = useAnimation();
@@ -96,7 +95,7 @@ const SwipeableExpenseItem = memo(
           style={{ touchAction: "pan-y", transform: "translateZ(0)" }}
           whileTap={!readOnly ? { scale: 0.97 } : undefined}
           onClick={() => onClick && onClick(t)}
-          className={`relative z-10 flex items-center justify-between p-5 
+          className={`relative z-10 flex items-center justify-between p-4
             bg-white dark:bg-[#1c1c1e] 
             border border-gray-100 dark:border-white/10 
             rounded-[2rem] shadow-sm
@@ -105,20 +104,17 @@ const SwipeableExpenseItem = memo(
         >
           <div className="flex items-center flex-1 min-w-0">
             {/* Illuminated Icon Container */}
-            <div className="shrink-0 relative group w-16 h-16 -ml-2 -mt-2 -mb-2 mr-2">
-              <div className="relative w-full h-full flex items-center justify-center">
-                {getCategoryIcon(
-                  t.category,
-                  "35px",
-                  t.note || t.description,
-                  t.icon,
-                )}
-              </div>
+            <div className="shrink-0 relative group w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm bg-gray-50 dark:bg-white/5 border-[2px] border-gray-100 dark:border-white/5 mr-3">
+              {getCategoryIcon(
+                t.category,
+                "28px",
+                t.note,
+              )}
             </div>
 
             {/* Note & Date/Category */}
             <div className="flex flex-col flex-1 min-w-0 pr-4">
-              <p className="font-semibold text-gray-900 dark:text-white text-[15px] truncate leading-tight">
+              <p className="font-semibold text-gray-900 dark:text-white text-lg truncate leading-tight">
                 {t.note}
               </p>
               <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">

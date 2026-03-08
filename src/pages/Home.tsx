@@ -16,7 +16,7 @@ import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 
 import IOSSpinner from "../components/ui/IOSSpinner";
 import { useAuth } from "../context/AuthContext";
-import CreditCard from "../components/CreditCard";
+import HeroBalance from "../components/HeroBalance";
 import { useGlobalModal } from "../context/GlobalModalContext";
 
 const container = {
@@ -168,10 +168,13 @@ const Home = () => {
           <p className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
             {greeting}{firstName ? `, ${firstName}` : ""}
           </p>
+          <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mt-0.5">
+            {format(now, "MMMM yyyy")}
+          </p>
         </div>
 
         {/* Balance Card Component */}
-        <CreditCard
+        <HeroBalance
           currentBalance={currentMonthTotal}
           trendDirection={trendDirection}
           percentageChange={percentageChange}

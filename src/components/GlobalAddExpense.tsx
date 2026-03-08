@@ -23,7 +23,7 @@ const GlobalAddExpense = memo(() => {
   const [category, setCategory] = useState("Food");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date());
-  const [expenseType, setExpenseType] = useState<"expense" | "One-off">("expense");
+  const [expenseType, setExpenseType] = useState<"Regular" | "One-off">("Regular");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const controls = useAnimation();
@@ -56,7 +56,7 @@ const GlobalAddExpense = memo(() => {
         setAmountStr(expenseData.amount.toString());
         setCategory(expenseData.category);
         setNote(expenseData.note || "");
-        setExpenseType(expenseData.type === "One-off" ? "One-off" : "expense");
+        setExpenseType(expenseData.type === "One-off" ? "One-off" : "Regular");
 
         // Handle Firestore Timestamp or Date
         // @ts-ignore
@@ -369,12 +369,15 @@ const GlobalAddExpense = memo(() => {
                           >
                             <div
                               className={`
-                                w-12 h-12 flex items-center justify-center
-                                transition-all duration-300
-                                ${isSelected ? "scale-125 drop-shadow-xl" : "opacity-50"}
+                                w-14 h-14 rounded-2xl flex items-center justify-center
+                                shadow-sm transition-all duration-300
+                                ${isSelected
+                                  ? "bg-gradient-to-br from-gray-800 to-black dark:from-white dark:to-gray-200 text-white dark:text-black shadow-lg shadow-gray-200 dark:shadow-none ring-2 ring-offset-2 ring-gray-900 dark:ring-white ring-offset-white dark:ring-offset-black"
+                                  : "bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 border border-gray-100 dark:border-white/5"
+                                }
                               `}
                             >
-                              {getCategoryIcon(cat, "30px")}
+                              {getCategoryIcon(cat, isSelected ? "30px" : "24px")}
                             </div>
                             <span
                               className={`text-xs font-semibold ${isSelected
@@ -407,12 +410,12 @@ const GlobalAddExpense = memo(() => {
                       className="absolute inset-y-1 rounded-xl bg-white dark:bg-[#2c2c2e] shadow-sm transition-all duration-300"
                       style={{
                         width: 'calc(50% - 4px)',
-                        left: expenseType === 'expense' ? '4px' : 'calc(50%)'
+                        left: expenseType === 'Regular' ? '4px' : 'calc(50%)'
                       }}
                     />
                     <button
-                      onClick={() => !isReadOnly && setExpenseType("expense")}
-                      className={`flex-1 py-1.5 text-sm font-semibold relative z-10 transition-colors ${expenseType === 'expense' ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}
+                      onClick={() => !isReadOnly && setExpenseType("Regular")}
+                      className={`flex-1 py-1.5 text-sm font-semibold relative z-10 transition-colors ${expenseType === 'Regular' ? 'text-gray-900 dark:text-white' : 'text-gray-500'}`}
                     >
                       Regular
                     </button>

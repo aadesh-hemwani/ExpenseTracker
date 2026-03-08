@@ -6,11 +6,8 @@ export interface Expense {
     amount: number;
     category: string;
     date: Timestamp | Date;
-    description?: string;
     note?: string;
-    icon?: string;
-    iconType?: 'lucide' | 'ion' | 'emoji';
-    type?: 'income' | 'expense' | 'One-off' | string;
+    type?: 'Regular' | 'One-off';
     userId: string;
     createdAt?: Timestamp;
 }

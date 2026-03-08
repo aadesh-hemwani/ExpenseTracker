@@ -18,20 +18,46 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     () => (localStorage.getItem("theme") as Theme) || "light"
   );
   const [accentColor, setAccentColor] = useState<string>(
-    () => localStorage.getItem("accentColor") || "indigo"
+    () => localStorage.getItem("accentColor") || "royalBlue"
   );
+
+  const isDark = theme === "dark";
 
   // Define accent colors map - using Tailwind colors for reference
   const accentColors: Record<
     string,
     { name: string; default: string; hover: string }
   > = {
-    indigo: { name: "Indigo", default: "#6366f1", hover: "#4f46e5" },
-    emerald: { name: "Emerald", default: "#10b981", hover: "#059669" },
-    rose: { name: "Rose", default: "#f43f5e", hover: "#e11d48" },
-    amber: { name: "Amber", default: "#f59e0b", hover: "#d97706" },
-    violet: { name: "Violet", default: "#8b5cf6", hover: "#7c3aed" },
-    cyan: { name: "Cyan", default: "#06b6d4", hover: "#0891b2" },
+    royalBlue: {
+      name: "Royal Blue",
+      default: isDark ? "#60a5fa" : "#2563eb",
+      hover: isDark ? "#93c5fd" : "#1d4ed8"
+    },
+    emerald: {
+      name: "Emerald",
+      default: isDark ? "#34d399" : "#059669",
+      hover: isDark ? "#6ee7b7" : "#047857"
+    },
+    rose: {
+      name: "Rose",
+      default: isDark ? "#fb7185" : "#e11d48",
+      hover: isDark ? "#fda4af" : "#be123c"
+    },
+    amber: {
+      name: "Amber",
+      default: isDark ? "#fbbf24" : "#d97706",
+      hover: isDark ? "#fcd34d" : "#b45309"
+    },
+    violet: {
+      name: "Violet",
+      default: isDark ? "#a78bfa" : "#7c3aed",
+      hover: isDark ? "#c4b5fd" : "#6d28d9"
+    },
+    cyan: {
+      name: "Cyan",
+      default: isDark ? "#22d3ee" : "#0891b2",
+      hover: isDark ? "#67e8f9" : "#0e7490"
+    },
   };
 
   // Helper to convert hex to HSL
@@ -83,7 +109,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     localStorage.setItem("theme", theme);
 
     // Apply Accent Color
-    const colors = accentColors[accentColor] || accentColors.indigo;
+    const colors = accentColors[accentColor] || accentColors.royalBlue;
     const { h, s, l } = hexToHSL(colors.default);
 
     // Set CSS Variables
