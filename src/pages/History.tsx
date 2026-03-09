@@ -1,4 +1,5 @@
 import { useState, useMemo, memo, lazy, Suspense } from "react";
+import { createPortal } from "react-dom";
 import {
   format,
   startOfMonth,
@@ -13,7 +14,7 @@ import {
 } from "date-fns";
 import "../components/ui/LiquidGlass.css";
 import { LiquidBack } from "../components/ui/LiquidBack";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import Card from "../components/Card";
 import {
   useMonthlyStats,
@@ -22,10 +23,13 @@ import {
 } from "../hooks/useExpenses";
 import ExpenseListModal from "../components/ExpenseListModal";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
-import { getCategoryIcon } from "../utils/uiUtils";
+import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
 import { Expense } from "../types";
 const CategoryDonutChart = lazy(() => import("../components/CategoryDonutChart"));
-import { Download, Calendar } from "lucide-react";
+import MonthInsights from "../components/MonthInsights";
+import DeepMonthAnalysis from "../components/DeepMonthAnalysis";
+import { useTheme } from "../context/ThemeContext";
+import { Download, Calendar, Search, X, SlidersHorizontal } from "lucide-react";
 // import html2canvas from "html2canvas";
 import { generateMonthlyReport } from "../utils/reportGenerator";
 import { useRef } from "react";
@@ -104,7 +108,17 @@ const MemoizedExpenseList = memo(
   }
 );
 
-// --- Sub-Component: Calendar View ---
+export interface FilterState {
+  query: string;
+  type: "all" | "regular" | "one-off";
+  category: string;
+  minAmount: string;
+  maxAmount: string;
+  startDate: string;
+  endDate: string;
+  sortBy: "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
+}
+
 interface CalendarViewProps {
   currentMonth: Date;
   onBack: () => void;
@@ -114,8 +128,8 @@ interface CalendarViewProps {
   calendarDays: Date[];
   readOnly?: boolean;
   isLoading?: boolean;
-  expenseTypeFilter: "all" | "regular" | "one-off";
-  setExpenseTypeFilter: (filter: "all" | "regular" | "one-off") => void;
+  filters: FilterState;
+  setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
 }
 
 const CalendarView = ({
@@ -127,22 +141,78 @@ const CalendarView = ({
   calendarDays,
   readOnly = false,
   isLoading = false,
-  expenseTypeFilter,
-  setExpenseTypeFilter,
+  filters,
+  setFilters,
 }: CalendarViewProps) => {
-  // Expenses are now passed down!
   const { deleteExpense } = useExpenses();
   const { openModal } = useGlobalModal();
   const { user } = useAuth(); // Access user for PDF report
+  const [viewMode, setViewMode] = useState<"standard" | "analysis">("standard");
+  const [showFilters, setShowFilters] = useState(false);
+  const [tempFilters, setTempFilters] = useState<FilterState>(filters);
+  const { theme } = useTheme();
+
+  const openFilters = () => {
+    setTempFilters(filters);
+    setShowFilters(true);
+  };
+
+  const applyFilters = () => {
+    setFilters(tempFilters);
+    setShowFilters(false);
+  };
 
   const filteredExpenses = useMemo(() => {
-    return expenses.filter(e => {
-      if (expenseTypeFilter === "all") return true;
-      if (expenseTypeFilter === "one-off") return e.type === "One-off";
-      if (expenseTypeFilter === "regular") return e.type !== "One-off";
+    let result = expenses.filter(e => {
+      // 1. Type Filter
+      if (filters.type === "one-off" && e.type !== "One-off") return false;
+      if (filters.type === "regular" && e.type === "One-off") return false;
+
+      // 2. Search Filter
+      if (filters.query.trim()) {
+        const query = filters.query.toLowerCase().trim();
+        const noteMatch = (e.note || "").toLowerCase().includes(query);
+        const categoryMatch = (e.category || "").toLowerCase().includes(query);
+        if (!noteMatch && !categoryMatch) return false;
+      }
+
+      // 3. Category Filter
+      if (filters.category !== "all" && e.category !== filters.category) return false;
+
+      // 4. Amount Range
+      if (filters.minAmount !== "" && Number(e.amount) < Number(filters.minAmount)) return false;
+      if (filters.maxAmount !== "" && Number(e.amount) > Number(filters.maxAmount)) return false;
+
+      // 5. Date Range
+      const eDate = e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
+      if (filters.startDate !== "") {
+        const sDate = parseISO(filters.startDate);
+        if (eDate < sDate) return false;
+      }
+      if (filters.endDate !== "") {
+        const eDateFilter = parseISO(filters.endDate);
+        eDateFilter.setHours(23, 59, 59, 999);
+        if (eDate > eDateFilter) return false;
+      }
+
       return true;
     });
-  }, [expenses, expenseTypeFilter]);
+
+    // 6. Sorting
+    result.sort((a, b) => {
+      if (filters.sortBy.startsWith("amount")) {
+        const aAmt = Number(a.amount);
+        const bAmt = Number(b.amount);
+        return filters.sortBy === "amount-desc" ? bAmt - aAmt : aAmt - bAmt;
+      } else {
+        const aDate = a.date instanceof Timestamp ? a.date.toDate().getTime() : new Date(a.date).getTime();
+        const bDate = b.date instanceof Timestamp ? b.date.toDate().getTime() : new Date(b.date).getTime();
+        return filters.sortBy === "date-desc" ? bDate - aDate : aDate - bDate;
+      }
+    });
+
+    return result;
+  }, [expenses, filters]);
 
   // Optimized: Create a map of daily totals to avoid repeated filtering
   const dailyTotalsMap = useMemo(() => {
@@ -182,7 +252,7 @@ const CalendarView = ({
         return acc;
       }, {} as Record<string, Expense[]>)
     );
-  }, [expenses]);
+  }, [filteredExpenses]);
 
   // PDF Export Logic
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -288,117 +358,351 @@ const CalendarView = ({
         </button>
       </div>
 
-      {/* Expense Type Filter */}
-      <div className="flex items-center space-x-2 mb-6 overflow-x-auto no-scrollbar pb-1">
-        {(['all', 'regular', 'one-off'] as const).map(f => (
+      {/* Search and Filter Section */}
+      <div className="flex flex-col gap-3 mb-6">
+        {/* Search Bar & Filter Toggle */}
+        <div className="flex gap-2">
+          <div className="relative w-full">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search size={18} className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              value={filters.query}
+              onChange={(e) => setFilters(prev => ({ ...prev, query: e.target.value }))}
+              placeholder="Search notes or categories..."
+              className="w-full pl-10 pr-10 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent transition-all text-gray-900 dark:text-white"
+            />
+            {filters.query && (
+              <button
+                onClick={() => setFilters(prev => ({ ...prev, query: "" }))}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
           <button
-            key={f}
-            onClick={() => setExpenseTypeFilter(f)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${expenseTypeFilter === f
-              ? "bg-black text-white dark:bg-white dark:text-black"
-              : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+            onClick={openFilters}
+            className={`w-12 h-12 shrink-0 flex items-center justify-center rounded-xl transition-all ${showFilters ? 'bg-accent/10 text-accent border border-accent/20' : 'bg-gray-50 dark:bg-white/5 text-gray-400 border border-gray-200 dark:border-white/10 hover:text-gray-600 dark:hover:text-gray-200'}`}
+          >
+            <SlidersHorizontal size={18} />
+          </button>
+        </div>
+
+        {/* Filter Bottom Sheet Modal */}
+        {typeof document !== 'undefined' && createPortal((
+          <AnimatePresence>
+            {showFilters && (
+              <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center p-0 sm:p-4 pointer-events-none">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  onClick={() => setShowFilters(false)}
+                  className="absolute inset-0 bg-black/40 backdrop-blur-sm pointer-events-auto"
+                />
+                <motion.div
+                  initial={{ y: "100%", opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: "100%", opacity: 0 }}
+                  transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                  className="w-full sm:max-w-md bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl relative z-10 pointer-events-auto flex flex-col max-h-[90vh]"
+                >
+                  {/* Header */}
+                  <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Filters</h3>
+                    <button onClick={() => setShowFilters(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors">
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  {/* Scrollable Content */}
+                  <div className="px-6 py-6 overflow-y-auto space-y-8">
+                    {/* Category Selection (Horizontal scrolling pills) */}
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Category</label>
+                      <div className="flex space-x-2 overflow-x-auto no-scrollbar pb-2 -mx-6 px-6">
+                        <button
+                          onClick={() => setTempFilters(prev => ({ ...prev, category: 'all' }))}
+                          className={`px-4 py-2 shrink-0 rounded-full text-sm font-semibold transition-all ${tempFilters.category === 'all' ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}
+                        >
+                          All Categories
+                        </button>
+                        {CATEGORIES.map(cat => (
+                          <button
+                            key={cat}
+                            onClick={() => setTempFilters(prev => ({ ...prev, category: cat }))}
+                            className={`px-4 py-2 shrink-0 flex items-center gap-2 rounded-full text-sm font-semibold transition-all ${tempFilters.category === cat ? 'bg-black dark:bg-white text-white dark:text-black shadow-md' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200'}`}
+                          >
+                            <span className="scale-[0.8]">{getCategoryIcon(cat, "20px")}</span> {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sort Order */}
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Sort By</label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {[
+                          { id: "date-desc", label: "Newest First" },
+                          { id: "date-asc", label: "Oldest First" },
+                          { id: "amount-desc", label: "Highest Amount" },
+                          { id: "amount-asc", label: "Lowest Amount" },
+                        ].map(option => (
+                          <button
+                            key={option.id}
+                            onClick={() => setTempFilters(prev => ({ ...prev, sortBy: option.id as any }))}
+                            className={`p-3 rounded-xl text-sm font-semibold transition-all border ${tempFilters.sortBy === option.id ? 'bg-accent/10 border-accent text-accent' : 'bg-transparent border-gray-200 dark:border-gray-800 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-700'}`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Amount Range */}
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Amount Range</label>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-full">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                          <input
+                            type="number"
+                            placeholder="Min"
+                            value={tempFilters.minAmount}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, minAmount: e.target.value }))}
+                            className="w-full pl-8 pr-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent transition-all text-gray-900 dark:text-white"
+                          />
+                        </div>
+                        <span className="text-gray-400 font-bold">to</span>
+                        <div className="relative w-full">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">₹</span>
+                          <input
+                            type="number"
+                            placeholder="Max"
+                            value={tempFilters.maxAmount}
+                            onChange={(e) => setTempFilters(prev => ({ ...prev, maxAmount: e.target.value }))}
+                            className="w-full pl-8 pr-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent transition-all text-gray-900 dark:text-white"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Date Range */}
+                    <div>
+                      <label className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3 block">Date Range</label>
+                      <div className="flex items-center gap-4">
+                        <input
+                          type="date"
+                          value={tempFilters.startDate}
+                          min={format(startOfMonth(currentMonth), "yyyy-MM-dd")}
+                          max={format(endOfMonth(currentMonth), "yyyy-MM-dd")}
+                          onChange={(e) => setTempFilters(prev => ({ ...prev, startDate: e.target.value }))}
+                          className="w-full px-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent transition-all text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                        />
+                        <span className="text-gray-400 font-bold">to</span>
+                        <input
+                          type="date"
+                          value={tempFilters.endDate}
+                          min={format(startOfMonth(currentMonth), "yyyy-MM-dd")}
+                          max={format(endOfMonth(currentMonth), "yyyy-MM-dd")}
+                          onChange={(e) => setTempFilters(prev => ({ ...prev, endDate: e.target.value }))}
+                          className="w-full px-4 py-3 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-gray-800 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-accent transition-all text-gray-900 dark:text-white dark:[color-scheme:dark]"
+                        />
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* Footer Actions */}
+                  <div className="p-6 pt-2 pb-8 sm:pb-6 flex items-center justify-between shrink-0 border-t border-gray-100 dark:border-gray-800/60 mt-2">
+                    <button
+                      onClick={() => setTempFilters({ query: tempFilters.query, type: 'all', category: 'all', minAmount: '', maxAmount: '', startDate: '', endDate: '', sortBy: 'date-desc' })}
+                      className="px-4 py-3 text-sm font-bold text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                      Reset
+                    </button>
+                    <button
+                      onClick={applyFilters}
+                      className="px-8 py-3 bg-accent text-white rounded-xl text-sm font-bold shadow-lg shadow-accent/30 active:scale-95 transition-all outline-none"
+                    >
+                      Apply Filters
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+        ), document.body)}
+
+        {/* Expense Type Filter & Analysis Toggle */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1">
+            {(['all', 'regular', 'one-off'] as const).map(f => (
+              <button
+                key={f}
+                onClick={() => setFilters(prev => ({ ...prev, type: f }))}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${filters.type === f
+                  ? "bg-black text-white dark:bg-white dark:text-black"
+                  : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                  }`}
+              >
+                {f === 'one-off' ? 'One-off' : f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          <button
+            onClick={() => setViewMode(viewMode === "standard" ? "analysis" : "standard")}
+            className={`shrink-0 ml-4 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-1.5 transition-all ${viewMode === "analysis"
+              ? "bg-accent text-white shadow-lg"
+              : "bg-accent/10 text-accent hover:bg-accent/20"
               }`}
           >
-            {f === 'one-off' ? 'One-off' : f.charAt(0).toUpperCase() + f.slice(1)}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3v18h18" /><path d="m19 9-5 5-4-4-3 3" /></svg>
+            {viewMode === "analysis" ? "View Grid" : "Deep Dive"}
           </button>
-        ))}
+        </div>
       </div>
 
-      {/* Charts Section with Ref: REMOVED as per user request to avoid duplicate. 
-            Ref moved to the bottom chart. */}
+      {viewMode === "analysis" ? (
+        <div className="mt-4">
+          <DeepMonthAnalysis expenses={filteredExpenses} currentMonth={currentMonth} theme={theme} />
+        </div>
+      ) : (
+        <>
+          {/* Charts Section with Ref: REMOVED as per user request to avoid duplicate. 
+                Ref moved to the bottom chart. */}
 
-      {/* Legend/Info (Optional, if Chart component doesn't show it) */}
+          {/* Legend/Info (Optional, if Chart component doesn't show it) */}
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1 md:gap-2">
-        {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-          <div
-            key={i}
-            className="text-center text-xs font-semibold text-gray-300 py-2"
-          >
-            {day}
-          </div>
-        ))}
+          {/* Calendar Grid */}
+          <div className="grid grid-cols-7 gap-1 md:gap-2">
+            {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
+              <div
+                key={i}
+                className="text-center text-xs font-semibold text-gray-300 py-2"
+              >
+                {day}
+              </div>
+            ))}
 
-        {calendarDays.map((day, idx) => {
-          const dailyTotal = getDailyTotal(day);
-          const roundedTotal = Math.ceil(dailyTotal);
-          const hasSpend = roundedTotal > 0;
-          const isSelected = selectedDate && isSameDay(day, selectedDate);
-          const isCurrentMonth = isSameMonth(day, currentMonth);
+            {calendarDays.map((day, idx) => {
+              const dailyTotal = getDailyTotal(day);
+              const roundedTotal = Math.ceil(dailyTotal);
+              const hasSpend = roundedTotal > 0;
+              const isSelected = selectedDate && isSameDay(day, selectedDate);
+              const isCurrentMonth = isSameMonth(day, currentMonth);
 
-          let amountColor = "text-green-500";
-          if (roundedTotal > 2000) amountColor = "text-red-500";
-          else if (roundedTotal >= 1000) amountColor = "text-yellow-500";
+              let amountColor = "text-green-500";
+              if (roundedTotal > 2000) amountColor = "text-red-500";
+              else if (roundedTotal >= 1000) amountColor = "text-yellow-500";
 
-          return (
-            <button
-              key={idx}
-              onClick={() => onSelectDate(day)}
-              disabled={!isCurrentMonth}
-              className={`
+              return (
+                <button
+                  key={idx}
+                  onClick={() => onSelectDate(day)}
+                  disabled={!isCurrentMonth}
+                  className={`
                     relative h-14 md:h-24 rounded-xl flex flex-col items-center justify-start pt-2 transition-all border
                     ${!isCurrentMonth ? "opacity-30" : "opacity-100"}
                     ${isSelected
-                  ? "bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10"
-                  : "bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent"
-                }
+                      ? "bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10"
+                      : "bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent"
+                    }
                     ${isToday(day) && !isSelected
-                  ? "text-accent font-bold bg-accent/10"
-                  : ""
-                }
+                      ? "text-accent font-bold bg-accent/10"
+                      : ""
+                    }
                   `}
-            >
-              <span className="text-sm">{format(day, "d")}</span>
+                >
+                  <span className="text-sm">{format(day, "d")}</span>
 
-              {hasSpend && (
-                <>
-                  {/* Desktop Amount */}
-                  <span
-                    className={`block md:text-[10px] text-[8px] mt-1 font-medium ${isSelected
-                      ? "text-gray-300 dark:text-gray-600"
-                      : amountColor
-                      }`}
-                  >
-                    ₹{roundedTotal}
-                  </span>
-                </>
-              )}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Monthly Expenses List */}
-      <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-        <div ref={chartContainerRef} className="mb-8 min-h-[250px] flex items-center justify-center">
-          <Suspense fallback={<IOSSpinner size={32} />}>
-            <CategoryDonutChart expenses={filteredExpenses} animate={!isGeneratingPDF} />
-          </Suspense>
-        </div>
-
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          {expenseTypeFilter === "all" ? "All" : expenseTypeFilter === "one-off" ? "One-off" : "Regular"} Expenses in {format(currentMonth, "MMMM")}
-        </h3>
-        <div className="space-y-4">
-          <div className="flex flex-col space-y-6">
-            {groupedExpenses.map(([label, groupExpenses], index) => (
-              <div
-                key={label}
-                className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
-              >
-                <MemoizedExpenseList
-                  label={label}
-                  expenses={groupExpenses}
-                  onDelete={deleteExpense}
-                  onView={(expense) => openModal("view", expense)}
-                  readOnly={readOnly}
-                />
-              </div>
-            ))}
+                  {hasSpend && (
+                    <>
+                      {/* Desktop Amount */}
+                      <span
+                        className={`block md:text-[10px] text-[8px] mt-1 font-medium ${isSelected
+                          ? "text-gray-300 dark:text-gray-600"
+                          : amountColor
+                          }`}
+                      >
+                        ₹{roundedTotal}
+                      </span>
+                    </>
+                  )}
+                </button>
+              );
+            })}
           </div>
-        </div>
-      </div>
+
+          {/* Monthly Expenses List */}
+          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
+            <div ref={chartContainerRef} className="mb-8 min-h-[250px] flex items-center justify-center">
+              <Suspense fallback={<IOSSpinner size={32} />}>
+                <CategoryDonutChart expenses={filteredExpenses} animate={!isGeneratingPDF} />
+              </Suspense>
+            </div>
+
+            {/* Analytics Widgets */}
+            <MonthInsights expenses={filteredExpenses} currentMonth={currentMonth} />
+
+            {/* Only show "Expenses in..." if no particular filters are active to reduce clutter */}
+            {(!filters.query && filters.category === "all" && !filters.minAmount && !filters.maxAmount && !filters.startDate && !filters.endDate) && (
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                {filters.type === "all" ? "All" : filters.type === "one-off" ? "One-off" : "Regular"} Expenses in {format(currentMonth, "MMMM")}
+              </h3>
+            )}
+
+            {/* Filter Results Summary */}
+            {(filters.query || filters.category !== "all" || filters.minAmount || filters.maxAmount || filters.startDate || filters.endDate) && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 font-medium">
+                Found {filteredExpenses.length} result{filteredExpenses.length !== 1 ? 's' : ''}
+              </p>
+            )}
+
+            {filteredExpenses.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+                {(filters.query || filters.category !== "all" || filters.minAmount || filters.maxAmount || filters.startDate || filters.endDate) ? "No matching results found." : "No expenses yet."}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {filters.sortBy.startsWith("amount") ? (
+                  // Flat list if sorting by amount to avoid confusing day groupings
+                  <MemoizedExpenseList
+                    label={filters.sortBy === "amount-desc" ? "Highest to Lowest Amount" : "Lowest to Highest Amount"}
+                    expenses={filteredExpenses}
+                    onDelete={deleteExpense}
+                    onView={(expense) => openModal("view", expense)}
+                    readOnly={readOnly}
+                  />
+                ) : (
+                  // Normal day-by-day grouped list
+                  <div className="flex flex-col space-y-6">
+                    {groupedExpenses.map(([label, groupExpenses], index) => (
+                      <div
+                        key={label}
+                        className={`space-y-2 ${index > 0 ? "pt-6" : ""}`}
+                      >
+                        <MemoizedExpenseList
+                          label={label}
+                          expenses={groupExpenses}
+                          onDelete={deleteExpense}
+                          onView={(expense) => openModal("view", expense)}
+                          readOnly={readOnly}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -416,7 +720,16 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
   const [view, setView] = useState<"list" | "calendar">("list"); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState<Date | null>(null); // The specific day clicked in calendar
-  const [expenseTypeFilter, setExpenseTypeFilter] = useState<"all" | "regular" | "one-off">("all");
+  const [filters, setFilters] = useState<FilterState>({
+    query: "",
+    type: "all",
+    category: "all",
+    minAmount: "",
+    maxAmount: "",
+    startDate: "",
+    endDate: "",
+    sortBy: "date-desc",
+  });
 
   const handleCloseModal = () => {
     setSelectedDate(null);
@@ -547,8 +860,8 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
           calendarDays={calendarDays}
           readOnly={readOnly}
           isLoading={monthLoading}
-          expenseTypeFilter={expenseTypeFilter}
-          setExpenseTypeFilter={setExpenseTypeFilter}
+          filters={filters}
+          setFilters={setFilters}
         />
       )}
 
@@ -558,8 +871,21 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
           <ExpenseListModal
             title={format(selectedDate, "EEEE, MMM do")}
             expenses={monthExpenses.filter((e) => {
-              if (expenseTypeFilter === "one-off" && e.type !== "One-off") return false;
-              if (expenseTypeFilter === "regular" && e.type === "One-off") return false;
+              if (filters.type === "one-off" && e.type !== "One-off") return false;
+              if (filters.type === "regular" && e.type === "One-off") return false;
+
+              if (filters.query.trim()) {
+                const query = filters.query.toLowerCase().trim();
+                const noteMatch = (e.note || "").toLowerCase().includes(query);
+                const categoryMatch = (e.category || "").toLowerCase().includes(query);
+                if (!noteMatch && !categoryMatch) return false;
+              }
+
+              if (filters.category !== "all" && e.category !== filters.category) return false;
+              if (filters.minAmount !== "" && Number(e.amount) < Number(filters.minAmount)) return false;
+              if (filters.maxAmount !== "" && Number(e.amount) > Number(filters.maxAmount)) return false;
+
+              // Modal list strictly overrides date filters implicitly since it's a day view
               return isSameDay(getDate(e.date), selectedDate);
             })}
             onClose={handleCloseModal}
