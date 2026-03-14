@@ -76,7 +76,7 @@ export const generateFinancialInsight = async (
 
       Do not use Markdown code blocks. Just valid JSON string.
     `;
-    
+
     console.log("🤖 Sending Prompt to Gemini:", prompt);
 
     const result = await model.generateContent(prompt);
@@ -116,9 +116,9 @@ export const generateAnalyticsInsights = async (
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const recentTxns = expenses.slice(0, 30).map(e => {
-        const dateStr = format(e.date instanceof Date ? e.date : (e.date as any).toDate(), "MMM dd");
-        const noteStr = e.note ? ` (Note: "${e.note}")` : "";
-        return `${e.category}: ${e.amount} on ${dateStr}${noteStr}`;
+      const dateStr = format(e.date instanceof Date ? e.date : (e.date as any).toDate(), "MMM dd");
+      const noteStr = e.note ? ` (Note: "${e.note}")` : "";
+      return `${e.category}: ${e.amount} on ${dateStr}${noteStr}`;
     }).join("\n      - ");
 
     const prompt = `
@@ -173,22 +173,22 @@ export const calculateRecommendedBudget = async (
     const monthlyData: Record<string, { total: number; categories: Record<string, number> }> = {};
 
     recentExpenses.forEach((e) => {
-        let dateObj: Date;
-        if (e.date && typeof (e.date as any).toDate === 'function') {
+      let dateObj: Date;
+      if (e.date && typeof (e.date as any).toDate === 'function') {
         dateObj = (e.date as any).toDate();
-        } else {
+      } else {
         dateObj = new Date(e.date as any);
-        }
-        
-        const monthKey = format(dateObj, "yyyy-MM");
-        const amount = Number(e.amount);
+      }
 
-        if (!monthlyData[monthKey]) {
-            monthlyData[monthKey] = { total: 0, categories: {} };
-        }
+      const monthKey = format(dateObj, "yyyy-MM");
+      const amount = Number(e.amount);
 
-        monthlyData[monthKey].total += amount;
-        monthlyData[monthKey].categories[e.category] = (monthlyData[monthKey].categories[e.category] || 0) + amount;
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = { total: 0, categories: {} };
+      }
+
+      monthlyData[monthKey].total += amount;
+      monthlyData[monthKey].categories[e.category] = (monthlyData[monthKey].categories[e.category] || 0) + amount;
     });
 
     const breakdownJson = JSON.stringify(monthlyData, null, 2);
@@ -235,40 +235,6 @@ export const calculateRecommendedBudget = async (
   }
 };
 
-export const suggestIcon = async (note: string): Promise<string | null> => {
-  if (!API_KEY || !note) return null;
-
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    
-    // Check if simple keyword match is enough to save API call? 
-    // No, user wants AI.
-
-    const prompt = `
-      You are an icon suggester used by an expense tracker app.
-      The app uses the "Lucide React" icon library.
-      
-      Task: Based on the following expense note, suggest the single best Lucide icon name that visually represents the purchase.
-      
-      Note: "${note}"
-      
-      Rules:
-      1. Return ONLY the icon component name in PascalCase (e.g., "Coffee", "Ticket", "Banana", "Car", "Gamepad2").
-      2. Do not include "Lucide" or "Icon" suffix unless it's part of the actual name.
-      3. If unsure, return "CreditCard".
-      4. Output nothing else. No JSON, no backticks.
-    `;
-
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
-    const iconName = text.trim().replace(/['"`]/g, ""); // Clean up quotes
-    return iconName;
-  } catch (error) {
-    console.error("Gemini Icon Suggestion Error:", error);
-    return null;
-  }
-};
-
 export const chatWithFinancialAssistant = async (
   message: string,
   expenses: Expense[],
@@ -277,82 +243,217 @@ export const chatWithFinancialAssistant = async (
   if (!API_KEY) return "Sorry, I can't connect to my brain right now.";
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-    
-    // Summarize data for context
-    // 1. Organize data into a structured JSON format helper
-    const monthlyData: Record<string, {
-      month: string;
-      total: number;
-      categoryTotals: Record<string, number>;
-      transactions: Array<{ date: string; amount: number; category: string; note: string }>;
-    }> = {};
+    // Model fallback chain — if one model hits rate limit (429), automatically try the next
+    const CHAT_MODELS = [
+      "gemini-2.5-pro",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-2.0-flash-lite"
+    ];
 
-    expenses.forEach((e) => {
+    const queryEmbedding = await generateEmbedding(message);
+    let relevantExpenses = expenses;
+
+    // --- DEEP ANALYTICS ENGINE (all computed client-side, zero extra API cost) ---
+    const categoryTotals: Record<string, number> = {};
+    const categoryCounts: Record<string, number> = {};
+    const noteCounts: Record<string, number> = {};
+    const noteKeywordCounts: Record<string, { count: number; total: number }> = {};
+    const monthlySpend: Record<string, number> = {};
+    let allTimeTotal = 0;
+    let earliestDate = new Date();
+    let latestDate = new Date(0);
+
+    expenses.forEach(e => {
+      const amt = Number(e.amount);
+      categoryTotals[e.category] = (categoryTotals[e.category] || 0) + amt;
+      categoryCounts[e.category] = (categoryCounts[e.category] || 0) + 1;
+      allTimeTotal += amt;
+
+      if (e.note) {
+        const noteKey = e.note.trim().toLowerCase();
+        noteCounts[noteKey] = (noteCounts[noteKey] || 0) + 1;
+
+        // Keyword-level counting: split note into words so "lunch at cafe" counts toward keyword "lunch"
+        const words = noteKey.split(/\s+/);
+        words.forEach(word => {
+          if (word.length >= 3) { // skip tiny words like "at", "on", "to"
+            if (!noteKeywordCounts[word]) noteKeywordCounts[word] = { count: 0, total: 0 };
+            noteKeywordCounts[word].count += 1;
+            noteKeywordCounts[word].total += amt;
+          }
+        });
+      }
+
+      const d = e.date && (e.date as any).toDate ? (e.date as any).toDate() : new Date(e.date as any);
+      if (d < earliestDate) earliestDate = d;
+      if (d > latestDate) latestDate = d;
+
+      const monthKey = format(d, "yyyy-MM");
+      monthlySpend[monthKey] = (monthlySpend[monthKey] || 0) + amt;
+    });
+
+    // Category summary with counts
+    const categorySummaryString = Object.entries(categoryTotals)
+      .sort((a, b) => b[1] - a[1])
+      .map(([cat, total]) => `${cat}: ₹${Math.round(total)} (${categoryCounts[cat]} txns)`)
+      .join(" | ");
+
+    // Keyword frequencies with amounts (covers partial note matches)
+    const noteFrequencyString = Object.entries(noteKeywordCounts)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 40)
+      .map(([keyword, data]) => `"${keyword}": ${data.count}x, ₹${Math.round(data.total)} total`)
+      .join(", ");
+
+    // Monthly breakdown sorted chronologically
+    const monthlyBreakdown = Object.entries(monthlySpend)
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([month, total]) => `${month}: ₹${Math.round(total)}`)
+      .join(" | ");
+
+    // Current month spend
+    const currentMonth = format(new Date(), "yyyy-MM");
+    const currentMonthSpend = monthlySpend[currentMonth] || 0;
+    const prevMonth = format(new Date(new Date().getFullYear(), new Date().getMonth() - 1), "yyyy-MM");
+    const prevMonthSpend = monthlySpend[prevMonth] || 0;
+
+    // Average monthly
+    const monthCount = Object.keys(monthlySpend).length || 1;
+    const avgMonthly = Math.round(allTimeTotal / monthCount);
+
+    // Top category
+    const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+
+    const dateRangeStr = expenses.length > 0
+      ? `${format(earliestDate, "MMM dd, yyyy")} → ${format(latestDate, "MMM dd, yyyy")}`
+      : "N/A";
+    // --- END ANALYTICS ---
+
+    // RAG Implementation: Perform Semantic Retrieval if query embedding exists
+    if (queryEmbedding && queryEmbedding.length > 0) {
+      const cosineSimilarity = (vecA: number[], vecB: number[]) => {
+        let dotProduct = 0;
+        let normA = 0;
+        let normB = 0;
+        for (let i = 0; i < vecA.length; i++) {
+          dotProduct += vecA[i] * vecB[i];
+          normA += vecA[i] * vecA[i];
+          normB += vecB[i] * vecB[i];
+        }
+        if (normA === 0 || normB === 0) return 0;
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+      };
+
+      const scoredExpenses = expenses.map(e => {
+        if (!e.embedding) return { expense: e, score: -1 };
+        return {
+          expense: e,
+          score: cosineSimilarity(queryEmbedding, e.embedding)
+        };
+      });
+
+      scoredExpenses.sort((a, b) => b.score - a.score);
+      relevantExpenses = scoredExpenses.slice(0, 50).map(item => item.expense);
+      console.log(`🤖 Selected Contextual Expenses: ${relevantExpenses.length}`);
+    } else {
+      relevantExpenses = expenses.slice(-30);
+    }
+
+    // Format transaction list
+    const recentTxns = relevantExpenses.map(e => {
       let dateObj: Date;
       if (e.date && typeof (e.date as any).toDate === 'function') {
         dateObj = (e.date as any).toDate();
       } else {
         dateObj = new Date(e.date as any);
       }
-      
-      const monthKey = format(dateObj, "MMMM yyyy"); // e.g., "February 2026"
-      
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = {
-          month: monthKey,
-          total: 0,
-          categoryTotals: {},
-          transactions: []
-        };
-      }
-      
-      const data = monthlyData[monthKey];
-      const val = Number(e.amount);
-
-      // Update aggregates
-      data.total += val;
-      data.categoryTotals[e.category] = (data.categoryTotals[e.category] || 0) + val;
-
-      // Add transaction detail
-      data.transactions.push({
-        date: format(dateObj, "yyyy-MM-dd"),
-        amount: val,
-        category: e.category,
-        note: e.note || ""
-      });
-    });
-
-    // Convert to array
-    const structuredContext = Object.values(monthlyData);
-    const jsonContext = JSON.stringify(structuredContext, null, 2);
+      return `${e.category}: ₹${e.amount} on ${format(dateObj, "MMM dd")}${e.note ? ` (${e.note})` : ""}`;
+    }).join("\n      - ");
 
     const prompt = `
-      You are a specific, helpful, and friendly financial assistant for an Expense Tracker app.
+      You are the user's personal financial analyst. You have COMPLETE access to their entire expense database and you know their spending inside-out. You speak with quiet confidence — like someone who has already studied their data deeply. Never say things like "based on the data provided" or "from what I can see" — you simply KNOW.
+
+      ═══ YOUR KNOWLEDGE BASE ═══
+
+      TODAY: ${format(new Date(), "MMM dd, yyyy")}
+      BUDGET: ${monthlyLimit > 0 ? `₹${monthlyLimit}/month` : "Not set"}
+
+      DATABASE: ${expenses.length} transactions spanning ${dateRangeStr}
+      TOTAL LIFETIME SPEND: ₹${Math.round(allTimeTotal)}
       
-      USER SETTINGS:
-      - Monthly Budget Cap: ${monthlyLimit > 0 ? monthlyLimit : "Not set"}
+      MONTHLY BREAKDOWN: ${monthlyBreakdown || "N/A"}
+      THIS MONTH (${format(new Date(), "MMM yyyy")}): ₹${Math.round(currentMonthSpend)}${prevMonthSpend > 0 ? ` (last month was ₹${Math.round(prevMonthSpend)})` : ""}
+      AVERAGE MONTHLY: ₹${avgMonthly}
+      ${topCategory ? `TOP CATEGORY: ${topCategory[0]} at ₹${Math.round(topCategory[1])} (${categoryCounts[topCategory[0]]} transactions)` : ""}
+      ${monthlyLimit > 0 ? `BUDGET STATUS: ₹${Math.round(currentMonthSpend)} of ₹${monthlyLimit} used (${Math.round((currentMonthSpend / monthlyLimit) * 100)}%)` : ""}
 
-      DATA CONTEXT (JSON Format):
-      ${jsonContext}
+      CATEGORY BREAKDOWN: ${categorySummaryString || "None"}
+      NOTE FREQUENCIES: ${noteFrequencyString || "None"}
 
-      USER QUESTION: "${message}"
+      ═══ RELEVANT TRANSACTIONS ═══
+      - ${recentTxns || "No transactions found."}
 
-      INSTRUCTIONS:
-      - Answer based ONLY on the provided JSON data.
-      - The JSON contains a list of months. Each month has a 'total', 'categoryTotals', and 'transactions'.
-      - Use 'categoryTotals' for high-level summaries and 'transactions' for specific details.
-      - If answering about a specific month, use the data from that detailed object.
-      - Be concise but conversational.
-      - Use INR (₹) symbol.
-      - If you can't find the answer in the data, honestly say so.
+      ═══ USER'S QUESTION ═══
+      "${message}"
+
+      ═══ RESPONSE RULES ═══
+      - Use the CATEGORY BREAKDOWN and NOTE FREQUENCIES as ground truth for sums and counts. They cover ALL ${expenses.length} transactions, not just the sample above.
+      - Be direct. Lead with the answer, then add context if useful. No filler.
+      - **Bold** all amounts and dates.
+      - Use bullet points for lists. Keep it scannable.
+      - Use ₹ symbol.
+      - If comparing months, cite the monthly breakdown numbers.
+      - Never mention "context", "data provided", "based on records", or anything that reveals you're reading a prompt. You just know.
+      - Sound like a sharp financial advisor who's been studying their account for months.
+      - Keep responses concise — 3-5 lines for simple questions, more only if they ask for detail.
+      - If you genuinely can't determine something, say so honestly.
     `;
 
-    const result = await model.generateContent(prompt);
-    return result.response.text();
+    // Try each model in the fallback chain
+    let lastError: any = null;
+    const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+    for (let i = 0; i < CHAT_MODELS.length; i++) {
+      const modelName = CHAT_MODELS[i];
+      try {
+        const model = genAI.getGenerativeModel({ model: modelName });
+        const result = await model.generateContent(prompt);
+        console.log(`✅ Response from: ${modelName}`);
+        return result.response.text();
+      } catch (modelError: any) {
+        lastError = modelError;
+        const msg = String(modelError?.message || modelError?.status || '').toLowerCase();
+        const isRateLimit = msg.includes('429') || msg.includes('resource has been exhausted') || msg.includes('quota');
+
+        if (isRateLimit && i < CHAT_MODELS.length - 1) {
+          console.warn(`⚠️ Rate limited on ${modelName}, waiting 2s before trying ${CHAT_MODELS[i + 1]}...`);
+          await delay(2000);
+          continue;
+        }
+        if (!isRateLimit) throw modelError;
+      }
+    }
+
+    // All models exhausted
+    console.error("All models rate limited:", lastError);
+    return "I've hit the rate limit on all available models. Please try again in a few minutes.";
 
   } catch (error) {
     console.error("Chat Error:", error);
     return "I'm having trouble analyzing your finances right now. Please try again.";
+  }
+};
+
+export const generateEmbedding = async (text: string): Promise<number[] | null> => {
+  if (!API_KEY) return null;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });
+    const result = await model.embedContent(text);
+    return result.embedding.values;
+  } catch (error) {
+    console.error("Gemini Embedding Error:", error);
+    return null;
   }
 };

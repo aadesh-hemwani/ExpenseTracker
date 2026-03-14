@@ -10,6 +10,7 @@ export interface Expense {
     type?: 'Regular' | 'One-off';
     userId: string;
     createdAt?: Timestamp;
+    embedding?: number[];
 }
 
 export type Theme = 'light' | 'dark' | 'system';

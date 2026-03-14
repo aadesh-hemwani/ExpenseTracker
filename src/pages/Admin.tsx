@@ -8,6 +8,9 @@ import { LiquidBack } from "../components/ui/LiquidBack";
 import { Users, Calendar, BarChart3 } from "lucide-react";
 import Analytics from "./Analytics";
 import History from "./History";
+import { format } from "date-fns";
+import { generateEmbedding } from "../services/gemini";
+import { doc, writeBatch } from "firebase/firestore";
 
 const Admin = () => {
   const { user } = useAuth();
@@ -16,9 +19,9 @@ const Admin = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"analytics" | "history">(
-    "analytics"
-  );
+  const [viewMode, setViewMode] = useState<"analytics" | "history">("analytics");
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("");
 
   // Protect the route
   useEffect(() => {
@@ -59,6 +62,66 @@ const Admin = () => {
 
   const handleBack = () => {
     setSelectedUserId(null);
+    setSyncStatus("");
+  };
+
+  const handleSyncEmbeddings = async (targetUserId: string) => {
+    if (!window.confirm("Are you sure you want to generate embeddings for ALL past expenses? This will consume Gemini API quota.")) return;
+
+    setIsSyncing(true);
+    setSyncStatus("Fetching expenses...");
+
+    try {
+      const expensesRef = collection(db, "users", targetUserId, "expenses");
+      const snapshot = await getDocs(expensesRef);
+      const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      const expensesWithoutEmbeddings = expenses.filter((e: any) => !e.embedding);
+
+      if (expensesWithoutEmbeddings.length === 0) {
+        setSyncStatus("All expenses already have embeddings!");
+        setIsSyncing(false);
+        return;
+      }
+
+      setSyncStatus(`Found ${expensesWithoutEmbeddings.length} expenses to sync. Generating...`);
+
+      // Process in small batches to avoid rate limits
+      const BATCH_SIZE = 10;
+      for (let i = 0; i < expensesWithoutEmbeddings.length; i += BATCH_SIZE) {
+        const batch = expensesWithoutEmbeddings.slice(i, i + BATCH_SIZE);
+        const firestoreBatch = writeBatch(db);
+
+        setSyncStatus(`Processing batch ${Math.floor(i / BATCH_SIZE) + 1} of ${Math.ceil(expensesWithoutEmbeddings.length / BATCH_SIZE)}...`);
+
+        await Promise.all(batch.map(async (expense: any) => {
+          let dateObj = new Date();
+          if (expense.date && expense.date.toDate) {
+            dateObj = expense.date.toDate();
+          } else if (expense.date) {
+            dateObj = new Date(expense.date);
+          }
+          const expenseString = `Spent ${expense.amount} on ${expense.category} on ${format(dateObj, "yyyy-MM-dd")}. Note: ${expense.note || ''}`;
+          const embedding = await generateEmbedding(expenseString);
+
+          if (embedding) {
+            const docRef = doc(db, "users", targetUserId, "expenses", expense.id);
+            firestoreBatch.update(docRef, { embedding });
+          }
+        }));
+
+        await firestoreBatch.commit();
+        // Artificial delay to respect API rate limits
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      setSyncStatus("✅ Successfully synced all historical embeddings!");
+    } catch (error) {
+      console.error("Embedding sync error:", error);
+      setSyncStatus("❌ Error syncing embeddings. Check console.");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   if (!user?.isAdmin) {
@@ -79,7 +142,16 @@ const Admin = () => {
               <h2 className="text-xl font-bold text-gray-900 dark:text-white">
                 Viewing: {selectedUser?.displayName || "User"}
               </h2>
-              <p className="text-xs text-gray-400">{selectedUser?.email}</p>
+              <div className="flex items-center gap-4">
+                <p className="text-xs text-gray-400">{selectedUser?.email}</p>
+                <button
+                  onClick={() => handleSyncEmbeddings(selectedUserId)}
+                  disabled={isSyncing}
+                  className="text-xs bg-accent/10 text-accent hover:bg-accent hover:text-white px-2 py-0.5 rounded transition-colors disabled:opacity-50"
+                >
+                  {isSyncing ? 'Syncing...' : 'Sync Embeddings'}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -88,8 +160,8 @@ const Admin = () => {
             <button
               onClick={() => setViewMode("analytics")}
               className={`p-2 rounded-lg transition-all ${viewMode === "analytics"
-                  ? "bg-white dark:bg-black shadow-sm text-accent"
-                  : "text-gray-400"
+                ? "bg-white dark:bg-black shadow-sm text-accent"
+                : "text-gray-400"
                 }`}
             >
               <BarChart3 size={20} />
@@ -97,14 +169,20 @@ const Admin = () => {
             <button
               onClick={() => setViewMode("history")}
               className={`p-2 rounded-lg transition-all ${viewMode === "history"
-                  ? "bg-white dark:bg-black shadow-sm text-accent"
-                  : "text-gray-400"
+                ? "bg-white dark:bg-black shadow-sm text-accent"
+                : "text-gray-400"
                 }`}
             >
               <Calendar size={20} />
             </button>
           </div>
         </div>
+
+        {syncStatus && (
+          <div className="mb-4 text-sm font-medium text-accent bg-accent/5 p-3 rounded-xl border border-accent/10 text-center animate-in fade-in">
+            {syncStatus}
+          </div>
+        )}
 
         {/* Content */}
         <div key={viewMode} className="animate-in fade-in duration-300">

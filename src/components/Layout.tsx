@@ -1,6 +1,6 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { Home, Calendar, BarChart3, User } from "lucide-react";
+import { Home, Calendar, BarChart3, User, BotMessageSquare, Bot } from "lucide-react";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion } from "framer-motion";
@@ -58,6 +58,11 @@ const NAV_ITEMS = [
     label: "History",
   },
   {
+    path: "/chat",
+    icon: BotMessageSquare,
+    label: "Ask",
+  },
+  {
     path: "/analytics",
     icon: BarChart3,
     label: "Insights",
@@ -99,6 +104,12 @@ const Layout = () => {
             activeColor={activeColor}
           />
           <NavItem
+            to="/chat"
+            icon={BotMessageSquare}
+            label="Ask AI"
+            activeColor={activeColor}
+          />
+          <NavItem
             to="/analytics"
             icon={BarChart3}
             label="Insights"
@@ -119,14 +130,18 @@ const Layout = () => {
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div
-          className={`relative z-10 max-w-2xl mx-auto px-5 pb-32 md:p-10 ${location.pathname === "/history"
-            ? "pt-0"
-            : "pt-[calc(env(safe-area-inset-top)+1.5rem)]"
+          className={`relative z-10 max-w-2xl mx-auto ${location.pathname === "/chat"
+            ? "h-full" // Chat handles its own padding to accommodate absolute positioning
+            : `px-5 pb-32 md:p-10 ${location.pathname === "/history"
+              ? "pt-0"
+              : "pt-[calc(env(safe-area-inset-top)+1.5rem)]"
+            }`
             }`}
         >
           {/* <AnimatePresence mode="wait"> */}
           <motion.div
             key={location.pathname}
+            className={location.pathname === "/chat" ? "h-full" : ""}
             initial={{ opacity: 0, y: 8, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             // exit={{ opacity: 0, y: -8, scale: 0.98 }}

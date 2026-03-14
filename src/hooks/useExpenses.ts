@@ -16,12 +16,13 @@ import {
   DocumentData,
   QuerySnapshot,
   writeBatch,
-  limit,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import { Expense } from "../types";
 import { getMonthFromCache, saveMonthToCache } from "../utils/indexedDB";
+import { generateEmbedding } from "../services/gemini";
+
 
 
 
@@ -331,15 +332,25 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
     const collectionRef = collection(db, "users", targetUserId, "expenses");
 
     // Calculate start date: 1st day of (CurrentMonth - monthsLookback)
-    const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth() - monthsLookback, 1);
-    startDate.setHours(0, 0, 0, 0);
+    let q;
 
-    const q = query(
-      collectionRef,
-      where("date", ">=", Timestamp.fromDate(startDate)),
-      orderBy("date", "desc")
-    );
+    if (monthsLookback === -1) {
+      // Infinite lookback: get all expenses for the user ever
+      q = query(
+        collectionRef,
+        orderBy("date", "desc")
+      );
+    } else {
+      const now = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth() - monthsLookback, 1);
+      startDate.setHours(0, 0, 0, 0);
+
+      q = query(
+        collectionRef,
+        where("date", ">=", Timestamp.fromDate(startDate)),
+        orderBy("date", "desc")
+      );
+    }
 
     const unsubscribe = onSnapshot(
       q,
@@ -409,11 +420,15 @@ export const useExpenses = () => {
       // Create doc ref outside to get ID
       const newExpenseRef = doc(collectionRef);
 
+      // Calculate embedding for the expense
+      const expenseString = `Spent ${amount} on ${category} on ${format(dateObj, "yyyy-MM-dd")}. Note: ${note}`;
+      const embedding = await generateEmbedding(expenseString);
+
       try {
         const batch = writeBatch(db);
 
         // 1. Set Expense
-        batch.set(newExpenseRef, {
+        const expenseData: any = {
           amount: Number(amount),
           category,
           note,
@@ -421,7 +436,13 @@ export const useExpenses = () => {
           ...(icon && { icon }),
           ...(iconType && { iconType }),
           type: type || 'Regular',
-        });
+        };
+
+        if (embedding) {
+          expenseData.embedding = embedding;
+        }
+
+        batch.set(newExpenseRef, expenseData);
 
         // 2. Update Aggregated Stats (Optimistic with increment)
         batch.set(

@@ -17,6 +17,7 @@ import Analytics from "./pages/Analytics";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 
 function App() {
   // Prevent Zoom on iOS
@@ -54,6 +55,7 @@ function App() {
                 <Route path="/history" element={<History />} />
                 <Route path="/analytics" element={<Analytics />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/chat" element={<Chat />} />
                 <Route path="/admin" element={<Admin />} />
               </Route>
             </Routes>
