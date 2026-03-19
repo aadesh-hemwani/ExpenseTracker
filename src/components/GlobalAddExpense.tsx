@@ -25,7 +25,7 @@ const NOTE_PLACEHOLDERS: Record<string, string> = {
 
 const AnimatedPercentage = ({ value, color }: { value: number; color: string }) => {
   const [display, setDisplay] = useState(0);
-  
+
   useEffect(() => {
     const animation = animate(0, value, {
       duration: 1.2,
@@ -40,13 +40,13 @@ const AnimatedPercentage = ({ value, color }: { value: number; color: string }) 
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.5, ease: "easeOut" }}
-      style={{ 
+      style={{
         color,
         filter: `drop-shadow(0 0 15px ${color}30)`
       }}
-      className="text-6xl font-bold tracking-tighter leading-none"
+      className="text-4xl font-bold tracking-tighter leading-none"
     >
-      {display.toFixed(1)}<span className="text-3xl ml-0.5">%</span>
+      {display.toFixed(1)}<span className="text-2xl ml-0.5">%</span>
     </motion.div>
   );
 };
@@ -763,26 +763,14 @@ const GlobalAddExpense = memo(() => {
                                   {/* Vertical Stacked Contribution Info */}
                                   <div className="flex flex-col items-center pt-2 text-center">
                                     <AnimatedPercentage value={pct} color={catColor} />
-                                    
-                                    <motion.p 
-                                      initial={{ opacity: 0, y: 5 }}
-                                      animate={{ opacity: 1, y: 0 }}
-                                      transition={{ delay: 0.4 }}
+
+                                    <p
                                       className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1 mb-2"
                                     >
-                                      of your monthly spend
-                                    </motion.p>
-
-                                    <motion.div 
-                                      initial={{ opacity: 0 }}
-                                      animate={{ opacity: 1 }}
-                                      transition={{ delay: 0.6 }}
-                                      className="flex items-center space-x-2 text-lg font-semibold text-gray-900 dark:text-gray-100"
-                                    >
-                                      <span>₹{expenseData.amount.toLocaleString()}</span>
-                                      <span className="text-gray-300 dark:text-gray-700 font-light">/</span>
+                                      of your monthly spend of {" "}
                                       <span className="text-gray-500 dark:text-gray-400">₹{total.toLocaleString()}</span>
-                                    </motion.div>
+
+                                    </p>
                                   </div>
                                 </div>
                               );
