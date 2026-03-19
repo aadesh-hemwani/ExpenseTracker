@@ -88,17 +88,24 @@ export const useEvents = () => {
 
       const eventRef = doc(db, "users", user.uid, "events", id);
       try {
-        // Convert any Date fields to Timestamps
-        const data: Record<string, any> = { ...updates };
-        if (updates.startDate instanceof Date) {
-          data.startDate = Timestamp.fromDate(updates.startDate);
-        }
-        if (updates.endDate instanceof Date) {
-          data.endDate = Timestamp.fromDate(updates.endDate);
-        }
+        // Sanitize updates: remove undefined or NaN values to avoid Firestore errors
+        const data: Record<string, any> = {};
+        Object.entries(updates).forEach(([key, value]) => {
+          if (value === undefined || (typeof value === "number" && isNaN(value))) {
+            return;
+          }
+          
+          if (value instanceof Date) {
+            data[key] = Timestamp.fromDate(value);
+          } else {
+            data[key] = value;
+          }
+        });
+
         await updateDoc(eventRef, data);
       } catch (e) {
         console.error("Failed to update event:", e);
+        throw e; // Rethrow to let the UI handle/know about the failure
       }
     },
     [user?.uid]

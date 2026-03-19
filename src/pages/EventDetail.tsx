@@ -10,10 +10,11 @@ import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useEvents } from "../hooks/useEvents";
 import { useExpenses } from "../hooks/useExpenses";
+import { useTheme } from "../context/ThemeContext";
 import { useGlobalModal } from "../context/GlobalModalContext";
 import { Expense, Event } from "../types";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
-import { getCategoryIcon } from "../utils/uiUtils";
+import { getCategoryIcon, getEventGradient } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import IOSSpinner from "../components/ui/IOSSpinner";
 
@@ -26,30 +27,11 @@ const toDate = (d: Timestamp | Date | undefined): Date => {
 
 type DeleteAction = "move-regular" | "move-oneoff" | "delete-all";
 
-// Helper for deterministic gradients based on string ID
-export const getEventGradient = (id: string) => {
-  const gradients = [
-    "from-purple-500 to-indigo-600",
-    "from-blue-500 to-cyan-500",
-    "from-emerald-500 to-teal-500",
-    "from-rose-500 to-orange-500",
-    "from-pink-500 to-rose-500",
-    "from-amber-500 to-orange-600",
-    "from-indigo-500 to-blue-600",
-    "from-fuchsia-500 to-purple-600",
-  ];
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) {
-    hash = id.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const index = Math.abs(hash) % gradients.length;
-  return gradients[index];
-};
-
 const EventDetail = () => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { theme } = useTheme();
   const { events, loading: eventsLoading, deleteEvent, updateEvent } = useEvents();
   const { deleteExpense } = useExpenses();
   const { openModal } = useGlobalModal();
@@ -198,7 +180,7 @@ const EventDetail = () => {
   if (hours > 0) durationStr += `${days > 0 ? ', ' : ''}${hours} hr${hours !== 1 ? 's' : ''}`;
   if (!durationStr) durationStr = "Less than an hour";
 
-  const gradientClass = getEventGradient(event.id);
+  const gradientClass = getEventGradient(event.id, theme);
 
   return (
     <div className="pt-4 max-w-lg mx-auto pb-32">
@@ -225,61 +207,72 @@ const EventDetail = () => {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-gradient-to-br ${gradientClass} rounded-3xl p-5 mb-6 text-white shadow-xl shadow-purple-500/10`}
+        className={`bg-gradient-to-br ${gradientClass} rounded-3xl p-6 mb-6 shadow-xl relative overflow-hidden border border-transparent dark:border-white/5`}
       >
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-white/20 rounded-2xl flex items-center justify-center">
-              <TentTree size={20} />
+        <div className="relative z-10">
+          <div className="flex justify-between items-start mb-6">
+            <div className="p-3 bg-white/40 dark:bg-white/10 rounded-2xl shadow-sm backdrop-blur-md">
+              <TentTree size={28} className="text-gray-900 dark:text-white" />
             </div>
-            <div>
-              <p className="font-bold text-base leading-tight">{event.name}</p>
-              <p className="text-white/70 text-xs mt-0.5">
-                {expenses.length} expense{expenses.length !== 1 ? "s" : ""}
+            <div className="text-right">
+              <p className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-1">
+                {formatCurrency(totalSpent)}
+              </p>
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-800/60 dark:text-white/60">
+                Total spent
               </p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-2xl font-bold">{formatCurrency(totalSpent)}</p>
-            <p className="text-white/70 text-xs">Total spent</p>
-          </div>
-        </div>
 
-        {/* Date & Duration Row */}
-        <div className="flex flex-col gap-1.5 text-white/90 text-xs mb-4">
-          <div className="flex items-center gap-2">
-            <Calendar size={12} className="opacity-80" />
-            <span>{format(start, "MMM d, yyyy")} – {format(end, "MMM d, yyyy")}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock size={12} className="opacity-80" />
-            <span>{durationStr}</span>
-          </div>
-        </div>
-
-        {/* Budget Bar */}
-        {event.budget && (
-          <div>
-            <div className="flex items-center justify-between text-xs mb-1.5">
-              <span className="text-white/70 flex items-center gap-1"><Wallet size={11} /> Budget</span>
-              <span className="font-semibold">
-                {formatCurrency(totalSpent)} / {formatCurrency(event.budget)}
-              </span>
+          <div className="mb-6">
+            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mb-1">
+              {event.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-gray-800/80 dark:text-white/80 font-medium text-xs">
+              <div className="flex items-center gap-1.5">
+                <Calendar size={14} className="opacity-60" />
+                <span>{format(start, "MMM d")} – {format(end, "MMM d, yyyy")}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <Clock size={14} className="opacity-60" />
+                <span className="uppercase tracking-widest font-bold text-[10px]">{durationStr}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-1 h-1 rounded-full bg-current opacity-40"></div>
+                <span>{expenses.length} expense{expenses.length !== 1 ? "s" : ""}</span>
+              </div>
             </div>
-            <div className="w-full bg-white/20 rounded-full h-2">
-              <div
-                className={`h-2 rounded-full transition-all duration-500 ${budgetUsed > 100 ? "bg-red-400" : budgetUsed > 80 ? "bg-yellow-300" : "bg-green-400"
+          </div>
+
+          {/* Budget Bar */}
+          {event.budget && (
+            <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/10">
+              <div className="flex items-center justify-between text-xs mb-2">
+                <span className="text-gray-800/60 dark:text-white/60 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Wallet size={12} /> Budget
+                </span>
+                <span className="font-bold text-gray-900 dark:text-white">
+                  {formatCurrency(totalSpent)} / {formatCurrency(event.budget)}
+                </span>
+              </div>
+              <div className="w-full bg-black/5 dark:bg-white/10 rounded-full h-2.5 overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(budgetUsed, 100)}%` }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className={`h-full rounded-full ${
+                    budgetUsed > 100 ? "bg-red-500" : budgetUsed > 80 ? "bg-amber-400" : "bg-emerald-500"
                   }`}
-                style={{ width: `${Math.min(budgetUsed, 100)}%` }}
-              />
+                />
+              </div>
+              {budgetUsed > 100 && (
+                <p className="text-red-600 dark:text-red-400 text-[11px] mt-2 font-bold flex items-center gap-1.5 bg-red-500/10 dark:bg-red-500/20 w-fit px-2 py-0.5 rounded-md">
+                  <AlertTriangle size={12} /> Over budget by {formatCurrency(totalSpent - event.budget)}
+                </p>
+              )}
             </div>
-            {budgetUsed > 100 && (
-              <p className="text-red-300 text-xs mt-1 font-semibold flex items-center gap-1">
-                <AlertTriangle size={11} /> Over budget by {formatCurrency(totalSpent - event.budget)}
-              </p>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </motion.div>
 
       {/* Expenses List */}

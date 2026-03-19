@@ -25,7 +25,7 @@ import { useEvents } from "../hooks/useEvents";
 import { Event } from "../types";
 import { Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
-import { getEventGradient } from "./EventDetail";
+import { getEventGradient } from "../utils/uiUtils";
 
 const container = {
   hidden: { opacity: 0 },
@@ -380,26 +380,26 @@ const Profile = () => {
               {events.map((ev: Event) => {
                 const start = toDate(ev.startDate);
                 const end = toDate(ev.endDate);
-                const gradientClass = getEventGradient(ev.id);
+                const gradientClass = getEventGradient(ev.id, theme);
 
                 return (
                   <motion.button
                     key={ev.id}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => navigate(`/event/${ev.id}`)}
-                    className={`w-full flex items-center gap-3 p-4 bg-gradient-to-r ${gradientClass} text-white hover:brightness-110 rounded-2xl transition-all text-left shadow-md shadow-purple-500/10 group`}
+                    className={`w-full flex items-center gap-3 p-4 bg-gradient-to-r ${gradientClass} dark:text-white hover:brightness-110 rounded-2xl transition-all text-left shadow-md shadow-purple-500/10 group border border-transparent dark:border-white/5`}
                   >
-                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
-                      <TentTree size={18} className="text-white" />
+                    <div className="w-10 h-10 rounded-xl bg-white/40 dark:bg-white/10 flex items-center justify-center shrink-0 shadow-sm border border-black/5 dark:border-transparent">
+                      <TentTree size={18} className="text-gray-900 dark:text-white" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="font-bold text-base truncate">{ev.name}</p>
-                      <p className="text-xs text-white/80 mt-0.5 font-medium">
+                      <p className="font-bold text-base truncate text-gray-900 dark:text-white">{ev.name}</p>
+                      <p className="text-xs text-gray-800/60 dark:text-white/80 mt-0.5 font-medium">
                         {format(start, "MMM d")} – {format(end, "MMM d, yyyy")}
                         {ev.budget ? ` • ₹${ev.budget.toLocaleString("en-IN")} budget` : ""}
                       </p>
                     </div>
-                    <ChevronRight size={18} className="text-white/60 group-hover:text-white transition-colors shrink-0" />
+                    <ChevronRight size={18} className="text-gray-900/40 dark:text-white/60 group-hover:text-gray-900 dark:group-hover:text-white transition-colors shrink-0" />
                   </motion.button>
                 );
               })}

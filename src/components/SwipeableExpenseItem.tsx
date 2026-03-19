@@ -2,6 +2,8 @@ import { ReactNode, memo } from "react";
 import { motion, useAnimation } from "framer-motion";
 import { Trash2 } from "lucide-react";
 import { format } from "date-fns";
+import { useTheme } from "../context/ThemeContext";
+import { getEventGradient } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import { Expense } from "../types";
 import { Timestamp } from "firebase/firestore";
@@ -32,6 +34,7 @@ const SwipeableExpenseItem = memo(
     readOnly = false,
     onClick,
   }: SwipeableExpenseItemProps) => {
+    const { theme } = useTheme();
     const controls = useAnimation();
 
     const handleDragEnd = (_: any, info: any) => {
@@ -56,6 +59,9 @@ const SwipeableExpenseItem = memo(
       if (date instanceof Date) return date;
       return new Date(); // Fallback
     };
+
+    const isEvent = t.context === "event" && t.contextId;
+    const gradientClass = isEvent ? getEventGradient(t.contextId!, theme) : "";
 
     return (
       <motion.div
@@ -95,41 +101,42 @@ const SwipeableExpenseItem = memo(
           style={{ touchAction: "pan-y", transform: "translateZ(0)" }}
           whileTap={!readOnly ? { scale: 0.97 } : undefined}
           onClick={() => onClick && onClick(t)}
-          className={`relative z-10 flex items-center justify-between p-4
-            bg-white dark:bg-[#1c1c1e] 
-            rounded-[1.5rem] shadow-sm
+          className={`relative z-10 transition-all rounded-[1.55rem]
+            ${isEvent ? `p-[1.5px] bg-gradient-to-br ${gradientClass} shadow-sm` : "bg-white dark:bg-[#1c1c1e] shadow-sm"} 
             ${onClick ? "cursor-pointer active:scale-95 transition-transform" : ""}
             ${cardClassName}`}
         >
-          <div className="flex items-center flex-1 min-w-0">
-            {/* Illuminated Icon Container */}
-            <div className="shrink-0 relative group w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm bg-gray-50 dark:bg-white/5 mr-3">
-              {getCategoryIcon(
-                t.category,
-                "28px",
-                t.note,
-              )}
-            </div>
+          <div className={`flex items-center justify-between p-4 rounded-[1.5rem] w-full h-full ${isEvent ? "bg-white dark:bg-[#1c1c1e]" : "bg-transparent"}`}>
+            <div className="flex items-center flex-1 min-w-0">
+              {/* Illuminated Icon Container */}
+              <div className="shrink-0 relative group w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm bg-gray-50 dark:bg-white/5 mr-3">
+                {getCategoryIcon(
+                  t.category,
+                  "28px",
+                  t.note,
+                )}
+              </div>
 
-            {/* Note & Date/Category */}
-            <div className="flex flex-col flex-1 min-w-0 pr-4">
-              <p className="font-semibold text-gray-900 dark:text-white text-lg truncate leading-tight">
-                {t.note}
-              </p>
-              <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">
-                <span className="opacity-80">{t.category}</span>
+              {/* Note & Date/Category */}
+              <div className="flex flex-col flex-1 min-w-0 pr-4">
+                <p className="font-semibold text-gray-900 dark:text-white text-lg truncate leading-tight">
+                  {t.note || t.category}
+                </p>
+                <div className="flex items-center text-xs font-medium text-gray-500 dark:text-gray-400 mt-1 space-x-1 truncate">
+                  <span className="opacity-80">{t.category}</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Amount & Time (Right Aligned) */}
-          <div className="text-right shrink-0 flex flex-col justify-center">
-            <span className="font-bold text-gray-900 dark:text-white block text-lg tracking-tight">
-              {formatCurrency(t.amount)}
-            </span>
-            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-0.5">
-              {t.date ? format(getDate(t.date), "hh:mm a") : ""}
-            </span>
+            {/* Amount & Time (Right Aligned) */}
+            <div className="text-right shrink-0 flex flex-col justify-center">
+              <span className="font-bold text-gray-900 dark:text-white block text-lg tracking-tight">
+                {formatCurrency(t.amount)}
+              </span>
+              <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-0.5">
+                {t.date ? format(getDate(t.date), "hh:mm a") : ""}
+              </span>
+            </div>
           </div>
         </motion.div>
       </motion.div>
