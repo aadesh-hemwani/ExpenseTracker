@@ -127,12 +127,12 @@ body {
 @layer utilities {
   .glass {
     /* Crystalline Glass - clearer, stronger blur */
-    @apply backdrop-blur-2xl bg-white/70 dark:bg-[#1c1c1e]/70 border border-white/40 dark:border-white/5 shadow-sm;
+    @apply backdrop-blur-2xl bg-white/70 dark:bg-[#1c1c1e]/70 shadow-sm;
   }
 
   .glass-card {
-    /* Tactile Card - Subtle border, smooth background */
-    @apply backdrop-blur-xl bg-white/80 dark:bg-[#1c1c1e]/80 border border-white/60 dark:border-white/5 shadow-sm transition-all duration-300;
+    /* Tactile Card - Subtle gap, smooth background */
+    @apply backdrop-blur-xl bg-white/80 dark:bg-[#1c1c1e]/80 shadow-sm transition-all duration-300;
   }
 
   .glass-nav {
@@ -159,6 +159,18 @@ body {
   .pt-safe {
     padding-top: max(20px, env(safe-area-inset-top));
   }
+}
+
+/* Hide elements when virtual keyboard is open */
+html.keyboard-open .keyboard-hide {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.keyboard-hide {
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 /* Animations */

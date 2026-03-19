@@ -14,9 +14,18 @@ import {
   ShieldCheck,
   Moon,
   Sun,
+  Plus,
+  ChevronRight,
+  X,
+  TentTree,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Card from "../components/Card";
+import { useEvents } from "../hooks/useEvents";
+import { Event } from "../types";
+import { Timestamp } from "firebase/firestore";
+import { format } from "date-fns";
+import { getEventGradient } from "./EventDetail";
 
 const container = {
   hidden: { opacity: 0 },
@@ -33,14 +42,30 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+// Helper to convert startDate/endDate to Date object
+const toDate = (d: Timestamp | Date | undefined): Date => {
+  if (!d) return new Date();
+  if (d instanceof Timestamp) return d.toDate();
+  return new Date(d);
+};
+
 const Profile = () => {
   const { user, logOut } = useAuth();
-  const { theme, toggleTheme, accentColor, setAccentColor, accentColors } =
-    useTheme();
+  const { theme, toggleTheme, accentColor, setAccentColor, accentColors } = useTheme();
   const navigate = useNavigate();
+  const { events, loading: eventsLoading, addEvent } = useEvents();
+
   const [budget, setBudget] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  // Event form state
+  const [showAddEventForm, setShowAddEventForm] = useState(false);
+  const [newEventName, setNewEventName] = useState("");
+  const [newEventStart, setNewEventStart] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+  const [newEventEnd, setNewEventEnd] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+  const [newEventBudget, setNewEventBudget] = useState("");
+  const [savingEvent, setSavingEvent] = useState(false);
 
   // Fetch current budget from Firestore on mount
   useEffect(() => {
@@ -69,8 +94,6 @@ const Profile = () => {
         monthlyBudgetCap: Number(budget),
       });
       setMessage("Budget updated successfully.");
-
-      // Clear success message after 3 seconds
       setTimeout(() => setMessage(""), 3000);
     } catch (error) {
       console.error("Error updating budget:", error);
@@ -83,9 +106,33 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await logOut();
-      // Router will auto-redirect to login due to ProtectedRoute
     } catch (error) {
       console.error("Failed to log out", error);
+    }
+  };
+
+  const handleAddEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEventName.trim()) return;
+    setSavingEvent(true);
+    try {
+      const startDate = new Date(newEventStart);
+      const endDate = new Date(newEventEnd);
+      await addEvent(
+        newEventName.trim(),
+        startDate,
+        endDate,
+        newEventBudget ? Number(newEventBudget) : undefined
+      );
+      setNewEventName("");
+      setNewEventStart(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+      setNewEventEnd(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
+      setNewEventBudget("");
+      setShowAddEventForm(false);
+    } catch (err) {
+      console.error("Failed to add event:", err);
+    } finally {
+      setSavingEvent(false);
     }
   };
 
@@ -143,10 +190,7 @@ const Profile = () => {
           )}
 
           <div className="mt-3 flex items-center gap-1.5 px-2.5 py-0.5 bg-green-500/20 dark:bg-green-900/40 text-green-800 dark:text-green-600 text-[10px] font-medium rounded-full border border-gray-100 dark:border-white/5">
-            <ShieldCheck
-              size={12}
-              color="currentColor"
-            />
+            <ShieldCheck size={12} color="currentColor" />
             <span>Google Verified</span>
           </div>
         </Card>
@@ -158,10 +202,7 @@ const Profile = () => {
         <Card>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
-              <Palette
-                size={20}
-                color="currentColor"
-              />
+              <Palette size={20} color="currentColor" />
             </div>
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">
               Appearance
@@ -178,21 +219,13 @@ const Profile = () => {
                   }`}
               >
                 {theme === "dark" ? (
-                  <Moon
-                    size={20}
-                    color="currentColor"
-                  />
+                  <Moon size={20} color="currentColor" />
                 ) : (
-                  <Sun
-                    size={20}
-                    color="currentColor"
-                  />
+                  <Sun size={20} color="currentColor" />
                 )}
               </div>
               <div>
-                <p className="font-semibold text-gray-900 dark:text-white">
-                  Dark Mode
-                </p>
+                <p className="font-semibold text-gray-900 dark:text-white">Dark Mode</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   Adjust the appearance to reduce glare.
                 </p>
@@ -233,13 +266,145 @@ const Profile = () => {
                   aria-label={`Select ${colors.name} accent color`}
                   title={colors.name}
                 >
-                  {accentColor === key && (
-                    <Check color="#ffffff" size={20} />
-                  )}
+                  {accentColor === key && <Check color="#ffffff" size={20} />}
                 </button>
               ))}
             </div>
           </div>
+        </Card>
+
+        {/* Events Section */}
+        <Card>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-purple-50 dark:bg-purple-500/10 rounded-lg text-purple-600 dark:text-purple-400">
+                <TentTree size={20} />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">Events</h3>
+            </div>
+            <button
+              onClick={() => setShowAddEventForm((v) => !v)}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-accent/10 text-accent rounded-full text-xs font-bold hover:bg-accent/20 transition-colors"
+            >
+              <Plus size={14} />
+              Add Event
+            </button>
+          </div>
+
+          {/* Add Event Form */}
+          <AnimatePresence>
+            {showAddEventForm && (
+              <motion.form
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                onSubmit={handleAddEvent}
+                className="overflow-hidden mb-4"
+              >
+                <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl space-y-3 border border-gray-100 dark:border-white/10">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">New Event</p>
+                    <button type="button" onClick={() => setShowAddEventForm(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+                      <X size={16} />
+                    </button>
+                  </div>
+
+                  <input
+                    type="text"
+                    value={newEventName}
+                    onChange={(e) => setNewEventName(e.target.value)}
+                    placeholder="Event name (e.g. Goa Trip)"
+                    required
+                    className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
+                  />
+
+                  <div className="grid grid-cols-1 gap-4">
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Start</label>
+                      <input
+                        type="datetime-local"
+                        value={newEventStart}
+                        onChange={(e) => setNewEventStart(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all dark:[color-scheme:dark]"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">End</label>
+                      <input
+                        type="datetime-local"
+                        value={newEventEnd}
+                        onChange={(e) => setNewEventEnd(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all dark:[color-scheme:dark]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₹</span>
+                    <input
+                      type="number"
+                      value={newEventBudget}
+                      onChange={(e) => setNewEventBudget(e.target.value)}
+                      placeholder="Budget (optional)"
+                      min="0"
+                      className="w-full pl-8 pr-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={savingEvent || !newEventName.trim()}
+                    className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-50 transition-all active:scale-95"
+                  >
+                    {savingEvent ? "Creating..." : "Create Event"}
+                  </button>
+                </div>
+              </motion.form>
+            )}
+          </AnimatePresence>
+
+          {/* Events List */}
+          {eventsLoading ? (
+            <div className="py-4 text-center text-sm text-gray-400">Loading events...</div>
+          ) : events.length === 0 ? (
+            <div className="py-6 text-center">
+              <TentTree size={32} className="text-gray-200 dark:text-gray-700 mx-auto mb-2" />
+              <p className="text-sm text-gray-400 dark:text-gray-600 font-medium">No events yet.</p>
+              <p className="text-xs text-gray-300 dark:text-gray-700 mt-1">Create one to group trip or party expenses.</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {events.map((ev: Event) => {
+                const start = toDate(ev.startDate);
+                const end = toDate(ev.endDate);
+                const gradientClass = getEventGradient(ev.id);
+
+                return (
+                  <motion.button
+                    key={ev.id}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => navigate(`/event/${ev.id}`)}
+                    className={`w-full flex items-center gap-3 p-4 bg-gradient-to-r ${gradientClass} text-white hover:brightness-110 rounded-2xl transition-all text-left shadow-md shadow-purple-500/10 group`}
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                      <TentTree size={18} className="text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-base truncate">{ev.name}</p>
+                      <p className="text-xs text-white/80 mt-0.5 font-medium">
+                        {format(start, "MMM d")} – {format(end, "MMM d, yyyy")}
+                        {ev.budget ? ` • ₹${ev.budget.toLocaleString("en-IN")} budget` : ""}
+                      </p>
+                    </div>
+                    <ChevronRight size={18} className="text-white/60 group-hover:text-white transition-colors shrink-0" />
+                  </motion.button>
+                );
+              })}
+            </div>
+          )}
         </Card>
 
         {/* Budget Setting */}
@@ -263,8 +428,6 @@ const Profile = () => {
                 onClick={async () => {
                   setLoading(true);
                   try {
-                    // 1. Fetch recent expenses (last 90 days roughly)
-                    // Ideally we use a proper hook, but for this "one-off" action, direct query is fine
                     const {
                       collection,
                       query,
@@ -273,39 +436,23 @@ const Profile = () => {
                     } = await import("firebase/firestore");
                     const q = query(
                       collection(db, "users", user?.uid || "", "expenses"),
-                      // orderBy("date", "desc"), // Sorting done client-side for safety/speed
-                      limit(300), // Fetch ~3 months of data
+                      limit(300),
                     );
 
-                    console.log(
-                      `🪄 Auto-Budget: Fetching for user ${user?.uid}...`,
-                    );
+                    console.log(`🪄 Auto-Budget: Fetching for user ${user?.uid}...`);
                     const snapshot = await getDocs(q);
-                    console.log(
-                      `🪄 Auto-Budget: Found ${snapshot.size} transactions.`,
-                    );
+                    console.log(`🪄 Auto-Budget: Found ${snapshot.size} transactions.`);
 
                     let expenses = snapshot.docs.map((d) => d.data());
 
-                    // Client-side sort by date (descending) since we can't do it in query
                     expenses.sort((a, b) => {
-                      const dateA = a.date?.toDate
-                        ? a.date.toDate()
-                        : new Date(a.date);
-                      const dateB = b.date?.toDate
-                        ? b.date.toDate()
-                        : new Date(b.date);
+                      const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
+                      const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
                       return dateB.getTime() - dateA.getTime();
                     });
 
-                    // Debug total before sending
-                    const localTotal = expenses.reduce(
-                      (sum, e) => sum + Number(e.amount || 0),
-                      0,
-                    );
-                    console.log(
-                      `🪄 Auto-Budget: Calculated Total: ${localTotal}`,
-                    );
+                    const localTotal = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                    console.log(`🪄 Auto-Budget: Calculated Total: ${localTotal}`);
 
                     if (expenses.length === 0) {
                       setMessage("No transaction history found to analyze.");
@@ -313,17 +460,13 @@ const Profile = () => {
                       return;
                     }
 
-                    // 2. Get Recommendation
-                    const { calculateRecommendedBudget } =
-                      await import("../services/gemini");
+                    const { calculateRecommendedBudget } = await import("../services/gemini");
                     // @ts-ignore
                     const rec = await calculateRecommendedBudget(expenses);
 
                     if (rec) {
                       setBudget(rec.recommendedBudget.toString());
-                      setMessage(
-                        `✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`,
-                      );
+                      setMessage(`✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`);
                     } else {
                       setMessage("Could not generate a suggestion.");
                     }
@@ -336,17 +479,8 @@ const Profile = () => {
                 }}
                 className="text-xs flex items-center gap-1 text-indigo-500 font-bold hover:text-indigo-600 transition-colors"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-3 w-3"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z"
-                    clipRule="evenodd"
-                  />
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 2a1 1 0 011 1v1h1a1 1 0 010 2H6v1a1 1 0 01-2 0V6H3a1 1 0 010-2h1V3a1 1 0 011-1zm0 10a1 1 0 011 1v1h1a1 1 0 110 2H6v1a1 1 0 11-2 0v-1H3a1 1 0 110-2h1v-1a1 1 0 011-1zM12 2a1 1 0 01.967.744L14.146 7.2 17.5 9.134a1 1 0 010 1.732l-3.354 1.935-1.18 4.455a1 1 0 01-1.933 0L9.854 12.8 6.5 10.866a1 1 0 010-1.732l3.354-1.935 1.18-4.455A1 1 0 0112 2z" clipRule="evenodd" />
                 </svg>
                 Auto-Calculate
               </button>

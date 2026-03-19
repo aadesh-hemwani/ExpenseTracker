@@ -176,6 +176,7 @@ const Home = () => {
         {/* Balance Card Component */}
         <HeroBalance
           currentBalance={currentMonthTotal}
+          budgetAmount={user?.monthlyBudgetCap}
           trendDirection={trendDirection}
           percentageChange={percentageChange}
           topCategory={topCategory}
@@ -192,7 +193,7 @@ const Home = () => {
 
         <div className="space-y-2">
           {recentExpenses.length === 0 ? (
-            <div className="text-center py-12 border border-dashed border-subtle rounded-3xl">
+            <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-3xl">
               <p className="text-tertiary text-sm">No expenses yet.</p>
             </div>
           ) : (

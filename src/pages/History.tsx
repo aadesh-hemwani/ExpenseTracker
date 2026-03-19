@@ -16,11 +16,8 @@ import "../components/ui/LiquidGlass.css";
 import { LiquidBack } from "../components/ui/LiquidBack";
 import { AnimatePresence, motion } from "framer-motion";
 import Card from "../components/Card";
-import {
-  useMonthlyStats,
-  useExpenses,
-  useExpensesForMonth,
-} from "../hooks/useExpenses";
+import { useMonthlyStats, useExpenses, useExpensesForMonth } from "../hooks/useExpenses";
+import { useEvents } from "../hooks/useEvents";
 import ExpenseListModal from "../components/ExpenseListModal";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
@@ -110,7 +107,8 @@ const MemoizedExpenseList = memo(
 
 export interface FilterState {
   query: string;
-  type: "all" | "regular" | "one-off";
+  type: "all" | "regular" | "one-off" | "event";
+  contextId?: string;  // When type === 'event', the specific eventId
   category: string;
   minAmount: string;
   maxAmount: string;
@@ -146,7 +144,8 @@ const CalendarView = ({
 }: CalendarViewProps) => {
   const { deleteExpense } = useExpenses();
   const { openModal } = useGlobalModal();
-  const { user } = useAuth(); // Access user for PDF report
+  const { user } = useAuth();
+  const { events } = useEvents();
   const [viewMode, setViewMode] = useState<"standard" | "analysis">("standard");
   const [showFilters, setShowFilters] = useState(false);
   const [tempFilters, setTempFilters] = useState<FilterState>(filters);
@@ -164,9 +163,22 @@ const CalendarView = ({
 
   const filteredExpenses = useMemo(() => {
     let result = expenses.filter(e => {
-      // 1. Type Filter
-      if (filters.type === "one-off" && e.type !== "One-off") return false;
-      if (filters.type === "regular" && e.type === "One-off") return false;
+      // 1. Context / Type Filter
+      if (filters.type !== "all") {
+        // Resolve the effective contextId for this expense (backward compat)
+        const effectiveContext = e.context || "personal";
+        const effectiveContextId = e.contextId ||
+          (e.type === "One-off" ? "one-off" : "regular");
+
+        if (filters.type === "regular") {
+          if (effectiveContext !== "personal" || effectiveContextId !== "regular") return false;
+        } else if (filters.type === "one-off") {
+          if (effectiveContext !== "personal" || effectiveContextId !== "one-off") return false;
+        } else if (filters.type === "event") {
+          if (effectiveContext !== "event") return false;
+          if (filters.contextId && effectiveContextId !== filters.contextId) return false;
+        }
+      }
 
       // 2. Search Filter
       if (filters.query.trim()) {
@@ -538,19 +550,39 @@ const CalendarView = ({
           </AnimatePresence>
         ), document.body)}
 
-        {/* Expense Type Filter & Analysis Toggle */}
+        {/* Expense Type/Context Filter & Analysis Toggle */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2 overflow-x-auto no-scrollbar pb-1">
-            {(['all', 'regular', 'one-off'] as const).map(f => (
+            {/* Static pills: All, Regular, One-off */}
+            {([
+              { id: "all", label: "All" },
+              { id: "regular", label: "Regular" },
+              { id: "one-off", label: "One-off" },
+            ] as const).map(f => (
               <button
-                key={f}
-                onClick={() => setFilters(prev => ({ ...prev, type: f }))}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${filters.type === f
-                  ? "bg-black text-white dark:bg-white dark:text-black"
-                  : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
-                  }`}
+                key={f.id}
+                onClick={() => setFilters(prev => ({ ...prev, type: f.id, contextId: undefined }))}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
+                  filters.type === f.id && !filters.contextId
+                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                }`}
               >
-                {f === 'one-off' ? 'One-off' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f.label}
+              </button>
+            ))}
+            {/* Dynamic event pills */}
+            {events.map(ev => (
+              <button
+                key={ev.id}
+                onClick={() => setFilters(prev => ({ ...prev, type: "event", contextId: ev.id }))}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
+                  filters.type === "event" && filters.contextId === ev.id
+                    ? "bg-purple-600 text-white"
+                    : "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/20"
+                }`}
+              >
+                🎉 {ev.name}
               </button>
             ))}
           </div>

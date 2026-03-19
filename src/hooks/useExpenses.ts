@@ -397,7 +397,9 @@ export const useExpenses = () => {
       customDate?: Date | string,
       icon?: string,
       iconType?: 'lucide' | 'ion' | 'emoji',
-      type?: 'Regular' | 'One-off'
+      type?: 'Regular' | 'One-off',
+      context?: 'personal' | 'event',
+      contextId?: string
     ) => {
       if (!user) return;
 
@@ -424,6 +426,10 @@ export const useExpenses = () => {
       const expenseString = `Spent ${amount} on ${category} on ${format(dateObj, "yyyy-MM-dd")}. Note: ${note}`;
       const embedding = await generateEmbedding(expenseString);
 
+      // Derive context values (with backward-compat fallback)
+      const resolvedContext = context || 'personal';
+      const resolvedContextId = contextId || (type === 'One-off' ? 'one-off' : 'regular');
+
       try {
         const batch = writeBatch(db);
 
@@ -436,6 +442,8 @@ export const useExpenses = () => {
           ...(icon && { icon }),
           ...(iconType && { iconType }),
           type: type || 'Regular',
+          context: resolvedContext,
+          contextId: resolvedContextId,
         };
 
         if (embedding) {
@@ -463,6 +471,7 @@ export const useExpenses = () => {
     },
     [user]
   );
+
 
   const updateExpense = useCallback(
     async (id: string, updates: Partial<Expense>) => {

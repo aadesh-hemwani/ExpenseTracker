@@ -171,6 +171,24 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
     return last6;
   }, [stats]);
 
+  const chartInsight = useMemo(() => {
+    if (monthlyData.length < 2) return null;
+    const sorted = [...monthlyData].filter(d => d.total > 0).sort((a, b) => b.total - a.total);
+    if (sorted.length === 0) return "No spending data for this period";
+    
+    const max = sorted[0];
+    const latest = monthlyData[monthlyData.length - 1];
+    
+    if (latest.total === 0) return `Peak spending was ${formatCurrency(max.total)} in ${max.name}`;
+    
+    if (latest.key === max.key) {
+      return `Highest spending reached this month: ${formatCurrency(latest.total)}`;
+    } else {
+      const diffPct = ((max.total - latest.total) / max.total) * 100;
+      return `Spending ${diffPct > 0 ? "↓" : "↑"}${Math.abs(diffPct).toFixed(0)}% from ${max.name} peak`;
+    }
+  }, [monthlyData]);
+
   // B. Prepare Data for "Category Breakdown" (Current Month Only)
   const categoryData = useMemo(
     () => getCategoryBreakdown(monthlyExpenses),
@@ -522,6 +540,11 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
             Monthly Trend
           </h2>
         </div>
+        {chartInsight && (
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-[-14px] mb-4 ml-9 font-medium">
+            {chartInsight}
+          </p>
+        )}
         <Card className="mt-0">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">
             Monthly Trend

@@ -157,7 +157,7 @@ const Layout = () => {
       {!location.pathname.startsWith("/admin") && <GlobalAddExpense />}
 
       {/* Mobile Bottom Navigation - Liquid Glass Style */}
-      <div className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-4 right-[6rem] z-50">
+      <div className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-4 right-[6rem] z-50 keyboard-hide">
         <LiquidNavBar items={NAV_ITEMS} />
       </div>
     </div>

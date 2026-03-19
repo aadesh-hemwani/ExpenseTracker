@@ -97,14 +97,13 @@ const SwipeableExpenseItem = memo(
           onClick={() => onClick && onClick(t)}
           className={`relative z-10 flex items-center justify-between p-4
             bg-white dark:bg-[#1c1c1e] 
-            border border-gray-100 dark:border-white/10 
-            rounded-[2rem] shadow-sm
+            rounded-[1.5rem] shadow-sm
             ${onClick ? "cursor-pointer active:scale-95 transition-transform" : ""}
             ${cardClassName}`}
         >
           <div className="flex items-center flex-1 min-w-0">
             {/* Illuminated Icon Container */}
-            <div className="shrink-0 relative group w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm bg-gray-50 dark:bg-white/5 border-[2px] border-gray-100 dark:border-white/5 mr-3">
+            <div className="shrink-0 relative group w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm bg-gray-50 dark:bg-white/5 mr-3">
               {getCategoryIcon(
                 t.category,
                 "28px",

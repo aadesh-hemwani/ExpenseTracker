@@ -20,13 +20,14 @@ interface DeepMonthAnalysisProps {
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-xl rounded-xl p-3 text-sm">
+            <div className="bg-white dark:bg-gray-900 shadow-xl rounded-xl p-3 text-sm">
                 <p className="font-bold text-gray-900 dark:text-white mb-1">{label}</p>
                 {payload.map((entry: any, index: number) => {
                     const isCount = entry.name === "Transactions";
                     return (
-                        <p key={index} className="font-medium" style={{ color: entry.color || entry.fill }}>
-                            {entry.name}: {isCount ? "" : "₹"}{isCount ? entry.value : Math.round(entry.value).toLocaleString('en-IN')}
+                        <p key={index} className="font-semibold flex items-center justify-between gap-4" style={{ color: entry.color || entry.fill }}>
+                            <span>{entry.name}</span>
+                            <span>{isCount ? "" : "₹"}{isCount ? entry.value : Math.round(entry.value).toLocaleString('en-IN')}</span>
                         </p>
                     );
                 })}
@@ -51,7 +52,7 @@ const CustomizedTreemapContent = (props: any) => {
                 height={height}
                 style={{
                     fill: depth < 2 ? colors[Math.floor((index / root.children.length) * 6)] : '#ffffff00',
-                    stroke: '#fff',
+                    stroke: 'rgba(255,255,255,0.3)',
                     strokeWidth: 2 / (depth + 1e-10),
                     strokeOpacity: 1 / (depth + 1e-10),
                 }}
@@ -60,11 +61,13 @@ const CustomizedTreemapContent = (props: any) => {
             {depth === 1 && width > 40 && height > 30 ? (
                 <text
                     x={x + width / 2}
-                    y={y + height / 2 + 7}
+                    y={y + height / 2 + 5}
                     textAnchor="middle"
                     fill="#fff"
-                    fontSize={12}
-                    fontWeight="bold"
+                    fontSize={11}
+                    fontWeight={600}
+                    className="select-none"
+                    style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.1))' }}
                 >
                     {name}
                 </text>
@@ -160,8 +163,19 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
         };
     }, [expenses, currentMonth]);
 
-    // Accent Colors for Charts
-    const COLORS = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#10b981', '#14b8a6', '#06b6d4', '#0ea5e9'];
+    // Accent Colors for Charts - Refined Palette
+    const COLORS = [
+        '#6366f1', // Indigo
+        '#8b5cf6', // Violet
+        '#d946ef', // Fuchsia
+        '#f43f5e', // Rose
+        '#fb7185', // Soft Rose
+        '#fb923c', // Orange
+        '#fca5a5', // Light Coral
+        '#38bdf8', // Sky
+        '#818cf8', // Soft Indigo
+        '#2dd4bf'  // Teal
+    ];
 
     return (
         <motion.div
@@ -283,7 +297,7 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
                                 data={chartData.categoryData}
                                 dataKey="size"
                                 aspectRatio={4 / 3}
-                                stroke="#fff"
+                                stroke="rgba(255,255,255,0.4)"
                                 content={<CustomizedTreemapContent colors={COLORS} />}
                             >
                                 <Tooltip content={<CustomTooltip />} />
