@@ -1,6 +1,6 @@
 # ExpenseTracker
 
-> A meticulously crafted, insight-driven expense tracking application designed to bring clarity and elegance to personal finance.
+> An insight-driven expense tracking application designed to bring clarity and elegance to personal finance.
 
 [![Live Demo](https://img.shields.io/badge/Live_Demo-View_App-blue?style=for-the-badge)](https://expenses-a2401.web.app/)
 
@@ -17,8 +17,6 @@
 ---
 
 ## 📸 See It In Action
-
-*Replace with actual image paths or URLs*
 
 <div align="center">
   <img src="./public/assets/home.png" alt="Home Dashboard" width="31%" style="margin:4px; border-radius:12px; border:1px solid #333;" />
