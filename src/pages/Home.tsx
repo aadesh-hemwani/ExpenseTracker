@@ -46,12 +46,34 @@ const Home = () => {
   const firstName = user?.displayName ? user.displayName.split(" ")[0] : "";
 
   useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour >= 4 && hour < 6) setGreeting("Early bird");
-    else if (hour >= 6 && hour < 12) setGreeting("Good morning");
-    else if (hour >= 12 && hour < 17) setGreeting("Good afternoon");
-    else if (hour >= 17 && hour < 22) setGreeting("Good evening");
-    else setGreeting("Up late");
+    const now = new Date();
+    const hour = now.getHours();
+    const isWeekend = [0, 6].includes(now.getDay());
+
+    let pool: string[] = [];
+
+    if (hour >= 0 && hour < 4) {
+      pool = ["Up late", "Burning the midnight oil", "Still awake", "Night owl vibes", "Quiet hours"];
+    } else if (hour >= 4 && hour < 7) {
+      pool = ["Early bird", "Rise and shine", "Up before the sun", "Peaceful morning"];
+    } else if (hour >= 7 && hour < 12) {
+      pool = ["Good morning", "Ready for the day", "Fresh start", "Let's get it"];
+    } else if (hour >= 12 && hour < 14) {
+      pool = ["Almost noon", "Lunch time", "Good afternoon", "Halfway there"];
+    } else if (hour >= 14 && hour < 17) {
+      pool = ["Good afternoon", "Afternoon push", "Keep it up", "Doing great"];
+    } else if (hour >= 17 && hour < 21) {
+      pool = ["Good evening", "Winding down", "Relaxing time", "Evening check-in"];
+    } else {
+      pool = ["Good night", "Time to unwind", "Late evening", "Rest easy"];
+    }
+
+    if (isWeekend) {
+      pool.push("Happy weekend", "Weekend vibes", "Enjoy your weekend");
+    }
+
+    const randomChoice = pool[Math.floor(Math.random() * pool.length)];
+    setGreeting(randomChoice);
   }, []);
 
   const now = useMemo(() => new Date(), []);
