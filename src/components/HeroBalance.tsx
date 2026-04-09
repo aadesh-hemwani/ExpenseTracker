@@ -56,7 +56,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
       aria-label="Account Balance Summary"
     >
       <div
-        className="relative w-full overflow-hidden rounded-[1.5rem] px-5 py-6 sm:p-7 transition-all duration-300 bg-white dark:bg-zinc-900 shadow-sm"
+        className="relative w-full overflow-hidden rounded-[1.5rem] px-5 py-6 sm:p-7 transition-all duration-300 bg-zinc-50 dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 shadow-[0_0_25px_rgba(0,0,0,0.04)]"
       >
         {/* Subtle background glow/noise for depth */}
         <div

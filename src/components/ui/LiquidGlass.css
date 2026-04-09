@@ -157,32 +157,10 @@
       var(--c-dark) calc(var(--glass-reflex-dark) * 8%),
       transparent);
 
-  /* Animation */
-  transition:
-    transform 200ms cubic-bezier(1, 0, 0.4, 1),
-    width 200ms cubic-bezier(1, 0, 0.4, 1),
-    left 200ms cubic-bezier(1, 0, 0.4, 1);
-  /* The scale animation is key for the liquid feel */
+  /* Transitions managed by Framer Motion for better integration with drag gestures */
 }
 
-.liquid-move-anim {
-  animation: scaleToggle 220ms ease;
-}
 
-@keyframes scaleToggle {
-  0% {
-    scale: 1 1;
-  }
-
-  50% {
-    scale: 1.1 1;
-  }
-
-  /* Squash/Stretch horizontally */
-  100% {
-    scale: 1 1;
-  }
-}
 
 .liquid-filter-def {
   position: absolute;

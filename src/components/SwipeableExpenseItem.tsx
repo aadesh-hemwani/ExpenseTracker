@@ -102,7 +102,7 @@ const SwipeableExpenseItem = memo(
           whileTap={!readOnly ? { scale: 0.97 } : undefined}
           onClick={() => onClick && onClick(t)}
           className={`relative z-10 transition-all rounded-[1.55rem]
-            ${isEvent ? `p-[1.5px] bg-gradient-to-br ${gradientClass} shadow-sm` : "bg-white dark:bg-[#1c1c1e] shadow-sm"} 
+            ${isEvent ? `p-[1.5px] bg-gradient-to-br ${gradientClass} shadow-sm` : "bg-zinc-50 dark:bg-[#1c1c1e] border border-black/5 dark:border-white/5 shadow-[0_0_25px_rgba(0,0,0,0.04)] transition-all duration-300"} 
             ${onClick ? "cursor-pointer active:scale-95 transition-transform" : ""}
             ${cardClassName}`}
         >
