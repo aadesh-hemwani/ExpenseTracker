@@ -187,7 +187,7 @@ const Home = () => {
 
   return (
     <div className="space-y-10 animate-fade-in">
-      <header className="flex flex-col space-y-6 pt-6 relative">
+      <header className="flex flex-col space-y-6 pt-2 relative">
         <div className="flex flex-col px-2 mb-2">
           <p className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
             {greeting}{firstName ? `, ${firstName}` : ""}

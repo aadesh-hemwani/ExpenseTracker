@@ -72,10 +72,8 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
                 className={`p-2 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-sm`}
               >
                 <insight.icon
-                  color="inherit"
-                  height="20px"
-                  width="20px"
-                  cssClasses={insight.color}
+                  size={20}
+                  className={insight.color}
                 />
               </div>
 

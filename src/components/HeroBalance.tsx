@@ -40,6 +40,15 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
     return { spentPercentage: percentage, remainingAmount: remaining, statusColor: color };
   }, [currentBalance, budgetAmount]);
 
+  const monthProgress = useMemo(() => {
+    const now = new Date();
+    const currentDay = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    return (currentDay / daysInMonth) * 100;
+  }, []);
+
+  const hasDecimals = currentBalance % 1 !== 0;
+
   return (
     <div
       className="relative w-full max-w-[400px] mx-auto group outline-none rounded-[1.5rem]"
@@ -57,8 +66,6 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
           }}
         />
 
-
-
         {/* Center: Massive Balance Number */}
         <div className="relative z-10 flex items-baseline justify-center pb-4">
           <CountUp
@@ -68,9 +75,11 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
             prefixClassName="text-5xl font-light text-zinc-400 dark:text-zinc-500 tracking-normal mr-1"
             className="text-6xl tracking-tighter text-zinc-900 dark:text-white font-semibold font-sans"
           />
-          <span className="text-5xl text-zinc-400 dark:text-zinc-500 font-medium tracking-tight">
-            .{currentBalance.toFixed(2).split(".")[1]}
-          </span>
+          {hasDecimals && (
+            <span className="text-5xl text-zinc-400 dark:text-zinc-500 font-medium tracking-tight">
+              .{currentBalance.toFixed(2).split(".")[1]}
+            </span>
+          )}
         </div>
 
         {/* Progress Bar Section (Budget) */}
@@ -78,14 +87,21 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
           <div className="relative z-10 px-1 mb-6">
             <div className="flex flex-col space-y-2.5">
               {/* Thin Progress Bar Track */}
-              <div className="h-1.5 w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-full overflow-hidden">
+              <div className="relative h-1.5 w-full bg-zinc-100 dark:bg-zinc-800/50 rounded-full">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${spentPercentage}%` }}
                   transition={{ duration: 1, ease: "easeOut" }}
-                  className={`h-full rounded-full ${statusColor}`}
+                  className={`absolute top-0 left-0 h-full rounded-full ${statusColor}`}
+                />
+                {/* Month Progress Marker (Prominent) */}
+                <div
+                  className="absolute top-1/2 w-1.5 h-3.5 bg-zinc-800 dark:bg-zinc-200 rounded-full z-10 border border-white dark:border-zinc-900 shadow-sm"
+                  style={{ left: `${monthProgress}%`, transform: 'translate(-50%, -50%)' }}
+                  title={`${Math.round(monthProgress)}% of month passed`}
                 />
               </div>
+
 
               {/* Supporting Text */}
               <div className="flex justify-between items-baseline">
@@ -93,9 +109,24 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
                   <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {spentPercentage.toFixed(0)}% used
                   </span>
+                  <span className="text-[10px] sm:text-[11px] font-medium text-zinc-400 dark:text-zinc-500">
+                    • {monthProgress.toFixed(0)}% month
+                  </span>
                 </div>
                 <span className="text-[11px] font-medium text-zinc-500 dark:text-zinc-400 tracking-wider">
-                  {formatCurrency(remainingAmount).split(".")[0]} left
+                  {(() => {
+                    const formatted = formatCurrency(remainingAmount);
+                    const [main, decimal] = formatted.split(".");
+                    if (decimal && decimal !== "00") {
+                      return (
+                        <>
+                          {main}
+                          <span className="text-[0.8em] opacity-50 font-medium">.{decimal}</span>
+                        </>
+                      );
+                    }
+                    return main;
+                  })()} left
                 </span>
               </div>
             </div>
@@ -110,12 +141,34 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         {/* Bottom Section: Context */}
         <div className="relative z-10 flex justify-between items-center w-full">
           <div className="flex-1 pr-2">
-
-            <h3 className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
-              {dailyAverage && dailyAverage > 0
-                ? `Avg. ${formatCurrency(dailyAverage)} / day`
-                : "Tap trend pill to see trajectory"}
+            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
+              {topCategory && topCategory !== "None"
+                ? `Top Spend: ${topCategory}`
+                : "Monthly Insight"}
             </h3>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+              {dailyAverage && dailyAverage > 0 ? (
+                <>
+                  Avg.{" "}
+                  {(() => {
+                    const formatted = formatCurrency(dailyAverage);
+                    const [main, decimal] = formatted.split(".");
+                    if (decimal && decimal !== "00") {
+                      return (
+                        <>
+                          {main}
+                          <span className="text-[0.8em] opacity-50 font-medium">.{decimal}</span>
+                        </>
+                      );
+                    }
+                    return main;
+                  })()}{" "}
+                  / day
+                </>
+              ) : (
+                "Tap trend pill to see trajectory"
+              )}
+            </p>
           </div>
 
           <button
