@@ -58,11 +58,6 @@ const NAV_ITEMS = [
     label: "History",
   },
   {
-    path: "/chat",
-    icon: BotMessageSquare,
-    label: "Ask",
-  },
-  {
     path: "/analytics",
     icon: BarChart3,
     label: "Insights",
@@ -101,12 +96,6 @@ const Layout = () => {
             to="/history"
             icon={Calendar}
             label="History"
-            activeColor={activeColor}
-          />
-          <NavItem
-            to="/chat"
-            icon={BotMessageSquare}
-            label="Ask AI"
             activeColor={activeColor}
           />
           <NavItem

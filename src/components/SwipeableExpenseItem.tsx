@@ -131,7 +131,19 @@ const SwipeableExpenseItem = memo(
             {/* Amount & Time (Right Aligned) */}
             <div className="text-right shrink-0 flex flex-col justify-center">
               <span className="font-bold text-gray-900 dark:text-white block text-lg tracking-tight">
-                {formatCurrency(t.amount)}
+                {(() => {
+                  const formatted = formatCurrency(t.amount);
+                  const parts = formatted.split(".");
+                  if (parts.length > 1 && parts[1] !== "00") {
+                    return (
+                      <>
+                        {parts[0]}
+                        <span className="text-[0.8em] opacity-50 font-medium">.{parts[1]}</span>
+                      </>
+                    );
+                  }
+                  return parts[0];
+                })()}
               </span>
               <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-0.5">
                 {t.date ? format(getDate(t.date), "hh:mm a") : ""}

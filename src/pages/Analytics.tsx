@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   useMonthlyStats,
   useExpensesForMonth,
@@ -17,7 +17,8 @@ import {
   TrendingUp,
   TrendingDown,
   CheckCircle2,
-  Lightbulb
+  Lightbulb,
+  BotMessageSquare
 } from "lucide-react";
 import { useAiInsights } from "../hooks/useAiInsights";
 import { motion, AnimatePresence } from "framer-motion";
@@ -57,6 +58,7 @@ interface AnalyticsProps {
 const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const trajectoryChartRef = useRef<HTMLDivElement>(null);
 
   // 1. Get High-Level Stats for Trend Chart
@@ -361,11 +363,24 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       className="space-y-8 pt-4"
     >
       {/* Header */}
-      <motion.div variants={item}>
-        <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
-          Insights
-        </h1>
-        <p className="text-gray-500 mt-2">Visualize your spending patterns.</p>
+      <motion.div variants={item} className="flex justify-between items-start">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
+            Insights
+          </h1>
+          <p className="text-gray-500 mt-2">Visualize your spending patterns.</p>
+        </div>
+        {!_readOnly && (
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/chat")}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-2xl transition-colors shadow-sm font-semibold text-sm"
+          >
+            <BotMessageSquare size={18} className="text-accent" />
+            <span>Ask AI</span>
+          </motion.button>
+        )}
       </motion.div>
 
       {/* KPI Cards */}

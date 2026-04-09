@@ -21,6 +21,7 @@ import { useEvents } from "../hooks/useEvents";
 import ExpenseListModal from "../components/ExpenseListModal";
 import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
+import { formatCurrency } from "../utils/formatUtils";
 import { Expense } from "../types";
 const CategoryDonutChart = lazy(() => import("../components/CategoryDonutChart"));
 import MonthInsights from "../components/MonthInsights";
@@ -40,6 +41,20 @@ interface MonthCardProps {
   total: number;
   onClick: (date: Date) => void;
 }
+
+const renderAmount = (amount: number) => {
+    const formatted = formatCurrency(amount);
+    const [main, decimal] = formatted.split(".");
+    if (decimal && decimal !== "00") {
+        return (
+            <>
+                {main}
+                <span className="text-[0.8em] opacity-50 font-medium">.{decimal}</span>
+            </>
+        );
+    }
+    return main;
+};
 
 // --- Sub-Component: Month Card ---
 const MonthCard = memo(({ monthKey, total, onClick }: MonthCardProps) => {
@@ -61,7 +76,7 @@ const MonthCard = memo(({ monthKey, total, onClick }: MonthCardProps) => {
       </div>
       <div>
         <span className="text-2xl font-bold text-gray-900 dark:text-white block">
-          ₹{total.toLocaleString("en-IN")}
+          {renderAmount(total)}
         </span>
         <span className="text-xs text-gray-400 font-medium">
           {format(date, "yyyy")}
@@ -572,7 +587,13 @@ const CalendarView = ({
               </button>
             ))}
             {/* Dynamic event pills */}
-            {events.map(ev => (
+            {events.filter(ev => {
+              const start = ev.startDate instanceof Timestamp ? ev.startDate.toDate() : new Date(ev.startDate);
+              const end = ev.endDate instanceof Timestamp ? ev.endDate.toDate() : new Date(ev.endDate);
+              const monthStart = startOfMonth(currentMonth);
+              const monthEnd = endOfMonth(currentMonth);
+              return start <= monthEnd && end >= monthStart;
+            }).map(ev => (
               <button
                 key={ev.id}
                 onClick={() => setFilters(prev => ({ ...prev, type: "event", contextId: ev.id }))}
@@ -861,7 +882,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
                     </h2>
                     <div className="text-right">
                       <span className="text-xs font-semibold text-gray-400 uppercase tracking-widest block mb-1">Total</span>
-                      <span className="text-lg font-bold text-gray-900 dark:text-white">₹{total.toLocaleString("en-IN")}</span>
+                      <span className="text-lg font-bold text-gray-900 dark:text-white">{renderAmount(total)}</span>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">

@@ -110,16 +110,12 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         {/* Bottom Section: Context */}
         <div className="relative z-10 flex justify-between items-center w-full">
           <div className="flex-1 pr-2">
-            <h3 className="text-sm font-semibold text-zinc-800 dark:text-zinc-200 truncate">
-              {topCategory && topCategory !== "None"
-                ? `Top Spend: ${topCategory}`
-                : "Monthly Insight"}
-            </h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
+
+            <h3 className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5 truncate">
               {dailyAverage && dailyAverage > 0
                 ? `Avg. ${formatCurrency(dailyAverage)} / day`
                 : "Tap trend pill to see trajectory"}
-            </p>
+            </h3>
           </div>
 
           <button

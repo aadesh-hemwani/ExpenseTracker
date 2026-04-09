@@ -53,19 +53,19 @@ const Home = () => {
     let pool: string[] = [];
 
     if (hour >= 0 && hour < 4) {
-      pool = ["Up late", "Burning the midnight oil", "Still awake", "Night owl vibes", "Quiet hours"];
+      pool = ["Up late", "Burning the midnight oil", "Still awake", "Quiet hours"];
     } else if (hour >= 4 && hour < 7) {
       pool = ["Early bird", "Rise and shine", "Up before the sun", "Peaceful morning"];
     } else if (hour >= 7 && hour < 12) {
       pool = ["Good morning", "Ready for the day", "Fresh start", "Let's get it"];
     } else if (hour >= 12 && hour < 14) {
-      pool = ["Almost noon", "Lunch time", "Good afternoon", "Halfway there"];
+      pool = ["Almost noon", "Lunch time", "Good afternoon"];
     } else if (hour >= 14 && hour < 17) {
       pool = ["Good afternoon", "Afternoon push", "Keep it up", "Doing great"];
     } else if (hour >= 17 && hour < 21) {
-      pool = ["Good evening", "Winding down", "Relaxing time", "Evening check-in"];
+      pool = ["Good evening", "Evening check-in"];
     } else {
-      pool = ["Good night", "Time to unwind", "Late evening", "Rest easy"];
+      pool = ["Good night", "Late evening"];
     }
 
     if (isWeekend) {
@@ -233,8 +233,11 @@ const Home = () => {
                   key={label}
                   className={`space-y-2 ${index > 0 ? "pt-3" : ""}`}
                 >
-                  <h4 className="sticky top-0 z-20 py-2 bg-transparent text-xs font-bold text-tertiary uppercase tracking-wider px-1">
-                    {label}
+                  <h4 className="sticky top-0 z-20 py-2 bg-transparent text-xs font-bold text-tertiary uppercase tracking-wider px-1 flex justify-between items-center">
+                    <span>{label}</span>
+                    <span className="font-semibold text-secondary normal-case tracking-normal">
+                      ₹{expenses.reduce((sum, e) => sum + Number(e.amount), 0).toLocaleString("en-IN")}
+                    </span>
                   </h4>
                   <div className="space-y-2">
                     <AnimatePresence mode="popLayout" initial={false}>
