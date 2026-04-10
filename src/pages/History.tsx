@@ -26,6 +26,7 @@ import { Expense } from "../types";
 const CategoryDonutChart = lazy(() => import("../components/CategoryDonutChart"));
 import MonthInsights from "../components/MonthInsights";
 import DeepMonthAnalysis from "../components/DeepMonthAnalysis";
+import ExpenseHeatmap from "../components/ExpenseHeatmap";
 import { useTheme } from "../context/ThemeContext";
 import { Download, Calendar, Search, X, SlidersHorizontal } from "lucide-react";
 // import html2canvas from "html2canvas";
@@ -43,17 +44,17 @@ interface MonthCardProps {
 }
 
 const renderAmount = (amount: number) => {
-    const formatted = formatCurrency(amount);
-    const [main, decimal] = formatted.split(".");
-    if (decimal && decimal !== "00") {
-        return (
-            <>
-                {main}
-                <span className="text-[0.8em] opacity-50 font-medium">.{decimal}</span>
-            </>
-        );
-    }
-    return main;
+  const formatted = formatCurrency(amount);
+  const [main, decimal] = formatted.split(".");
+  if (decimal && decimal !== "00") {
+    return (
+      <>
+        {main}
+        <span className="text-[0.8em] opacity-50 font-medium">.{decimal}</span>
+      </>
+    );
+  }
+  return main;
 };
 
 // --- Sub-Component: Month Card ---
@@ -145,6 +146,8 @@ interface CalendarViewProps {
   setFilters: React.Dispatch<React.SetStateAction<FilterState>>;
 }
 
+import { useLocation } from "react-router-dom";
+
 const CalendarView = ({
   currentMonth,
   onBack,
@@ -157,11 +160,14 @@ const CalendarView = ({
   filters,
   setFilters,
 }: CalendarViewProps) => {
+  const location = useLocation();
   const { deleteExpense } = useExpenses();
   const { openModal } = useGlobalModal();
   const { user } = useAuth();
   const { events } = useEvents();
-  const [viewMode, setViewMode] = useState<"standard" | "analysis">("standard");
+  const [viewMode, setViewMode] = useState<"standard" | "analysis">(
+    (location.state as any)?.viewMode === "analysis" ? "analysis" : "standard"
+  );
   const [showFilters, setShowFilters] = useState(false);
   const [tempFilters, setTempFilters] = useState<FilterState>(filters);
   const { theme } = useTheme();
@@ -577,11 +583,10 @@ const CalendarView = ({
               <button
                 key={f.id}
                 onClick={() => setFilters(prev => ({ ...prev, type: f.id, contextId: undefined }))}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
-                  filters.type === f.id && !filters.contextId
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${filters.type === f.id && !filters.contextId
                     ? "bg-black text-white dark:bg-white dark:text-black"
                     : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
-                }`}
+                  }`}
               >
                 {f.label}
               </button>
@@ -597,11 +602,10 @@ const CalendarView = ({
               <button
                 key={ev.id}
                 onClick={() => setFilters(prev => ({ ...prev, type: "event", contextId: ev.id }))}
-                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  filters.type === "event" && filters.contextId === ev.id
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${filters.type === "event" && filters.contextId === ev.id
                     ? "bg-purple-600 text-white"
                     : "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/20"
-                }`}
+                  }`}
               >
                 🎉 {ev.name}
               </button>
@@ -632,65 +636,12 @@ const CalendarView = ({
 
           {/* Legend/Info (Optional, if Chart component doesn't show it) */}
 
-          {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1 md:gap-2">
-            {["S", "M", "T", "W", "T", "F", "S"].map((day, i) => (
-              <div
-                key={i}
-                className="text-center text-xs font-semibold text-gray-300 py-2"
-              >
-                {day}
-              </div>
-            ))}
-
-            {calendarDays.map((day, idx) => {
-              const dailyTotal = getDailyTotal(day);
-              const roundedTotal = Math.ceil(dailyTotal);
-              const hasSpend = roundedTotal > 0;
-              const isSelected = selectedDate && isSameDay(day, selectedDate);
-              const isCurrentMonth = isSameMonth(day, currentMonth);
-
-              let amountColor = "text-green-500";
-              if (roundedTotal > 2000) amountColor = "text-red-500";
-              else if (roundedTotal >= 1000) amountColor = "text-yellow-500";
-
-              return (
-                <button
-                  key={idx}
-                  onClick={() => onSelectDate(day)}
-                  disabled={!isCurrentMonth}
-                  className={`
-                    relative h-14 md:h-24 rounded-xl flex flex-col items-center justify-start pt-2 transition-all border
-                    ${!isCurrentMonth ? "opacity-30" : "opacity-100"}
-                    ${isSelected
-                      ? "bg-black dark:bg-white text-white dark:text-black ring-4 ring-gray-100 dark:ring-gray-800 scale-105 z-10"
-                      : "bg-white dark:bg-black text-gray-900 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 border-transparent"
-                    }
-                    ${isToday(day) && !isSelected
-                      ? "text-accent font-bold bg-accent/10"
-                      : ""
-                    }
-                  `}
-                >
-                  <span className="text-sm">{format(day, "d")}</span>
-
-                  {hasSpend && (
-                    <>
-                      {/* Desktop Amount */}
-                      <span
-                        className={`block md:text-[10px] text-[8px] mt-1 font-medium ${isSelected
-                          ? "text-gray-300 dark:text-gray-600"
-                          : amountColor
-                          }`}
-                      >
-                        ₹{roundedTotal}
-                      </span>
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </div>
+          <ExpenseHeatmap
+            expenses={filteredExpenses}
+            currentMonth={currentMonth}
+            onSelectDate={onSelectDate}
+            selectedDate={selectedDate}
+          />
 
           {/* Monthly Expenses List */}
           <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
@@ -767,10 +718,13 @@ interface HistoryProps {
 
 // --- Main Component ---
 const History = ({ userId, readOnly = false }: HistoryProps) => {
+  const location = useLocation();
   // Use Optimized Hook: Fetches only tiny stats docs
   const { stats, loading: statsLoading } = useMonthlyStats(userId);
 
-  const [view, setView] = useState<"list" | "calendar">("list"); // 'list' | 'calendar'
+  const [view, setView] = useState<"list" | "calendar">(() =>
+    (location.state as any)?.viewMode === "analysis" ? "calendar" : "list"
+  ); // 'list' | 'calendar'
   const [currentMonth, setCurrentMonth] = useState(new Date()); // The month being viewed in calendar
   const [selectedDate, setSelectedDate] = useState<Date | null>(null); // The specific day clicked in calendar
   const [filters, setFilters] = useState<FilterState>({

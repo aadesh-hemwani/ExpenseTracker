@@ -208,6 +208,9 @@ const Home = () => {
           onTrendClick={() =>
             navigate("/analytics", { state: { scrollToTrajectory: true } })
           }
+          onAmountClick={() =>
+            navigate("/history", { state: { viewMode: "analysis" } })
+          }
         />
       </header>
 
