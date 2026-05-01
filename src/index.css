@@ -66,25 +66,22 @@ p {
 }
 
 html {
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  overflow: hidden;
   background-color: hsl(var(--bg-body));
   transition: background-color 0.3s ease;
 }
 
 body {
-  height: 100vh;
-  width: 100vw;
-  position: fixed;
-  overflow: hidden;
-  padding-top: env(safe-area-inset-top);
+  margin: 0;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  background-color: hsl(var(--bg-body));
 }
 
 #root {
-  height: 100%;
-  width: 100%;
+  height: 100vh;
+  height: 100dvh;
 }
 
 /* Dark Mode Overrides */
@@ -114,16 +111,16 @@ body {
 @layer utilities {
   .glass {
     /* Crystalline Glass - clearer, stronger blur */
-    @apply backdrop-blur-2xl bg-white/70 dark:bg-[#1c1c1e]/70 shadow-sm;
+    @apply backdrop-blur-md bg-white/70 dark:bg-[#1c1c1e]/70 shadow-sm;
   }
 
   .glass-card {
     /* Tactile Card - Centered glow, secondary background in light mode */
-    @apply backdrop-blur-xl bg-zinc-50 dark:bg-[#1c1c1e]/80 border border-black/5 dark:border-white/5 shadow-[0_0_25px_rgba(0,0,0,0.04)] transition-all duration-300;
+    @apply backdrop-blur-md bg-zinc-50 dark:bg-[#1c1c1e]/80 border border-black/5 dark:border-white/5 shadow-[0_0_25px_rgba(0,0,0,0.04)] transition-all duration-300;
   }
 
   .glass-nav {
-    @apply backdrop-blur-2xl bg-white/85 dark:bg-[#1c1c1e]/85 border-t border-white/20 dark:border-white/5 shadow-lg;
+    @apply backdrop-blur-md bg-white/85 dark:bg-[#1c1c1e]/85 border-t border-white/20 dark:border-white/5 shadow-lg;
   }
 
   .text-balance {

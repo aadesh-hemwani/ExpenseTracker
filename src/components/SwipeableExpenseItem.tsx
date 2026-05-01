@@ -13,8 +13,7 @@ interface SwipeableExpenseItemProps {
   getCategoryIcon: (
     category: string,
     size?: string,
-    note?: string,
-    iconName?: string,
+    colorOverride?: string,
   ) => ReactNode;
   onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
   className?: string;
@@ -113,7 +112,6 @@ const SwipeableExpenseItem = memo(
                 {getCategoryIcon(
                   t.category,
                   "28px",
-                  t.note,
                 )}
               </div>
 

@@ -810,7 +810,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
     <div className="pt-4 h-full flex flex-col pb-20 md:pb-0">
       {/* VIEW 1: MONTH GRID OVERVIEW */}
       {view === "list" && (
-        <div className="space-y-6">
+        <div className="space-y-6 pt-[calc(env(safe-area-inset-top)+2rem)]">
           <div className="flex justify-between items-center">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
               History

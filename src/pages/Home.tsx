@@ -10,7 +10,6 @@ import {
 } from "../hooks/useExpenses";
 import { Timestamp } from "firebase/firestore";
 import { Expense } from "../types";
-import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
 import { getCategoryIcon, CATEGORY_COLORS } from "../utils/uiUtils";
 import { getCategoryBreakdown } from "../utils/analyticsHelpers";
 
@@ -38,24 +37,24 @@ import { Trash2, Edit2, X } from "lucide-react";
 
 // --- Sub-Components for Redesigned Transactions List ---
 
-const ExpenseCard = ({ 
-  t, 
-  onClick, 
+const ExpenseCard = ({
+  t,
+  onClick,
   onDelete,
   onEdit,
   isSmall
-}: { 
-  t: Expense; 
-  onClick: (e: Expense) => void; 
+}: {
+  t: Expense;
+  onClick: (e: Expense) => void;
   onDelete: (id: string, amount: number, date: any) => void;
   onEdit: (e: Expense) => void;
   isSmall: boolean;
 }) => {
   const amount = Number(t.amount).toLocaleString("en-IN");
-  const time = t.date instanceof Timestamp 
-    ? format(t.date.toDate(), "hh:mm a") 
+  const time = t.date instanceof Timestamp
+    ? format(t.date.toDate(), "hh:mm a")
     : format(new Date(t.date), "hh:mm a");
-    
+
   const accentColor = CATEGORY_COLORS[t.category as keyof typeof CATEGORY_COLORS] || "#A0A0A0";
   const [showActions, setShowActions] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -112,11 +111,11 @@ const ExpenseCard = ({
         onPointerUp={endPress}
         onPointerLeave={endPress}
         onClick={handleClick}
-        className="bg-white dark:bg-[#1C1C1E] rounded-[16px] p-2 flex flex-col items-start text-left w-full h-full relative overflow-hidden group border border-black/5 dark:border-white/5 transition-colors hover:bg-zinc-50 dark:hover:bg-[#252529]"
+        className="bg-white dark:bg-[#1C1C1E] rounded-[22px] p-2 flex flex-col items-start text-left w-full h-full relative overflow-hidden group border border-black/5 dark:border-white/5 transition-colors hover:bg-zinc-50 dark:hover:bg-[#252529]"
       >
         {/* Neutral Accent Tint */}
-        <div 
-          className="absolute inset-0 opacity-[0.03] transition-opacity group-hover:opacity-[0.06] bg-zinc-400 dark:bg-white/5" 
+        <div
+          className="absolute inset-0 opacity-[0.03] transition-opacity group-hover:opacity-[0.06] bg-zinc-400 dark:bg-white/5"
         />
 
         {/* Category Watermark Icon */}
@@ -125,9 +124,8 @@ const ExpenseCard = ({
         </div>
 
         <div className="w-full mb-0.5">
-          <span className={`font-bold text-zinc-900 dark:text-white tracking-tight whitespace-nowrap ${
-            amount.length >= 8 ? 'text-base' : amount.length >= 6 ? 'text-lg' : 'text-xl'
-          }`}>
+          <span className={`font-bold text-zinc-900 dark:text-white tracking-tight whitespace-nowrap ${amount.length >= 8 ? 'text-base' : amount.length >= 6 ? 'text-lg' : 'text-xl'
+            }`}>
             ₹{amount}
           </span>
         </div>
@@ -136,7 +134,7 @@ const ExpenseCard = ({
           if (rawNote.includes('-')) {
             const [main, ...rest] = rawNote.split('-');
             const subNote = rest.join('-').trim();
-            
+
             if (isSmall) {
               return (
                 <div className="flex flex-col mb-3 w-[85%]">
@@ -174,14 +172,14 @@ const ExpenseCard = ({
             </span>
           );
         })()}
-        
-      <div className={`mt-auto flex ${isSmall ? 'flex-col' : 'flex-row justify-between items-center'} w-full`}>
-        <div className="flex items-center gap-1">
-           <div className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
-           <span className="text-[9px] text-zinc-400 dark:text-[#A0A0A0] font-bold uppercase tracking-wider truncate">{t.category}</span>
+
+        <div className={`mt-auto flex ${isSmall ? 'flex-col' : 'flex-row justify-between items-center'} w-full`}>
+          <div className="flex items-center gap-1">
+            <div className="w-1 h-1 rounded-full shrink-0" style={{ backgroundColor: accentColor }} />
+            <span className="text-[9px] text-zinc-400 dark:text-[#A0A0A0] font-bold uppercase tracking-wider truncate">{t.category}</span>
+          </div>
+          <span className="text-[9px] text-zinc-500 dark:text-[#A0A0A0]/60 font-medium">{time}</span>
         </div>
-        <span className="text-[9px] text-zinc-500 dark:text-[#A0A0A0]/60 font-medium">{time}</span>
-      </div>
       </motion.button>
 
       {/* Actions Overlay */}
@@ -191,7 +189,7 @@ const ExpenseCard = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute inset-0 z-30 bg-white/95 dark:bg-[#1C1C1E]/95 rounded-[16px] flex items-center justify-center gap-4 backdrop-blur-sm"
+            className="absolute inset-0 z-30 bg-white/95 dark:bg-[#1C1C1E]/95 rounded-[22px] flex items-center justify-center gap-4 backdrop-blur-sm"
           >
             <button
               onClick={handleEdit}
@@ -222,22 +220,22 @@ const ExpenseCard = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute inset-0 z-40 bg-red-500 rounded-[16px] flex flex-col items-center justify-center p-2 text-white"
+            className="absolute inset-0 z-40 bg-red-500 rounded-[22px] flex flex-col items-center justify-center p-2 text-white"
           >
             <span className="text-[10px] font-bold uppercase tracking-wider mb-2">Are you sure?</span>
             <div className={`flex ${isSmall ? 'flex-col gap-1.5' : 'flex-row gap-2'} w-full px-1`}>
-               <button
-                 onClick={handleConfirmDelete}
-                 className="flex-1 py-1.5 bg-white text-red-500 rounded-full text-[10px] font-bold active:scale-95 transition-transform"
-               >
-                 Delete
-               </button>
-               <button
-                 onClick={() => setShowConfirm(false)}
-                 className="flex-1 py-1.5 bg-black/20 text-white rounded-full text-[10px] font-bold active:scale-95 transition-transform"
-               >
-                 Cancel
-               </button>
+              <button
+                onClick={handleConfirmDelete}
+                className="flex-1 py-1.5 bg-white text-red-500 rounded-full text-[10px] font-bold active:scale-95 transition-transform"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 py-1.5 bg-black/20 text-white rounded-full text-[10px] font-bold active:scale-95 transition-transform"
+              >
+                Cancel
+              </button>
             </div>
           </motion.div>
         )}
@@ -246,19 +244,19 @@ const ExpenseCard = ({
   );
 };
 
-const ExpenseGrid = ({ 
-  expenses, 
-  onCardClick, 
+const ExpenseGrid = ({
+  expenses,
+  onCardClick,
   onCardDelete,
   onCardEdit
-}: { 
-  expenses: Expense[], 
+}: {
+  expenses: Expense[],
   onCardClick: (e: Expense) => void;
   onCardDelete: (id: string, amount: number, date: any) => void;
   onCardEdit: (e: Expense) => void;
 }) => {
   const count = expenses.length;
-  
+
   return (
     <div className="grid grid-cols-6 gap-1.5">
       <AnimatePresence mode="popLayout" initial={false}>
@@ -273,10 +271,10 @@ const ExpenseGrid = ({
             colSpan = i < 2 ? "col-span-3" : "col-span-2";
             isSmall = i >= 2;
           }
-          
+
           return (
-            <motion.div 
-              key={t.id} 
+            <motion.div
+              key={t.id}
               className={colSpan}
               variants={item}
               layout
@@ -290,15 +288,15 @@ const ExpenseGrid = ({
   );
 };
 
-const DaySection = ({ 
-  label, 
-  expenses, 
+const DaySection = ({
+  label,
+  expenses,
   onCardClick,
   onCardDelete,
   onCardEdit
-}: { 
-  label: string, 
-  expenses: Expense[], 
+}: {
+  label: string,
+  expenses: Expense[],
   onCardClick: (e: Expense) => void;
   onCardDelete: (id: string, amount: number, date: any) => void;
   onCardEdit: (e: Expense) => void;
@@ -306,33 +304,33 @@ const DaySection = ({
   const dailyTotal = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
   const maxAmount = Math.max(...expenses.map(e => Number(e.amount)), 1);
   const chronologicalExpenses = [...expenses].reverse();
-  
+
   return (
-    <div className="space-y-3 bg-zinc-50/50 dark:bg-[#141414] p-2 rounded-[16px] border border-black/5 dark:border-transparent">
+    <div className="space-y-3 bg-zinc-50/50 dark:bg-[#141414] p-2 rounded-[28px] border border-black/10 dark:border-white/10 shadow-sm">
       <div className="flex justify-between items-center px-2">
         <span className="text-[10px] font-bold text-zinc-400 dark:text-[#A0A0A0] uppercase tracking-[0.25em]">{label}</span>
         <div className="flex items-center gap-3">
-           {/* Horizontal Stacked Category Bar */}
-           <div className="flex w-12 h-1 rounded-full overflow-hidden">
-             {Object.entries(
-               expenses.reduce((acc, e) => {
-                 acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
-                 return acc;
-               }, {} as Record<string, number>)
-             )
-               .sort((a, b) => b[1] - a[1]) // Largest category first
-               .map(([cat, amt]) => (
-                 <div 
-                   key={cat}
-                   style={{ 
-                     width: `${(amt / dailyTotal) * 100}%`, 
-                     minWidth: "4px",
-                     backgroundColor: CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#A0A0A0' 
-                   }}
-                 />
-               ))}
-           </div>
-           <span className="text-sm font-bold text-zinc-900 dark:text-white">₹{dailyTotal.toLocaleString("en-IN")}</span>
+          {/* Horizontal Stacked Category Bar */}
+          <div className="flex w-12 h-1 rounded-full overflow-hidden">
+            {Object.entries(
+              expenses.reduce((acc, e) => {
+                acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
+                return acc;
+              }, {} as Record<string, number>)
+            )
+              .sort((a, b) => b[1] - a[1]) // Largest category first
+              .map(([cat, amt]) => (
+                <div
+                  key={cat}
+                  style={{
+                    width: `${(amt / dailyTotal) * 100}%`,
+                    minWidth: "4px",
+                    backgroundColor: CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#A0A0A0'
+                  }}
+                />
+              ))}
+          </div>
+          <span className="text-sm font-bold text-zinc-900 dark:text-white">₹{dailyTotal.toLocaleString("en-IN")}</span>
         </div>
       </div>
       <ExpenseGrid expenses={expenses} onCardClick={onCardClick} onCardDelete={onCardDelete} onCardEdit={onCardEdit} />
@@ -458,7 +456,7 @@ const Home = () => {
   // Memoize grouped recent expenses
   const groupedRecentExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
-    
+
     recentExpenses.forEach((expense) => {
       const date =
         expense.date instanceof Timestamp
@@ -491,17 +489,7 @@ const Home = () => {
 
   return (
     <div className="space-y-10">
-      <header className="flex flex-col space-y-6 pt-2 relative">
-        <div className="flex flex-col px-2 mb-2">
-          <p className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
-            {greeting}{firstName ? `, ${firstName}` : ""}
-          </p>
-          <p className="text-lg font-medium text-gray-500 dark:text-gray-400 mt-0.5">
-            {format(now, "MMMM yyyy")}
-          </p>
-        </div>
-
-        {/* Balance Card Component */}
+      <header className="relative -mx-5 -mt-[calc(env(safe-area-inset-top)+2rem)] mb-10">
         <HeroBalance
           currentBalance={currentMonthTotal}
           budgetAmount={user?.monthlyBudgetCap}
@@ -509,6 +497,9 @@ const Home = () => {
           percentageChange={percentageChange}
           topCategory={topCategory}
           dailyAverage={dailyAverage}
+          greeting={greeting}
+          firstName={firstName}
+          isTopHero={true}
           onTrendClick={() =>
             navigate("/analytics", { state: { scrollToTrajectory: true } })
           }
@@ -520,7 +511,7 @@ const Home = () => {
 
       <section className="space-y-6">
         <div className="flex items-center justify-between px-2">
-           <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Recent Activity</h3>
+          <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Recent Activity</h3>
         </div>
 
         <div className="space-y-4">

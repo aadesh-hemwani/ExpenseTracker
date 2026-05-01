@@ -52,7 +52,7 @@ const AnimatedPercentage = ({ value, color }: { value: number; color: string }) 
 };
 
 
-const GlobalAddExpense = memo(() => {
+const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const { addExpense, updateExpense } = useExpenses();
   const { stats } = useMonthlyStats();
   const { events } = useEvents();
@@ -313,7 +313,7 @@ const GlobalAddExpense = memo(() => {
 
   return (
     <>
-      <LiquidFAB onClick={() => openModal("add")} />
+      {showFAB && <LiquidFAB onClick={() => openModal("add")} />}
 
       {createPortal(
         <AnimatePresence>

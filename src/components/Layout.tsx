@@ -4,6 +4,9 @@ import { Home, Calendar, BarChart3, User } from "lucide-react";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion, AnimatePresence } from "framer-motion";
+import { LiquidFAB } from "./ui/LiquidFAB";
+import { useGlobalModal } from "../context/GlobalModalContext";
+import { LiquidFilter } from "./ui/LiquidFilter";
 
 interface NavItemProps {
   to: string;
@@ -85,11 +88,24 @@ const NAV_ITEMS = [
 const Layout = () => {
   const location = useLocation();
   const { accentColor, accentColors } = useTheme();
+  const { openModal } = useGlobalModal();
   // @ts-ignore
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 overflow-hidden selection:bg-primary/20">
+    <div className="h-[100dvh] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">
+      <LiquidFilter />
+      {/* Dynamic Background Aura */}
+      <div 
+        className="fixed inset-0 z-0 pointer-events-none transition-all duration-1000 ease-in-out"
+        style={{
+          background: `
+            radial-gradient(circle at 0% 0%, ${activeColor}15 0%, transparent 70%),
+            radial-gradient(circle at 100% 100%, ${activeColor}10 0%, transparent 70%)
+          `
+        }}
+      />
+
       {/* Desktop Sidebar (Glass) */}
       <aside className="hidden md:flex flex-col w-72 glass border-r border-subtle h-full p-8 z-20">
         <div className="mb-10 flex items-center gap-3 px-2">
@@ -169,12 +185,17 @@ const Layout = () => {
         </div>
       </main>
 
-      {/* Global Add Expense FAB & Modal */}
-      {!location.pathname.startsWith("/admin") && <GlobalAddExpense />}
+      {/* Global Add Expense Modal (Hidden FAB version) */}
+      {!location.pathname.startsWith("/admin") && <GlobalAddExpense showFAB={false} />}
 
-      {/* Mobile Bottom Navigation - Liquid Glass Style */}
-      <div className="md:hidden fixed bottom-[calc(1.5rem+env(safe-area-inset-bottom))] left-4 right-[6rem] z-50 keyboard-hide">
-        <LiquidNavBar items={NAV_ITEMS} />
+      {/* Unified Mobile Bottom Navigation & FAB */}
+      <div className="md:hidden fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-4 right-4 z-50 pointer-events-none flex items-center gap-3 keyboard-hide">
+        <div className="flex-1 pointer-events-auto">
+          <LiquidNavBar items={NAV_ITEMS} />
+        </div>
+        <div className="pointer-events-auto shrink-0">
+          <LiquidFAB onClick={() => openModal("add")} />
+        </div>
       </div>
     </div>
   );
