@@ -60,3 +60,21 @@ export const clearCache = async () => {
     const db = await initDB();
     await db.clear(STORE_NAME);
 };
+
+export const updateExpenseInCache = async (monthKey: string, id: string, updates: Partial<Expense>) => {
+    const db = await initDB();
+    const cached = await db.get(STORE_NAME, monthKey);
+    if (cached) {
+        const index = cached.data.findIndex((e: Expense) => e.id === id);
+        if (index !== -1) {
+            cached.data[index] = { ...cached.data[index], ...updates };
+            cached.timestamp = Date.now();
+            await db.put(STORE_NAME, cached);
+        }
+    }
+};
+
+export const deleteMonthFromCache = async (monthKey: string) => {
+    const db = await initDB();
+    await db.delete(STORE_NAME, monthKey);
+};

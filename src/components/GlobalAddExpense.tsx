@@ -357,7 +357,7 @@ const GlobalAddExpense = memo(() => {
                     <div className="flex items-center space-x-2">
                       {/* Date Picker */}
                       <div className="relative">
-                        <button className={`flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none ${isReadOnly ? 'text-xs' : 'text-sm'}`}>
+                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-sm">
                           <Calendar size={16} className="text-current" />
                           <span>{format(date, "MMM dd, yyyy")}</span>
                         </button>
@@ -383,7 +383,7 @@ const GlobalAddExpense = memo(() => {
 
                       {/* Time Picker */}
                       <div className="relative">
-                        <button className={`flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none ${isReadOnly ? 'text-xs' : 'text-sm'}`}>
+                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-sm">
                           <Clock size={16} className="text-current" />
                           <span>{format(date, "hh:mm a")}</span>
                         </button>

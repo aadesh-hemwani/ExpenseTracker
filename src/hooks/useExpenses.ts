@@ -20,7 +20,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import { Expense } from "../types";
-import { getMonthFromCache, saveMonthToCache } from "../utils/indexedDB";
+import { getMonthFromCache, saveMonthToCache, updateExpenseInCache, deleteMonthFromCache } from "../utils/indexedDB";
 import { generateEmbedding } from "../services/gemini";
 
 
@@ -311,6 +311,25 @@ export const useExpensesForMonth = (
 
   }, [targetUserId, date, subscribe, statsLoaded, allStats, user]); // Dependencies merged
 
+  // Effect C: Listen for local updates to patch state without refetching
+  useEffect(() => {
+    const handleLocalUpdate = (e: CustomEvent) => {
+       const { id, updates } = e.detail;
+       setExpenses(prev => prev.map(exp => {
+           if (exp.id === id) {
+               const newExp = { ...exp, ...updates };
+               if (updates.date) {
+                   newExp.date = updates.date instanceof Timestamp ? updates.date.toDate() : new Date(updates.date);
+               }
+               return newExp;
+           }
+           return exp;
+       }));
+    };
+    window.addEventListener('local_expense_update', handleLocalUpdate as EventListener);
+    return () => window.removeEventListener('local_expense_update', handleLocalUpdate as EventListener);
+  }, []);
+
   return { expenses, loading };
 };
 
@@ -481,7 +500,7 @@ export const useExpenses = () => {
       const statsRef = collection(db, "users", user.uid, "stats");
 
       try {
-        await runTransaction(db, async (transaction) => {
+        const result = await runTransaction(db, async (transaction) => {
           // 1. Get current expense
           const expenseDoc = await transaction.get(docRef);
           if (!expenseDoc.exists()) throw "Expense document does not exist!";
@@ -571,7 +590,23 @@ export const useExpenses = () => {
           }
 
           transaction.set(docRef, sanitized, { merge: true });
+          
+          return { oldMonthKey, newMonthKey, sanitized };
         });
+
+        if (result) {
+            const { oldMonthKey, newMonthKey, sanitized } = result;
+            if (oldMonthKey === newMonthKey) {
+                await updateExpenseInCache(oldMonthKey, id, sanitized);
+            } else {
+                await deleteMonthFromCache(oldMonthKey);
+                await deleteMonthFromCache(newMonthKey);
+            }
+
+            window.dispatchEvent(new CustomEvent('local_expense_update', { 
+               detail: { id, updates: sanitized } 
+            }));
+        }
       } catch (e) {
         console.error("Failed to update expense", e);
       }

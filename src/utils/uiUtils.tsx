@@ -26,11 +26,9 @@ export const CATEGORY_COLORS: Record<string, string> = {
 export const getCategoryIcon = (
   cat: string,
   size: string = "20px",
-  _note?: string,
-  _iconName?: string,
-  _iconType?: string
+  colorOverride?: string
 ): ReactElement => {
-  const color = CATEGORY_COLORS[cat] || "#6b7280";
+  const color = colorOverride || CATEGORY_COLORS[cat] || "#6b7280";
   const sizeNum = parseInt(size.replace("px", "")) || 20;
 
   switch (cat) {

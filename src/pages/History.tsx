@@ -807,7 +807,7 @@ const History = ({ userId, readOnly = false }: HistoryProps) => {
   };
 
   return (
-    <div className="animate-fade-in pt-4 h-full flex flex-col pb-20 md:pb-0">
+    <div className="pt-4 h-full flex flex-col pb-20 md:pb-0">
       {/* VIEW 1: MONTH GRID OVERVIEW */}
       {view === "list" && (
         <div className="space-y-6">

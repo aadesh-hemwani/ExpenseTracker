@@ -1,9 +1,9 @@
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { Home, Calendar, BarChart3, User, BotMessageSquare, Bot } from "lucide-react";
+import { Home, Calendar, BarChart3, User } from "lucide-react";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface NavItemProps {
   to: string;
@@ -18,33 +18,46 @@ const NavItem = ({
   label,
   activeColor,
 }: NavItemProps) => (
-  <NavLink to={to} className="relative flex items-center justify-center group">
+  <NavLink to={to} className="relative flex items-center group">
     {({ isActive }) => (
-      <div className="flex flex-col items-center">
-        <motion.div
-          whileTap={{ scale: 0.9 }}
-          className={`
-            relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300
-            ${isActive
-              ? "bg-primary text-white shadow-soft"
-              : "text-gray-400 dark:text-gray-500 hover:bg-black/5 dark:hover:bg-white/10"
-            }
-          `}
-        >
-          <Icon
-            color={isActive ? activeColor : "currentColor"}
-            size={24}
-            className={`transition-all duration-300`}
-            strokeWidth={isActive ? 2.5 : 2}
+      <div className="flex items-center w-full px-4 py-3 rounded-2xl transition-all duration-300 relative overflow-hidden">
+        {/* Active Highlight Background */}
+        {isActive && (
+          <motion.div
+            layoutId="active-nav-bg"
+            className="absolute inset-0 bg-white dark:bg-white/5 shadow-soft z-0"
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
           />
-        </motion.div>
-        <span
-          className={`text-[10px] font-bold mt-1 transition-colors ${isActive ? "" : "text-gray-400 dark:text-gray-500"
+        )}
+        
+        <div className="relative z-10 flex items-center gap-4">
+          <motion.div
+            whileTap={{ scale: 0.9 }}
+            className={`
+              relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300
+              ${isActive
+                ? "text-white"
+                : "text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-white"
+              }
+            `}
+            style={isActive ? { backgroundColor: activeColor } : {}}
+          >
+            <Icon
+              color={isActive ? "white" : "currentColor"}
+              size={22}
+              className={`transition-all duration-300`}
+              strokeWidth={isActive ? 2.5 : 2}
+            />
+          </motion.div>
+          
+          <span
+            className={`text-sm font-semibold transition-colors duration-300 ${
+              isActive ? "text-primary dark:text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200"
             }`}
-          style={isActive ? { color: activeColor } : {}}
-        >
-          {label}
-        </span>
+          >
+            {label}
+          </span>
+        </div>
       </div>
     )}
   </NavLink>
@@ -76,16 +89,22 @@ const Layout = () => {
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
   return (
-    <div className="flex flex-col h-full w-full bg-body text-primary font-sans md:flex-row transition-colors duration-300 overflow-hidden">
+    <div className="fixed inset-0 flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 overflow-hidden selection:bg-primary/20">
       {/* Desktop Sidebar (Glass) */}
-      <aside className="hidden md:flex flex-col w-72 glass border-r border-subtle h-full p-6 z-20">
-        <div className="mb-12 px-2">
-          <h1 className="text-xl font-bold tracking-tight text-primary">
-            Expenses.
+      <aside className="hidden md:flex flex-col w-72 glass border-r border-subtle h-full p-8 z-20">
+        <div className="mb-10 flex items-center gap-3 px-2">
+          <div 
+            className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
+            style={{ backgroundColor: activeColor }}
+          >
+            <BarChart3 color="white" size={24} />
+          </div>
+          <h1 className="text-2xl font-black tracking-tight text-primary dark:text-white">
+            Expenses<span className="text-primary" style={{ color: activeColor }}>.</span>
           </h1>
         </div>
 
-        <nav className="flex flex-col space-y-6">
+        <nav className="flex flex-col space-y-2">
           <NavItem
             to="/"
             icon={Home}
@@ -111,6 +130,14 @@ const Layout = () => {
             activeColor={activeColor}
           />
         </nav>
+        
+        <div className="mt-auto p-4 rounded-3xl bg-primary/5 border border-primary/10">
+          <p className="text-xs font-bold text-primary/40 uppercase tracking-widest mb-1">Status</p>
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: activeColor }} />
+            <span className="text-sm font-semibold">Live Updates</span>
+          </div>
+        </div>
       </aside>
 
       {/* Main Content Area */}
@@ -120,25 +147,25 @@ const Layout = () => {
       >
         <div
           className={`relative z-10 max-w-2xl mx-auto ${location.pathname === "/chat"
-            ? "h-full" // Chat handles its own padding to accommodate absolute positioning
-            : `px-5 pb-32 md:p-10 ${location.pathname === "/history"
+            ? "h-full" 
+            : `px-5 pb-32 md:p-12 ${location.pathname === "/history"
               ? "pt-0"
-              : "pt-[calc(env(safe-area-inset-top)+1.5rem)]"
+              : "pt-[calc(env(safe-area-inset-top)+2rem)]"
             }`
             }`}
         >
-          {/* <AnimatePresence mode="wait"> */}
-          <motion.div
-            key={location.pathname}
-            className={location.pathname === "/chat" ? "h-full" : ""}
-            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            // exit={{ opacity: 0, y: -8, scale: 0.98 }}
-            transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
-          >
-            <Outlet />
-          </motion.div>
-          {/* </AnimatePresence> */}
+          <AnimatePresence mode="popLayout">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="w-full h-full"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
         </div>
       </main>
 
