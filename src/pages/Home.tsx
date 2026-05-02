@@ -489,7 +489,7 @@ const Home = () => {
 
   return (
     <div className="space-y-10">
-      <header className="relative -mx-5 -mt-[calc(env(safe-area-inset-top)+2rem)] mb-10">
+      <header className="sticky top-0 z-50 -mx-5 -mt-[calc(env(safe-area-inset-top)+2rem)] mb-10">
         <HeroBalance
           currentBalance={currentMonthTotal}
           budgetAmount={user?.monthlyBudgetCap}

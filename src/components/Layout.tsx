@@ -7,6 +7,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { useGlobalModal } from "../context/GlobalModalContext";
 import { LiquidFilter } from "./ui/LiquidFilter";
+import { createContext, useContext, useRef } from "react";
+
+const ScrollContext = createContext<React.RefObject<HTMLDivElement | null> | null>(null);
+export const useScrollContainer = () => useContext(ScrollContext);
 
 interface NavItemProps {
   to: string;
@@ -89,6 +93,7 @@ const Layout = () => {
   const location = useLocation();
   const { accentColor, accentColors } = useTheme();
   const { openModal } = useGlobalModal();
+  const mainRef = useRef<HTMLDivElement>(null);
   // @ts-ignore
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
@@ -158,7 +163,8 @@ const Layout = () => {
 
       {/* Main Content Area */}
       <main
-        className="flex-1 relative overflow-y-auto no-scrollbar overscroll-contain"
+        ref={mainRef}
+        className="flex-1 relative overflow-y-auto no-scrollbar overscroll-none"
         style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div
@@ -170,18 +176,20 @@ const Layout = () => {
             }`
             }`}
         >
-          <AnimatePresence mode="popLayout">
-            <motion.div
-              key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
-              className="w-full h-full"
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <ScrollContext.Provider value={mainRef}>
+            <AnimatePresence mode="popLayout">
+              <motion.div
+                key={location.pathname}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="w-full h-full"
+              >
+                <Outlet />
+              </motion.div>
+            </AnimatePresence>
+          </ScrollContext.Provider>
         </div>
       </main>
 
