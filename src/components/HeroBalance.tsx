@@ -1,5 +1,5 @@
-import React, { useMemo, useState, useEffect } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import { motion } from "framer-motion";
 import CountUp from "./CountUp";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency } from "../utils/formatUtils";
@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { format } from "date-fns";
 import { useScrollContainer } from "./Layout";
 import "./ui/LiquidGlass.css";
+import "./ui/HeroScroll.css";
 
 const calculateTimeState = () => {
   const now = new Date();
@@ -43,6 +44,12 @@ interface HeroBalanceProps {
   onAmountClick?: () => void;
 }
 
+// ─── CSS-driven scroll interpolation helper ───
+// Maps scroll progress (0..1) to CSS calc values via custom properties.
+// This avoids React re-renders entirely — scroll drives a single CSS variable.
+
+const SHRINK_PX = 500; // Total scroll distance for full collapse (higher = slower, more gradual)
+
 const HeroBalance: React.FC<HeroBalanceProps> = ({
   currentBalance,
   trendDirection,
@@ -60,52 +67,48 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
   // @ts-ignore
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
+  const heroRef = useRef<HTMLDivElement>(null);
   const scrollRef = useScrollContainer();
-  const { scrollY } = useScroll({ container: scrollRef || undefined });
+  const rafRef = useRef<number>(0);
+  const lastProgressRef = useRef<number>(0);
 
-  // ─── Scroll Animation Configuration ───
-  const SHRINK_LIMIT = 600; // Increase to slow down, decrease to speed up
+  // ─── Single RAF scroll listener → CSS custom property ───
+  const updateScrollProgress = useCallback(() => {
+    const container = scrollRef?.current;
+    const hero = heroRef.current;
+    if (!container || !hero || !isTopHero) return;
 
-  const config = {
-    full: [0, SHRINK_LIMIT],
-    mid: [0, SHRINK_LIMIT * 0.8],
-    quick: [0, SHRINK_LIMIT * 0.5],
-    sticky: [SHRINK_LIMIT * 0.5, SHRINK_LIMIT * 0.8],
-    delayed: [SHRINK_LIMIT * 0.2, SHRINK_LIMIT],
-  };
+    const scrollTop = container.scrollTop;
+    // Clamp to 0..1
+    const raw = Math.min(Math.max(scrollTop / SHRINK_PX, 0), 1);
 
-  // Primary Row (Balance)
-  const amountScale = useTransform(scrollY, config.full, [1, 0.55]);
-  const primaryRowY = useTransform(scrollY, config.full, [0, -5]);
-  const primaryRowMb = useTransform(scrollY, config.full, [16, 0]);
+    // Only update DOM if value actually changed (avoid unnecessary style recalc)
+    if (Math.abs(raw - lastProgressRef.current) < 0.001) return;
+    lastProgressRef.current = raw;
 
-  // Layout Spacing
-  const paddingTop = useTransform(scrollY, config.full, [16, 12]);
-  const paddingBottom = useTransform(scrollY, config.full, [40, 4]);
+    // Write a single CSS custom property — all animations derive from this
+    hero.style.setProperty("--sp", raw.toString());
+  }, [scrollRef, isTopHero]);
 
-  // Greeting — fade + collapse
-  const secondaryOpacity = useTransform(scrollY, config.quick, [1, 0]);
-  const greetingScale = useTransform(scrollY, config.mid, [1, 0.7]);
-  const greetingY = useTransform(scrollY, config.mid, [0, -15]);
-  const greetingMaxH = useTransform(scrollY, config.mid, [120, 0]);
+  useEffect(() => {
+    if (!isTopHero) return;
+    const container = scrollRef?.current;
+    if (!container) return;
 
-  // Progress bar — fade + collapse
-  const progressOpacity = useTransform(scrollY, config.mid, [1, 0]);
-  const progressScale = useTransform(scrollY, config.mid, [1, 0.7]);
-  const progressY = useTransform(scrollY, config.mid, [0, -10]);
-  const progressMaxH = useTransform(scrollY, config.delayed, [200, 0]);
-  const progressMb = useTransform(scrollY, config.delayed, [32, 0]);
+    const onScroll = () => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(updateScrollProgress);
+    };
 
-  // Sticky stats
-  const stickyStatsOpacity = useTransform(scrollY, config.sticky, [0, 1]);
-  const stickyStatsScale = useTransform(scrollY, config.sticky, [0.8, 1]);
+    // Set initial value
+    updateScrollProgress();
 
-  // Tertiary row — fade + collapse
-  const tertiaryOpacity = useTransform(scrollY, config.mid, [1, 0]);
-  const tertiaryScale = useTransform(scrollY, config.full, [1, 0.75]);
-  const tertiaryY = useTransform(scrollY, config.full, [0, -10]);
-  const tertiaryMaxH = useTransform(scrollY, config.delayed, [80, 0]);
-  const trendBtnScale = useTransform(scrollY, config.full, [1, 0.7]);
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      container.removeEventListener("scroll", onScroll);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [scrollRef, isTopHero, updateScrollProgress]);
 
   const { spentPercentage, remainingAmount, statusColor } = useMemo(() => {
     if (!budgetAmount || budgetAmount <= 0) {
@@ -136,17 +139,19 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
   const hasDecimals = currentBalance % 1 !== 0;
 
   return (
-    <motion.div
+    <div
+      ref={heroRef}
       className={`relative w-full mx-auto group ${isTopHero
-        ? "sticky top-0 z-50 overflow-hidden rounded-b-[48px] backdrop-blur-sm liquid-glass-effect border-b border-white/5"
+        ? "hero-scroll-root sticky top-0 z-50 overflow-hidden rounded-b-[48px] backdrop-blur-sm liquid-glass-effect border-b border-white/5"
         : "max-w-[400px] rounded-[1.5rem] p-[1.5px] overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.04)] transition-all duration-700"
         }`}
+      style={isTopHero ? { "--sp": "0" } as React.CSSProperties : undefined}
       role="region"
       aria-label="Account Balance Summary"
     >
       {/* Background Layer */}
       {isTopHero ? (
-        <motion.div
+        <div
           className="absolute inset-0 z-0 will-change-transform"
           style={{
             background: `radial-gradient(140% 140% at 50% 0%, color-mix(in srgb, ${activeColor} 20%, white 20%) 0%, color-mix(in srgb, ${activeColor} 40%, transparent) 40%, color-mix(in srgb, ${activeColor} 15%, black 40%) 100%)`,
@@ -157,7 +162,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
             className="absolute -top-[500px] left-0 right-0 h-[500px]"
             style={{ backgroundColor: `color-mix(in srgb, ${activeColor} 10%, white 10%)` }}
           />
-        </motion.div>
+        </div>
       ) : (
         <div
           className="absolute inset-0 z-0 transition-opacity duration-500 opacity-20 group-hover:opacity-40"
@@ -167,15 +172,11 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         />
       )}
 
-      <motion.div
+      <div
         className={`relative z-10 w-full overflow-hidden ${isTopHero
-          ? "px-8 sm:px-10 bg-transparent flex flex-col will-change-[padding]"
+          ? "hero-inner px-8 sm:px-10 bg-transparent flex flex-col will-change-transform"
           : "rounded-[calc(1.5rem-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-zinc-50 dark:bg-[#1c1c1e] border-none transition-all duration-300"
           }`}
-        style={isTopHero ? {
-          paddingTop,
-          paddingBottom,
-        } : {}}
       >
         {/* Safe-area spacer for top hero — keeps safe area constant, only animates the extra padding */}
         {isTopHero && (
@@ -186,17 +187,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
 
         {/* Top Hero Specific Header: Greeting & Date */}
         {isTopHero && (
-          <motion.div
-            style={{
-              opacity: secondaryOpacity,
-              scale: greetingScale,
-              y: greetingY,
-              maxHeight: greetingMaxH,
-              originY: 0,
-              originX: 0,
-            }}
-            className="overflow-hidden will-change-[transform,opacity]"
-          >
+          <div className="hero-greeting overflow-hidden">
             <div className="flex items-baseline space-x-2 mb-3">
               <span className="text-xl font-extrabold text-white/70 tracking-tight">
                 {greeting},
@@ -205,22 +196,17 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
                 {firstName || "there"}
               </h1>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Primary: Massive Balance Number */}
-        <motion.div
-          className={`relative z-10 flex items-center px-1 active:scale-95 ${isTopHero ? 'justify-between' : 'justify-center pb-6'
+        <div
+          className={`hero-balance-row relative z-10 flex items-center px-1 active:scale-95 ${isTopHero ? 'justify-between' : 'justify-center pb-6'
             } ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`}
-          style={isTopHero ? {
-            y: primaryRowY,
-            marginBottom: primaryRowMb,
-          } : {}}
           onClick={onAmountClick}
         >
-          <motion.div
-            className="flex items-baseline will-change-transform"
-            style={isTopHero ? { scale: amountScale, originX: 0 } : {}}
+          <div
+            className={`flex items-baseline ${isTopHero ? 'hero-amount will-change-transform' : ''}`}
           >
             <CountUp
               value={Math.trunc(currentBalance)}
@@ -237,14 +223,11 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
                 .{currentBalance.toFixed(2).split(".")[1]}
               </span>
             )}
-          </motion.div>
+          </div>
 
           {/* Sticky-only Stats (Fades in on scroll) */}
           {isTopHero && budgetAmount > 0 && (
-            <motion.div
-              style={{ opacity: stickyStatsOpacity, scale: stickyStatsScale, originY: 0.5, originX: 1 }}
-              className="absolute right-1 flex flex-col items-end text-right whitespace-nowrap"
-            >
+            <div className="hero-sticky-stats absolute right-1 flex flex-col items-end text-right whitespace-nowrap">
               <span className="text-[10px] font-black uppercase tracking-widest text-white/50 leading-none mb-1">
                 Budget Status
               </span>
@@ -259,25 +242,16 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
                   })()} left
                 </span>
               </div>
-            </motion.div>
+            </div>
           )}
-        </motion.div>
+        </div>
 
         {/* Secondary: Progress Section */}
         {budgetAmount > 0 && (
-          <motion.div
-            className={`relative z-10 px-1 overflow-hidden ${isTopHero ? '' : 'mb-6'}`}
-            style={isTopHero ? {
-              opacity: progressOpacity,
-              scale: progressScale,
-              y: progressY,
-              maxHeight: progressMaxH,
-              marginBottom: progressMb,
-              originY: 0,
-              originX: 0,
-            } : {}}
+          <div
+            className={`hero-progress relative z-10 px-1 overflow-hidden ${isTopHero ? '' : 'mb-6'}`}
           >
-            <div className="flex flex-col overflow-hidden will-change-[transform,opacity]">
+            <div className="flex flex-col overflow-hidden">
               {/* Unified Progress Bar Track */}
               <div className={`relative w-full rounded-full ${isTopHero ? 'h-2 bg-black/10' : 'h-1.5 bg-zinc-100 dark:bg-zinc-800/50'}`}>
                 {/* Time Fill Background (Subtle pacing guide) */}
@@ -322,7 +296,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
                 </span>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
 
         {/* Divider - only show if no budget */}
@@ -331,14 +305,8 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         )}
 
         {/* Tertiary: Contextual Insight & Trend */}
-        <motion.div
-          className="relative z-10 flex justify-between items-center w-full px-1 mt-auto overflow-hidden will-change-[transform,opacity]"
-          style={isTopHero ? {
-            opacity: tertiaryOpacity,
-            scale: tertiaryScale,
-            y: tertiaryY,
-            maxHeight: tertiaryMaxH,
-          } : {}}
+        <div
+          className="hero-tertiary relative z-10 flex justify-between items-center w-full px-1 mt-auto overflow-hidden"
         >
           <div className="flex-1 pr-2">
             <span className={`text-xs font-semibold ${isTopHero ? 'text-white/70' : 'text-zinc-500 dark:text-zinc-600'}`}>
@@ -358,16 +326,15 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
             </span>
           </div>
 
-          <motion.button
+          <button
             onClick={onTrendClick}
-            className={`px-4 py-2 rounded-full flex items-center space-x-1.5 outline-none transition-transform active:scale-95 cursor-pointer shrink-0 border border-transparent backdrop-blur-md
+            className={`hero-trend-btn px-4 py-2 rounded-full flex items-center space-x-1.5 outline-none transition-transform active:scale-95 cursor-pointer shrink-0 border border-transparent backdrop-blur-md
                      ${isTopHero
                 ? "bg-black/10 text-white border-white/10 hover:bg-black/20"
                 : trendDirection === "down"
                   ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400/90"
                   : "bg-rose-500/10 text-rose-600 dark:text-rose-400/90 hover:border-current/20"
               }`}
-            style={isTopHero ? { scale: trendBtnScale } : {}}
             aria-label={`View insights. Trending ${trendDirection} by ${percentageChange}%`}
           >
             {trendDirection === "down" ? (
@@ -376,10 +343,10 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
               <TrendingUp size={15} strokeWidth={3} />
             )}
             <span className="text-sm font-bold leading-none">{percentageChange}%</span>
-          </motion.button>
-        </motion.div>
-      </motion.div>
-    </motion.div>
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

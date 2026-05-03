@@ -36,7 +36,7 @@ const NavItem = ({
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           />
         )}
-        
+
         <div className="relative z-10 flex items-center gap-4">
           <motion.div
             whileTap={{ scale: 0.9 }}
@@ -56,11 +56,10 @@ const NavItem = ({
               strokeWidth={isActive ? 2.5 : 2}
             />
           </motion.div>
-          
+
           <span
-            className={`text-sm font-semibold transition-colors duration-300 ${
-              isActive ? "text-primary dark:text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200"
-            }`}
+            className={`text-sm font-semibold transition-colors duration-300 ${isActive ? "text-primary dark:text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200"
+              }`}
           >
             {label}
           </span>
@@ -96,7 +95,7 @@ const Layout = () => {
   const mainRef = useRef<HTMLDivElement>(null);
   // @ts-ignore
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
-  
+
   // Reset scroll on route change
   useEffect(() => {
     if (mainRef.current) {
@@ -108,12 +107,12 @@ const Layout = () => {
     <div className="h-[100dvh] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">
       <LiquidFilter />
       {/* Dynamic Background Aura */}
-      <div 
+      <div
         className="fixed inset-0 z-0 pointer-events-none transition-all duration-1000 ease-in-out"
         style={{
           background: `
-            radial-gradient(circle at 0% 0%, ${activeColor}15 0%, transparent 70%),
-            radial-gradient(circle at 100% 100%, ${activeColor}10 0%, transparent 70%)
+            radial-gradient(circle at 0% 0%, ${activeColor}45 0%, transparent 25%),
+            radial-gradient(circle at 100% 100%, ${activeColor}35 0%, transparent 25%)
           `
         }}
       />
@@ -121,7 +120,7 @@ const Layout = () => {
       {/* Desktop Sidebar (Glass) */}
       <aside className="hidden md:flex flex-col w-72 glass border-r border-subtle h-full p-8 z-20">
         <div className="mb-10 flex items-center gap-3 px-2">
-          <div 
+          <div
             className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
             style={{ backgroundColor: activeColor }}
           >
@@ -158,7 +157,7 @@ const Layout = () => {
             activeColor={activeColor}
           />
         </nav>
-        
+
         <div className="mt-auto p-4 rounded-3xl bg-primary/5 border border-primary/10">
           <p className="text-xs font-bold text-primary/40 uppercase tracking-widest mb-1">Status</p>
           <div className="flex items-center gap-2">
@@ -176,7 +175,7 @@ const Layout = () => {
       >
         <div
           className={`relative z-10 max-w-2xl mx-auto ${location.pathname === "/chat"
-            ? "h-full" 
+            ? "h-full"
             : `px-5 pb-32 md:p-12 ${location.pathname === "/history"
               ? "pt-0"
               : "pt-[calc(env(safe-area-inset-top)+2rem)]"

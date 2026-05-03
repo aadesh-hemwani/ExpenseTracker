@@ -1,39 +1,15 @@
 import { useState, useCallback } from "react";
 import { 
-  generateFinancialInsight, 
   generateAnalyticsInsights,
-  GeminiInsight, 
   AnalyticsInsight 
 } from "../services/gemini";
 import { Expense } from "../types";
 
 export const useAiInsights = () => {
-  const [insight, setInsight] = useState<GeminiInsight | null>(null);
   const [analyticsInsights, setAnalyticsInsights] = useState<AnalyticsInsight[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchInsight = useCallback(async (
-    expenses: Expense[],
-    budget: number,
-    totalSpent: number
-  ) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await generateFinancialInsight(expenses, budget, totalSpent);
-      if (result) {
-        setInsight(result);
-      } else {
-        setError("Could not generate insight");
-      }
-    } catch (err) {
-      console.error("👉 useAiInsights Error:", err);
-      setError("Failed to connect to AI service");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
   const fetchAnalyticsInsights = useCallback(async (
     expenses: Expense[],
@@ -88,5 +64,5 @@ export const useAiInsights = () => {
     }
   }, []);
 
-  return { insight, analyticsInsights, loading, error, fetchInsight, fetchAnalyticsInsights };
+  return { analyticsInsights, loading, error, fetchAnalyticsInsights };
 };

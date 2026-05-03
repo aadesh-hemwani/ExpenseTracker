@@ -56,10 +56,6 @@ export const getMonthFromCache = async (monthKey: string): Promise<MonthlyCache 
     return await db.get(STORE_NAME, monthKey);
 };
 
-export const clearCache = async () => {
-    const db = await initDB();
-    await db.clear(STORE_NAME);
-};
 
 export const updateExpenseInCache = async (monthKey: string, id: string, updates: Partial<Expense>) => {
     const db = await initDB();
