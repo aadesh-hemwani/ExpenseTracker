@@ -38,7 +38,7 @@ function App() {
     <ThemeProvider>
       <ErrorBoundary>
         <ReloadPrompt />
-        <BrowserRouter>
+        <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <AuthProvider>
             <Routes>
               <Route path="/login" element={<Login />} />

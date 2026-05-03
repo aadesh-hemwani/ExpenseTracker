@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { useGlobalModal } from "../context/GlobalModalContext";
 import { LiquidFilter } from "./ui/LiquidFilter";
-import { createContext, useContext, useRef } from "react";
+import { createContext, useContext, useRef, useEffect } from "react";
 
 const ScrollContext = createContext<React.RefObject<HTMLDivElement | null> | null>(null);
 export const useScrollContainer = () => useContext(ScrollContext);
@@ -96,6 +96,13 @@ const Layout = () => {
   const mainRef = useRef<HTMLDivElement>(null);
   // @ts-ignore
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
+  
+  // Reset scroll on route change
+  useEffect(() => {
+    if (mainRef.current) {
+      mainRef.current.scrollTop = 0;
+    }
+  }, [location.pathname]);
 
   return (
     <div className="h-[100dvh] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">

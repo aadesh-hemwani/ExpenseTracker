@@ -64,7 +64,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
   const { scrollY } = useScroll({ container: scrollRef || undefined });
 
   // ─── Scroll Animation Configuration ───
-  const SHRINK_LIMIT = 550; // Increase to slow down, decrease to speed up
+  const SHRINK_LIMIT = 600; // Increase to slow down, decrease to speed up
 
   const config = {
     full: [0, SHRINK_LIMIT],
@@ -80,7 +80,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
   const primaryRowMb = useTransform(scrollY, config.full, [16, 0]);
 
   // Layout Spacing
-  const paddingTop = useTransform(scrollY, config.full, [16, 2]);
+  const paddingTop = useTransform(scrollY, config.full, [16, 12]);
   const paddingBottom = useTransform(scrollY, config.full, [40, 4]);
 
   // Greeting — fade + collapse
@@ -98,6 +98,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
 
   // Sticky stats
   const stickyStatsOpacity = useTransform(scrollY, config.sticky, [0, 1]);
+  const stickyStatsScale = useTransform(scrollY, config.sticky, [0.8, 1]);
 
   // Tertiary row — fade + collapse
   const tertiaryOpacity = useTransform(scrollY, config.mid, [1, 0]);
@@ -168,7 +169,7 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
 
       <motion.div
         className={`relative z-10 w-full overflow-hidden ${isTopHero
-          ? "px-6 sm:px-8 bg-transparent flex flex-col will-change-[padding]"
+          ? "px-8 sm:px-10 bg-transparent flex flex-col will-change-[padding]"
           : "rounded-[calc(1.5rem-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-zinc-50 dark:bg-[#1c1c1e] border-none transition-all duration-300"
           }`}
         style={isTopHero ? {
@@ -224,10 +225,10 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
             <CountUp
               value={Math.trunc(currentBalance)}
               currency={false}
-              prefix="₹"
-              prefixClassName={`font-light tracking-normal mr-1 sm:mr-2 ${isTopHero ? 'text-3xl sm:text-4xl text-white/60' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
+              prefix="₹ "
+              prefixClassName={`inline-block font-light tracking-normal pr-2 sm:pr-3 ${isTopHero ? 'text-3xl sm:text-4xl text-white/60' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
                 }`}
-              className={`tracking-tighter font-bold font-sans ${isTopHero ? 'text-[4rem] sm:text-[5rem] leading-none text-white' : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
+              className={`tracking-tight font-bold font-sans ${isTopHero ? 'text-[4rem] sm:text-[5rem] leading-none text-white' : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
                 }`}
             />
             {hasDecimals && (
@@ -241,13 +242,13 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
           {/* Sticky-only Stats (Fades in on scroll) */}
           {isTopHero && budgetAmount > 0 && (
             <motion.div
-              style={{ opacity: stickyStatsOpacity }}
-              className="flex flex-col items-end text-right"
+              style={{ opacity: stickyStatsOpacity, scale: stickyStatsScale, originY: 0.5, originX: 1 }}
+              className="absolute right-1 flex flex-col items-end text-right whitespace-nowrap"
             >
               <span className="text-[10px] font-black uppercase tracking-widest text-white/50 leading-none mb-1">
                 Budget Status
               </span>
-              <div className="flex items-center space-x-2 text-white font-bold">
+              <div className="flex items-center space-x-2 text-white font-bold whitespace-nowrap">
                 <span className="text-sm font-mono">{spentPercentage.toFixed(0)}% Used</span>
                 <span className="w-1 h-1 rounded-full bg-white/20" />
                 <span className="text-sm">
