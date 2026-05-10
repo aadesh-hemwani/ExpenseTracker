@@ -353,12 +353,12 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
                 <div className="px-5 pb-3 pt-1 flex flex-col h-full space-y-3">
                   {/* Top Bar */}
-                  <div className="flex justify-between items-center">
-                    <div className="flex items-center space-x-2">
+                  <div className="flex justify-between items-center w-full">
+                    <div className="flex items-center space-x-1.5 flex-nowrap min-w-0">
                       {/* Date Picker */}
-                      <div className="relative">
-                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-sm">
-                          <Calendar size={16} className="text-current" />
+                      <div className="relative flex-shrink-0">
+                        <button className="flex items-center space-x-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-xs whitespace-nowrap">
+                          <Calendar size={13} className="text-current flex-shrink-0" />
                           <span>{format(date, "MMM dd, yyyy")}</span>
                         </button>
                         {!isReadOnly && (
@@ -382,9 +382,9 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                       </div>
 
                       {/* Time Picker */}
-                      <div className="relative">
-                        <button className="flex items-center space-x-2 bg-gray-100 dark:bg-white/5 px-4 py-2 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-sm">
-                          <Clock size={16} className="text-current" />
+                      <div className="relative flex-shrink-0">
+                        <button className="flex items-center space-x-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-xs whitespace-nowrap">
+                          <Clock size={13} className="text-current flex-shrink-0" />
                           <span>{format(date, "hh:mm a")}</span>
                         </button>
                         {!isReadOnly && (

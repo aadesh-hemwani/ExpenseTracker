@@ -19,7 +19,7 @@ import Card from "../components/Card";
 import { useMonthlyStats, useExpenses, useExpensesForMonth } from "../hooks/useExpenses";
 import { useEvents } from "../hooks/useEvents";
 import ExpenseListModal from "../components/ExpenseListModal";
-import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
+import { ExpenseCard } from "../components/ExpenseCard";
 import { CATEGORIES, getCategoryIcon } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import { Expense } from "../types";
@@ -93,11 +93,12 @@ interface MemoizedExpenseListProps {
   expenses: Expense[];
   onDelete: (id: string, amount: number, date: Date | Timestamp) => void;
   onView: (expense: Expense) => void;
+  onEdit: (expense: Expense) => void;
   readOnly: boolean;
 }
 
 const MemoizedExpenseList = memo(
-  ({ label, expenses, onDelete, onView, readOnly }: MemoizedExpenseListProps) => {
+  ({ label, expenses, onDelete, onView, onEdit, readOnly }: MemoizedExpenseListProps) => {
     return (
       <div className="space-y-2">
         <h4 className="sticky top-[calc(env(safe-area-inset-top)+4.9rem)] z-20 pt-0 pb-2 -mx-5 px-5 liquid-sticky-header flex items-center justify-between transition-all">
@@ -105,14 +106,13 @@ const MemoizedExpenseList = memo(
         </h4>
         <div className="space-y-2">
           {expenses.map((expense) => (
-            <SwipeableExpenseItem
+            <ExpenseCard
               key={expense.id}
               t={expense}
-              getCategoryIcon={getCategoryIcon}
+              onClick={(e) => onView(e)}
               onDelete={onDelete}
+              onEdit={onEdit}
               readOnly={readOnly}
-              hideDate={true}
-              onClick={(expense) => onView(expense)}
             />
           ))}
         </div>
@@ -681,6 +681,7 @@ const CalendarView = ({
                     expenses={filteredExpenses}
                     onDelete={deleteExpense}
                     onView={(expense) => openModal("view", expense)}
+                    onEdit={(expense) => openModal("edit", expense)}
                     readOnly={readOnly}
                   />
                 ) : (
@@ -696,6 +697,7 @@ const CalendarView = ({
                           expenses={groupExpenses}
                           onDelete={deleteExpense}
                           onView={(expense) => openModal("view", expense)}
+                          onEdit={(expense) => openModal("edit", expense)}
                           readOnly={readOnly}
                         />
                       </div>

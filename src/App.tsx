@@ -21,16 +21,27 @@ import Chat from "./pages/Chat";
 import EventDetail from "./pages/EventDetail";
 
 function App() {
-  // Prevent Zoom on iOS
+  // Prevent Zoom on iOS and snap the window viewport back to full screen
   useEffect(() => {
     const handleGestureStart = (e: Event) => {
       e.preventDefault();
     };
 
+    const handleScrollReset = () => {
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+
     document.addEventListener("gesturestart", handleGestureStart);
+    window.addEventListener("scroll", handleScrollReset);
+
+    // Run initial scroll snap on launch
+    window.scrollTo(0, 0);
 
     return () => {
       document.removeEventListener("gesturestart", handleGestureStart);
+      window.removeEventListener("scroll", handleScrollReset);
     };
   }, []);
 

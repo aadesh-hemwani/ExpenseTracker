@@ -13,7 +13,7 @@ import { useExpenses } from "../hooks/useExpenses";
 import { useTheme } from "../context/ThemeContext";
 import { useGlobalModal } from "../context/GlobalModalContext";
 import { Expense, Event } from "../types";
-import SwipeableExpenseItem from "../components/SwipeableExpenseItem";
+import { ExpenseCard } from "../components/ExpenseCard";
 import { getCategoryIcon, getEventGradient } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import IOSSpinner from "../components/ui/IOSSpinner";
@@ -293,12 +293,12 @@ const EventDetail = () => {
           <AnimatePresence>
             <div className="space-y-2">
               {expenses.map((expense) => (
-                <SwipeableExpenseItem
+                <ExpenseCard
                   key={expense.id}
                   t={expense}
-                  getCategoryIcon={getCategoryIcon}
                   onDelete={(id, amount, date) => deleteExpense(id, amount, date instanceof Timestamp ? date : new Date(date as any))}
                   onClick={(e) => openModal("view", e)}
+                  onEdit={(e) => openModal("edit", e)}
                 />
               ))}
             </div>

@@ -1,34 +1,98 @@
-import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import CountUp from "./CountUp";
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency } from "../utils/formatUtils";
 import { useTheme } from "../context/ThemeContext";
 import { format } from "date-fns";
-import { useScrollContainer } from "./Layout";
 import "./ui/LiquidGlass.css";
 import "./ui/HeroScroll.css";
 
 const calculateTimeState = () => {
   const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  // Calculate day progress: percentage of the current day that has elapsed
+  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const dayProgress = ((now.getTime() - startOfDay) / (24 * 60 * 60 * 1000)) * 100;
+
+  // Calculate month progress: percentage of the current month that has elapsed
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
   const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-
-  const totalMsMonth = nextMonth.getTime() - startOfMonth.getTime();
-  const passedMsMonth = now.getTime() - startOfMonth.getTime();
-
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-
-  const totalMsDay = endOfDay.getTime() - startOfDay.getTime();
-  const passedMsDay = now.getTime() - startOfDay.getTime();
+  const monthProgress = ((now.getTime() - startOfMonth) / (nextMonth.getTime() - startOfMonth)) * 100;
 
   return {
-    progress: Math.min((passedMsMonth / totalMsMonth) * 100, 100),
-    dayProgress: Math.min((passedMsDay / totalMsDay) * 100, 100),
-    secondsPassed: Math.floor(passedMsMonth / 1000),
-    totalSeconds: Math.floor(totalMsMonth / 1000)
+    progress: monthProgress,
+    dayProgress,
   };
+};
+
+const HeroProgressTimer = ({
+  budgetAmount,
+  currentBalance,
+  isTopHero,
+  statusColor,
+  remainingAmount,
+}: {
+  budgetAmount: number;
+  currentBalance: number;
+  isTopHero: boolean;
+  statusColor: string;
+  remainingAmount: number;
+}) => {
+  const [timeState, setTimeState] = useState(calculateTimeState);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTimeState(calculateTimeState());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const spentPercentage = budgetAmount > 0 ? Math.min((currentBalance / budgetAmount) * 100, 100) : 0;
+
+  return (
+    <div
+      className={`hero-progress relative z-10 px-1 overflow-hidden ${isTopHero ? 'mt-3.5' : 'mb-6'}`}
+    >
+      <div className="flex flex-col overflow-hidden">
+        <div className={`relative w-full rounded-full ${isTopHero ? 'h-2 bg-black/10' : 'h-1.5 bg-zinc-100 dark:bg-zinc-800/50'}`}>
+          <div
+            className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-linear"
+            style={{
+              width: `${timeState.progress}%`,
+              backgroundColor: isTopHero ? 'rgba(255,255,255,0.15)' : 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)'
+            }}
+          />
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${spentPercentage}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={`absolute top-0 left-0 h-full rounded-full z-0 ${isTopHero ? 'bg-white/80' : statusColor}`}
+          />
+          <div
+            className={`absolute top-1/2 rounded-full z-20 transition-all duration-1000 ease-linear ${isTopHero ? 'w-[2px] h-5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.2)]' : 'w-1 h-3 border border-white dark:border-[#1c1c1e] bg-[var(--color-accent)] shadow-[0_0_10px_hsla(var(--accent-h),var(--accent-s),var(--accent-l),0.4)]'}`}
+            style={{
+              left: `${timeState.progress}%`,
+              transform: isTopHero ? 'translate(-50%, calc(-50% - 5px))' : 'translate(-50%, -50%)',
+            }}
+          />
+        </div>
+        <div className={`flex items-center text-xs font-semibold tracking-wide ${isTopHero ? 'mt-2.5 text-white/80' : 'mt-4 text-zinc-500 dark:text-zinc-400'}`}>
+          <span>{spentPercentage.toFixed(0)}% used</span>
+          <span className="mx-2 opacity-40">/</span>
+          <span className="font-mono tracking-tighter">{timeState.progress.toFixed(1)}% time</span>
+          <span className="mx-2 opacity-40">/</span>
+          <span>
+            {(() => {
+              const formatted = formatCurrency(remainingAmount);
+              const [main] = formatted.split(".");
+              return main;
+            })()} left
+          </span>
+        </div>
+      </div>
+    </div>
+  );
 };
 interface HeroBalanceProps {
   currentBalance: number;
@@ -44,17 +108,10 @@ interface HeroBalanceProps {
   onAmountClick?: () => void;
 }
 
-// ─── CSS-driven scroll interpolation helper ───
-// Maps scroll progress (0..1) to CSS calc values via custom properties.
-// This avoids React re-renders entirely — scroll drives a single CSS variable.
-
-const SHRINK_PX = 500; // Total scroll distance for full collapse (higher = slower, more gradual)
-
 const HeroBalance: React.FC<HeroBalanceProps> = ({
   currentBalance,
   trendDirection,
   percentageChange,
-  topCategory,
   dailyAverage,
   budgetAmount = 0,
   greeting,
@@ -63,56 +120,15 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
   onTrendClick,
   onAmountClick,
 }) => {
-  const { accentColor, accentColors } = useTheme();
+  const { theme, accentColor, accentColors } = useTheme();
+  const isDark = theme === "dark";
   // @ts-ignore
   const activeColor = accentColors[accentColor]?.default || "#6366f1";
+  const timeState = useMemo(() => calculateTimeState(), []);
 
-  const heroRef = useRef<HTMLDivElement>(null);
-  const scrollRef = useScrollContainer();
-  const rafRef = useRef<number>(0);
-  const lastProgressRef = useRef<number>(0);
-
-  // ─── Single RAF scroll listener → CSS custom property ───
-  const updateScrollProgress = useCallback(() => {
-    const container = scrollRef?.current;
-    const hero = heroRef.current;
-    if (!container || !hero || !isTopHero) return;
-
-    const scrollTop = container.scrollTop;
-    // Clamp to 0..1
-    const raw = Math.min(Math.max(scrollTop / SHRINK_PX, 0), 1);
-
-    // Only update DOM if value actually changed (avoid unnecessary style recalc)
-    if (Math.abs(raw - lastProgressRef.current) < 0.001) return;
-    lastProgressRef.current = raw;
-
-    // Write a single CSS custom property — all animations derive from this
-    hero.style.setProperty("--sp", raw.toString());
-  }, [scrollRef, isTopHero]);
-
-  useEffect(() => {
-    if (!isTopHero) return;
-    const container = scrollRef?.current;
-    if (!container) return;
-
-    const onScroll = () => {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = requestAnimationFrame(updateScrollProgress);
-    };
-
-    // Set initial value
-    updateScrollProgress();
-
-    container.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      container.removeEventListener("scroll", onScroll);
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [scrollRef, isTopHero, updateScrollProgress]);
-
-  const { spentPercentage, remainingAmount, statusColor } = useMemo(() => {
+  const { remainingAmount, statusColor } = useMemo(() => {
     if (!budgetAmount || budgetAmount <= 0) {
-      return { spentPercentage: 0, remainingAmount: 0, statusColor: "bg-zinc-400" };
+      return { remainingAmount: 0, statusColor: "bg-zinc-400" };
     }
     const percentage = Math.min((currentBalance / budgetAmount) * 100, 100);
     const remaining = Math.max(0, budgetAmount - currentBalance);
@@ -124,45 +140,58 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
       color = "bg-amber-500"; // Medium usage
     }
 
-    return { spentPercentage: percentage, remainingAmount: remaining, statusColor: color };
+    return { remainingAmount: remaining, statusColor: color };
   }, [currentBalance, budgetAmount]);
-
-  const [timeState, setTimeState] = useState(calculateTimeState);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setTimeState(calculateTimeState());
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
 
   const hasDecimals = currentBalance % 1 !== 0;
 
+  const gradientBg = useMemo(() => {
+    if (isDark) {
+      return `radial-gradient(140% 140% at 50% 0%, color-mix(in srgb, ${activeColor} 20%, white 20%) 0%, color-mix(in srgb, ${activeColor} 40%, transparent) 40%, color-mix(in srgb, ${activeColor} 15%, black 40%) 100%)`;
+    } else {
+      // Gorgeous semi-transparent glass gradient for Light Theme
+      return `radial-gradient(140% 140% at 50% 0%, 
+        color-mix(in srgb, ${activeColor} 55%, white 25%) 0%, 
+        color-mix(in srgb, ${activeColor} 40%, transparent) 45%, 
+        color-mix(in srgb, ${activeColor} 25%, black 45%) 100%)`;
+    }
+  }, [activeColor, isDark]);
+
+  const bleedColor = useMemo(() => {
+    return isDark 
+      ? `color-mix(in srgb, ${activeColor} 10%, white 10%)` 
+      : `color-mix(in srgb, ${activeColor} 55%, white 25%)`;
+  }, [activeColor, isDark]);
+
   return (
     <div
-      ref={heroRef}
       className={`relative w-full mx-auto group ${isTopHero
-        ? "hero-scroll-root sticky top-0 z-50 overflow-hidden rounded-b-[48px] backdrop-blur-sm liquid-glass-effect border-b border-white/5"
+        ? `hero-scroll-root z-30 overflow-hidden rounded-b-[32px] backdrop-blur-sm liquid-glass-effect border-b ${isDark ? 'border-white/5' : 'border-white/15'}`
         : "max-w-[400px] rounded-[1.5rem] p-[1.5px] overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.04)] transition-all duration-700"
         }`}
-      style={isTopHero ? { "--sp": "0" } as React.CSSProperties : undefined}
       role="region"
       aria-label="Account Balance Summary"
     >
       {/* Background Layer */}
       {isTopHero ? (
-        <div
-          className="absolute inset-0 z-0 will-change-transform"
-          style={{
-            background: `radial-gradient(140% 140% at 50% 0%, color-mix(in srgb, ${activeColor} 20%, white 20%) 0%, color-mix(in srgb, ${activeColor} 40%, transparent) 40%, color-mix(in srgb, ${activeColor} 15%, black 40%) 100%)`,
-          }}
-        >
-          {/* Overscroll Bleed: Extends the gradient upwards so pulling down doesn't show black */}
+        <>
+          {/* Subtle dark tint behind the glass in Light Mode to ensure perfect text contrast and visible blur */}
+          {!isDark && (
+            <div className="absolute inset-0 bg-black/[0.18] z-0 rounded-b-[32px] pointer-events-none" />
+          )}
           <div
-            className="absolute -top-[500px] left-0 right-0 h-[500px]"
-            style={{ backgroundColor: `color-mix(in srgb, ${activeColor} 10%, white 10%)` }}
-          />
-        </div>
+            className="absolute inset-0 z-0 will-change-transform"
+            style={{
+              background: gradientBg,
+            }}
+          >
+            {/* Overscroll Bleed: Extends the gradient upwards so pulling down doesn't show black */}
+            <div
+              className="absolute -top-[500px] left-0 right-0 h-[500px]"
+              style={{ backgroundColor: bleedColor }}
+            />
+          </div>
+        </>
       ) : (
         <div
           className="absolute inset-0 z-0 transition-opacity duration-500 opacity-20 group-hover:opacity-40"
@@ -174,11 +203,11 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
 
       <div
         className={`relative z-10 w-full overflow-hidden ${isTopHero
-          ? "hero-inner px-8 sm:px-10 bg-transparent flex flex-col will-change-transform"
+          ? "hero-inner px-8 sm:px-10 bg-transparent flex flex-col"
           : "rounded-[calc(1.5rem-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-zinc-50 dark:bg-[#1c1c1e] border-none transition-all duration-300"
           }`}
       >
-        {/* Safe-area spacer for top hero — keeps safe area constant, only animates the extra padding */}
+        {/* Safe-area spacer for top hero */}
         {isTopHero && (
           <div className="w-full" style={{ height: "env(safe-area-inset-top, 0px)" }} />
         )}
@@ -188,11 +217,11 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         {/* Top Hero Specific Header: Greeting & Date */}
         {isTopHero && (
           <div className="hero-greeting overflow-hidden">
-            <div className="flex items-baseline space-x-2 mb-3">
-              <span className="text-xl font-extrabold text-white/70 tracking-tight">
+            <div className="flex items-baseline space-x-1.5 mb-2.5">
+              <span className="text-lg font-extrabold text-white/70 tracking-tight">
                 {greeting},
               </span>
-              <h1 className="text-xl font-extrabold text-white tracking-tight">
+              <h1 className="text-lg font-extrabold text-white tracking-tight">
                 {firstName || "there"}
               </h1>
             </div>
@@ -212,91 +241,29 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
               value={Math.trunc(currentBalance)}
               currency={false}
               prefix="₹ "
-              prefixClassName={`inline-block font-light tracking-normal pr-2 sm:pr-3 ${isTopHero ? 'text-3xl sm:text-4xl text-white/60' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
+              prefixClassName={`inline-block font-light tracking-normal pr-2 sm:pr-3 ${isTopHero ? 'text-[2rem] sm:text-[2.5rem] text-white/60' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
                 }`}
-              className={`tracking-tight font-bold font-sans ${isTopHero ? 'text-[4rem] sm:text-[5rem] leading-none text-white' : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
+              className={`tracking-tight font-bold font-sans ${isTopHero ? 'text-[2.8rem] sm:text-[3.6rem] leading-none text-white' : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
                 }`}
             />
             {hasDecimals && (
-              <span className={`font-medium tracking-tight ml-1 ${isTopHero ? 'text-2xl sm:text-3xl text-white/60' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
+              <span className={`font-medium tracking-tight ml-1 ${isTopHero ? 'text-[1.5rem] sm:text-[1.8rem] text-white/60' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
                 }`}>
                 .{currentBalance.toFixed(2).split(".")[1]}
               </span>
             )}
           </div>
-
-          {/* Sticky-only Stats (Fades in on scroll) */}
-          {isTopHero && budgetAmount > 0 && (
-            <div className="hero-sticky-stats absolute right-1 flex flex-col items-end text-right whitespace-nowrap">
-              <span className="text-[10px] font-black uppercase tracking-widest text-white/50 leading-none mb-1">
-                Budget Status
-              </span>
-              <div className="flex items-center space-x-2 text-white font-bold whitespace-nowrap">
-                <span className="text-sm font-mono">{spentPercentage.toFixed(0)}% Used</span>
-                <span className="w-1 h-1 rounded-full bg-white/20" />
-                <span className="text-sm">
-                  {(() => {
-                    const formatted = formatCurrency(remainingAmount);
-                    const [main] = formatted.split(".");
-                    return main;
-                  })()} left
-                </span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Secondary: Progress Section */}
         {budgetAmount > 0 && (
-          <div
-            className={`hero-progress relative z-10 px-1 overflow-hidden ${isTopHero ? '' : 'mb-6'}`}
-          >
-            <div className="flex flex-col overflow-hidden">
-              {/* Unified Progress Bar Track */}
-              <div className={`relative w-full rounded-full ${isTopHero ? 'h-2 bg-black/10' : 'h-1.5 bg-zinc-100 dark:bg-zinc-800/50'}`}>
-                {/* Time Fill Background (Subtle pacing guide) */}
-                <div
-                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-linear"
-                  style={{
-                    width: `${timeState.progress}%`,
-                    backgroundColor: isTopHero ? 'rgba(255,255,255,0.15)' : 'hsla(var(--accent-h), var(--accent-s), var(--accent-l), 0.15)'
-                  }}
-                />
-
-                {/* Money Spent Fill (Primary) */}
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${spentPercentage}%` }}
-                  transition={{ duration: 1, ease: "easeOut" }}
-                  className={`absolute top-0 left-0 h-full rounded-full z-0 ${isTopHero ? 'bg-white/80' : statusColor}`}
-                />
-
-                {/* Accent Time Marker that sits on top */}
-                <div
-                  className={`absolute top-1/2 rounded-full z-20 transition-all duration-1000 ease-linear ${isTopHero ? 'w-[2px] h-5 bg-white shadow-[0_0_10px_rgba(0,0,0,0.2)]' : 'w-1 h-3 border border-white dark:border-[#1c1c1e] bg-[var(--color-accent)] shadow-[0_0_10px_hsla(var(--accent-h),var(--accent-s),var(--accent-l),0.4)]'}`}
-                  style={{
-                    left: `${timeState.progress}%`,
-                    transform: isTopHero ? 'translate(-50%, calc(-50% - 5px))' : 'translate(-50%, -50%)',
-                  }}
-                />
-              </div>
-
-              {/* Inline Stats */}
-              <div className={`flex items-center text-xs font-semibold mt-4 tracking-wide ${isTopHero ? 'text-white/80' : 'text-zinc-500 dark:text-zinc-400'}`}>
-                <span>{spentPercentage.toFixed(0)}% used</span>
-                <span className="mx-2 opacity-40">/</span>
-                <span className="font-mono tracking-tighter">{timeState.progress.toFixed(1)}% time</span>
-                <span className="mx-2 opacity-40">/</span>
-                <span>
-                  {(() => {
-                    const formatted = formatCurrency(remainingAmount);
-                    const [main] = formatted.split(".");
-                    return main;
-                  })()} left
-                </span>
-              </div>
-            </div>
-          </div>
+          <HeroProgressTimer
+            budgetAmount={budgetAmount}
+            currentBalance={currentBalance}
+            isTopHero={isTopHero}
+            statusColor={statusColor}
+            remainingAmount={remainingAmount}
+          />
         )}
 
         {/* Divider - only show if no budget */}
