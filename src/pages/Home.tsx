@@ -63,7 +63,7 @@ const DaySection = React.memo(({
           {expenses.map((t) => (
             <motion.div key={t.id} variants={item} layout>
               <ExpenseCard
-                t={t}
+                expense={t}
                 onClick={onCardClick}
                 onDelete={onCardDelete}
                 onEdit={onCardEdit}

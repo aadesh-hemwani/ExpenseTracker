@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Edit2, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
@@ -7,68 +7,94 @@ import { Expense } from "../types";
 import { CATEGORY_COLORS, getCategoryIcon } from "../utils/uiUtils";
 
 interface ExpenseCardProps {
-  t: Expense;
+  expense: Expense;
   onClick: (e: Expense) => void;
-  onDelete: (id: string, amount: number, date: any) => void;
+  onDelete: (id: string, amount: number, date: Timestamp | Date) => void;
   onEdit: (e: Expense) => void;
   readOnly?: boolean;
 }
 
-export const ExpenseCard = ({
-  t,
+export const ExpenseCard = React.memo(({
+  expense,
   onClick,
   onDelete,
   onEdit,
   readOnly = false,
 }: ExpenseCardProps) => {
-  const amount = Number(t.amount).toLocaleString("en-IN");
-  const time = t.date instanceof Timestamp
-    ? format(t.date.toDate(), "hh:mm a")
-    : format(new Date(t.date), "hh:mm a");
-
-  const accentColor = CATEGORY_COLORS[t.category as keyof typeof CATEGORY_COLORS] || "#A0A0A0";
   const [showActions, setShowActions] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const startPress = () => {
+  const amount = useMemo(() => 
+    Number(expense.amount).toLocaleString("en-IN"), 
+    [expense.amount]
+  );
+
+  const time = useMemo(() => {
+    const date = expense.date instanceof Timestamp ? expense.date.toDate() : new Date(expense.date);
+    return format(date, "hh:mm a");
+  }, [expense.date]);
+
+  const accentColor = useMemo(() => 
+    CATEGORY_COLORS[expense.category as keyof typeof CATEGORY_COLORS] || "#A0A0A0",
+    [expense.category]
+  );
+
+  const noteDetails = useMemo(() => {
+    const rawNote = String(expense.note || expense.category || "");
+    const [main, ...rest] = rawNote.split("-");
+    return {
+      main: main.trim(),
+      subNote: rest.join("-").trim()
+    };
+  }, [expense.note, expense.category]);
+
+  const startPress = useCallback(() => {
     if (readOnly || showActions || showConfirm) return;
     timerRef.current = setTimeout(() => {
       setShowActions(true);
-      if (navigator.vibrate) navigator.vibrate(50);
-    }, 600); // Slightly faster long press
-  };
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 600);
+  }, [readOnly, showActions, showConfirm]);
 
-  const endPress = () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  };
+  const endPress = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     if (showActions || showConfirm) {
       setShowActions(false);
       setShowConfirm(false);
       return;
     }
-    onClick(t);
-  };
+    onClick(expense);
+  }, [showActions, showConfirm, onClick, expense]);
 
-  const handleDeleteClick = (e: React.MouseEvent) => {
+  const handleDeleteClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setShowConfirm(true);
     setShowActions(false);
-  };
+  }, []);
 
-  const handleConfirmDelete = (e: React.MouseEvent) => {
+  const handleConfirmDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onDelete(t.id, Number(t.amount), t.date);
+    onDelete(expense.id, Number(expense.amount), expense.date);
     setShowConfirm(false);
-  };
+  }, [onDelete, expense]);
 
-  const handleEdit = (e: React.MouseEvent) => {
+  const handleEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    onEdit(t);
+    onEdit(expense);
     setShowActions(false);
-  };
+  }, [onEdit, expense]);
+
+  const closeActions = useCallback(() => setShowActions(false), []);
+  const closeConfirm = useCallback(() => setShowConfirm(false), []);
 
   return (
     <motion.div
@@ -82,54 +108,39 @@ export const ExpenseCard = ({
         onPointerUp={endPress}
         onPointerLeave={endPress}
         onClick={handleClick}
-        className="bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-3 flex items-center gap-4 text-left w-full min-h-[68px] relative overflow-hidden group border-none transition-colors hover:bg-white/60 dark:hover:bg-white/[0.04]"
+        className="bg-white/60 dark:bg-white/[0.06] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-2 flex items-center gap-4 text-left w-full min-h-[60px] relative overflow-hidden group border-none transition-colors hover:bg-white/70 dark:hover:bg-white/[0.1]"
       >
         <div
-          className="relative z-10 w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 bg-white/60 dark:bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+          className="relative z-10 w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 bg-white/60 dark:bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
           style={{ color: accentColor }}
         >
           <div className="opacity-80">
-            {getCategoryIcon(t.category, "20px")}
+            {getCategoryIcon(expense.category, "20px")}
           </div>
         </div>
 
         <div className="relative z-10 min-w-0 flex-1">
-          {(() => {
-            const rawNote = String(t.note || t.category || "");
-            const [main, ...rest] = rawNote.split("-");
-            const subNote = rest.join("-").trim();
-
-            return (
-              <>
-                <div className="text-[18px] font-semibold text-zinc-900 dark:text-white leading-tight truncate">
-                  {main.trim()}
-                </div>
-                <div className="mt-1 flex items-center gap-1.5 min-w-0 text-[12px] font-medium text-zinc-400 dark:text-[#A0A0A0] opacity-70">
-                  <span className="truncate">{t.category}</span>
-                  {subNote && (
-                    <>
-                      <div className="w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-white/20 shrink-0" />
-                      <span className="normal-case tracking-normal font-medium text-zinc-400 dark:text-white/45 truncate">
-                        {subNote}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </>
-            );
-          })()}
+          <div className="text-[15px] font-semibold text-zinc-900 dark:text-white leading-tight truncate">
+            {noteDetails.main}
+          </div>
+          {noteDetails.subNote && (
+            <div className="mt-0.5 flex items-center gap-1.5 min-w-0 text-[11px] font-medium text-zinc-400 dark:text-[#A0A0A0] opacity-70">
+              <span className="normal-case tracking-normal font-medium truncate">
+                {noteDetails.subNote}
+              </span>
+            </div>
+          )}
         </div>
 
         <div className="relative z-10 flex flex-col items-end justify-center shrink-0 max-w-[42%]">
-          <span className={`font-bold text-zinc-900 dark:text-white tracking-tighter whitespace-nowrap ${amount.length >= 8 ? 'text-[16px]' : 'text-[19px]'
+          <span className={`font-bold text-zinc-900 dark:text-white tracking-tighter whitespace-nowrap ${amount.length >= 8 ? 'text-[14px]' : 'text-[17px]'
             }`}>
             ₹{amount}
           </span>
-          <span className="mt-1 text-[10px] text-zinc-400/60 dark:text-[#A0A0A0]/40 font-medium whitespace-nowrap">{time}</span>
+          <span className="mt-0.5 text-[9px] text-zinc-400/60 dark:text-[#A0A0A0]/40 font-medium whitespace-nowrap">{time}</span>
         </div>
       </motion.button>
 
-      {/* Actions Overlay */}
       <AnimatePresence>
         {showActions && (
           <motion.div
@@ -151,7 +162,7 @@ export const ExpenseCard = ({
               <Trash2 size={18} />
             </button>
             <button
-              onClick={() => setShowActions(false)}
+              onClick={closeActions}
               className="absolute top-2 right-2 p-1 text-zinc-400 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
             >
               <X size={16} />
@@ -160,7 +171,6 @@ export const ExpenseCard = ({
         )}
       </AnimatePresence>
 
-      {/* Delete Confirmation Overlay */}
       <AnimatePresence>
         {showConfirm && (
           <motion.div
@@ -178,7 +188,7 @@ export const ExpenseCard = ({
                 Delete
               </button>
               <button
-                onClick={() => setShowConfirm(false)}
+                onClick={closeConfirm}
                 className="flex-1 py-1.5 bg-black/20 text-white rounded-full text-[10px] font-bold active:scale-95 transition-transform cursor-pointer"
               >
                 Cancel
@@ -189,4 +199,7 @@ export const ExpenseCard = ({
       </AnimatePresence>
     </motion.div>
   );
-};
+});
+
+ExpenseCard.displayName = "ExpenseCard";
+

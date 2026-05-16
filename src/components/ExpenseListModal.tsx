@@ -83,7 +83,7 @@ const ExpenseListModal = ({
                 >
                   <div className="flex flex-col gap-1">
                     <span className="text-gray-900 dark:text-white font-medium text-[15px]">
-                      {expense.note || expense.description || "Unknown Expense"}
+                      {expense.note || "Unknown Expense"}
                     </span>
                     <span className="text-xs text-gray-400 font-medium">
                       {format(getDate(expense.date), "MMM dd")}

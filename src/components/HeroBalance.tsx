@@ -1,24 +1,27 @@
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import CountUp from "./CountUp";
-import { TrendingDown, TrendingUp } from "lucide-react";
 import { formatCurrency } from "../utils/formatUtils";
 import { useTheme } from "../context/ThemeContext";
-import { format } from "date-fns";
 import "./ui/LiquidGlass.css";
 import "./ui/HeroScroll.css";
 
+/**
+ * Calculates current day and month progress percentages.
+ */
 const calculateTimeState = () => {
   const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
 
-  // Calculate day progress: percentage of the current day that has elapsed
-  const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  // Day progress: percentage of the current day that has elapsed
+  const startOfDay = new Date(year, month, now.getDate()).getTime();
   const dayProgress = ((now.getTime() - startOfDay) / (24 * 60 * 60 * 1000)) * 100;
 
-  // Calculate month progress: percentage of the current month that has elapsed
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  const monthProgress = ((now.getTime() - startOfMonth) / (nextMonth.getTime() - startOfMonth)) * 100;
+  // Month progress: percentage of the current month that has elapsed
+  const startOfMonth = new Date(year, month, 1).getTime();
+  const nextMonth = new Date(year, month + 1, 1).getTime();
+  const monthProgress = ((now.getTime() - startOfMonth) / (nextMonth - startOfMonth)) * 100;
 
   return {
     progress: monthProgress,
@@ -26,20 +29,22 @@ const calculateTimeState = () => {
   };
 };
 
-const HeroProgressTimer = ({
-  budgetAmount,
-  currentBalance,
-  isTopHero,
-  statusColor,
-}: {
+interface ProgressTimerProps {
   budgetAmount: number;
   currentBalance: number;
   isTopHero: boolean;
   statusColor: string;
-}) => {
-  const { theme, accentColor, accentColors } = useTheme();
-  // @ts-ignore
-  const activeColor = accentColors[accentColor]?.default || "#6366f1";
+  activeColor: string;
+}
+
+const HeroProgressTimer = React.memo(({
+  budgetAmount,
+  currentBalance,
+  isTopHero,
+  statusColor,
+  activeColor,
+}: ProgressTimerProps) => {
+  const { theme } = useTheme();
   const [timeState, setTimeState] = useState(calculateTimeState);
 
   useEffect(() => {
@@ -49,29 +54,43 @@ const HeroProgressTimer = ({
     return () => clearInterval(interval);
   }, []);
 
-  const spentPercentage = budgetAmount > 0 ? Math.min((currentBalance / budgetAmount) * 100, 100) : 0;
+  const spentPercentage = useMemo(() => 
+    budgetAmount > 0 ? Math.min((currentBalance / budgetAmount) * 100, 100) : 0,
+    [currentBalance, budgetAmount]
+  );
+
+  const containerClass = `relative w-full rounded-full overflow-hidden ${
+    isTopHero ? 'h-[3px] bg-black/[0.03] dark:bg-white/[0.04]' : 'h-[3px] bg-zinc-100 dark:bg-zinc-800'
+  }`;
+
+  const timeProgressStyle = {
+    width: `${timeState.progress}%`,
+    backgroundColor: isTopHero 
+      ? (theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') 
+      : 'rgba(128,128,128,0.1)'
+  };
+
+  const spendProgressStyle = isTopHero ? { backgroundColor: activeColor, opacity: 0.35 } : {};
+  
+  const indicatorClass = `absolute top-0 h-full z-20 transition-all duration-1000 ease-linear ${
+    isTopHero ? 'w-[2px] bg-black/20 dark:bg-white/30' : 'w-[2px] bg-zinc-400 dark:bg-zinc-500'
+  }`;
 
   return (
-    <div className={`relative w-full rounded-full overflow-hidden ${isTopHero ? 'h-[3px] bg-black/[0.03] dark:bg-white/[0.04]' : 'h-[3px] bg-zinc-100 dark:bg-zinc-800'}`}>
-      {/* Time Progress Background */}
+    <div className={containerClass}>
       <div
         className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-linear"
-        style={{
-          width: `${timeState.progress}%`,
-          backgroundColor: isTopHero ? (theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') : 'rgba(128,128,128,0.1)'
-        }}
+        style={timeProgressStyle}
       />
-      {/* Spend Progress */}
       <motion.div
         initial={{ width: 0 }}
         animate={{ width: `${spentPercentage}%` }}
         transition={{ duration: 1, ease: "easeOut" }}
         className={`absolute top-0 left-0 h-full rounded-full z-0 ${isTopHero ? '' : statusColor}`}
-        style={isTopHero ? { backgroundColor: activeColor, opacity: 0.35 } : {}}
+        style={spendProgressStyle}
       />
-      {/* Current Time Indicator Line */}
       <div
-        className={`absolute top-0 h-full z-20 transition-all duration-1000 ease-linear ${isTopHero ? 'w-[2px] bg-black/20 dark:bg-white/30' : 'w-[2px] bg-zinc-400 dark:bg-zinc-500'}`}
+        className={indicatorClass}
         style={{
           left: `${timeState.progress}%`,
           transform: 'translateX(-50%)',
@@ -79,7 +98,10 @@ const HeroProgressTimer = ({
       />
     </div>
   );
-};
+});
+
+HeroProgressTimer.displayName = "HeroProgressTimer";
+
 interface HeroBalanceProps {
   currentBalance: number;
   trendDirection: "up" | "down";
@@ -94,37 +116,35 @@ interface HeroBalanceProps {
   onAmountClick?: () => void;
 }
 
-const HeroBalance: React.FC<HeroBalanceProps> = ({
+const HeroBalance = React.memo(({
   currentBalance,
-  trendDirection,
-  percentageChange,
-  dailyAverage,
   budgetAmount = 0,
+  dailyAverage,
   greeting,
   firstName,
   isTopHero = false,
   onTrendClick,
   onAmountClick,
-}) => {
+}: HeroBalanceProps) => {
   const { theme, accentColor, accentColors } = useTheme();
-  const isDark = theme === "dark";
-  // @ts-ignore
-  const activeColor = accentColors[accentColor]?.default || "#6366f1";
+  
+  const activeColor = useMemo(() => {
+    const color = accentColors[accentColor];
+    return color ? color.default : "#6366f1";
+  }, [accentColors, accentColor]);
+
   const timeState = useMemo(() => calculateTimeState(), []);
 
   const { remainingAmount, statusColor } = useMemo(() => {
     if (!budgetAmount || budgetAmount <= 0) {
       return { remainingAmount: 0, statusColor: "bg-zinc-400" };
     }
-    const percentage = Math.min((currentBalance / budgetAmount) * 100, 100);
+    const percentage = (currentBalance / budgetAmount) * 100;
     const remaining = Math.max(0, budgetAmount - currentBalance);
 
-    let color = "bg-zinc-400 dark:bg-zinc-500"; // Default / Low
-    if (percentage > 85) {
-      color = "bg-rose-500"; // High usage
-    } else if (percentage > 60) {
-      color = "bg-amber-500"; // Medium usage
-    }
+    let color = "bg-zinc-400 dark:bg-zinc-500";
+    if (percentage > 85) color = "bg-rose-500";
+    else if (percentage > 60) color = "bg-amber-500";
 
     return { remainingAmount: remaining, statusColor: color };
   }, [currentBalance, budgetAmount]);
@@ -132,15 +152,16 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
   const hasDecimals = currentBalance % 1 !== 0;
 
   const gradientBg = useMemo(() => {
-    // Almost invisible gradients, flat matte look
-    const baseColor = theme === 'dark' ? 'rgba(11, 11, 12, 1)' : 'rgba(250, 250, 251, 1)';
-    const subtleHighlight = theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)';
-
-    // Add a very subtle hint of the accent color at the top
-    const accentAlpha = theme === 'dark' ? '0.08' : '0.04';
-    const accentWithAlpha = activeColor.startsWith('#')
-      ? `${activeColor}${Math.round(parseFloat(accentAlpha) * 255).toString(16).padStart(2, '0')}`
-      : activeColor;
+    const isDark = theme === 'dark';
+    const baseColor = isDark ? 'rgba(11, 11, 12, 1)' : 'rgba(250, 250, 251, 1)';
+    const subtleHighlight = isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)';
+    const accentAlpha = isDark ? '0.08' : '0.04';
+    
+    let accentWithAlpha = activeColor;
+    if (activeColor.startsWith('#')) {
+      const alphaHex = Math.round(parseFloat(accentAlpha) * 255).toString(16).padStart(2, '0');
+      accentWithAlpha = `${activeColor}${alphaHex}`;
+    }
 
     return `radial-gradient(150% 150% at 50% -20%, 
       ${accentWithAlpha} 0%, 
@@ -149,39 +170,36 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
       ${baseColor} 100%)`;
   }, [theme, activeColor]);
 
-  const bleedColor = "#0B0B0C";
+  const containerClass = `relative w-full mx-auto group ${
+    isTopHero
+      ? "hero-scroll-root z-30 overflow-hidden rounded-b-[16px]"
+      : "max-w-[400px] rounded-2xl p-[1.5px] overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.02)] transition-all duration-700"
+  }`;
+
+  const innerClass = `relative z-10 w-full overflow-hidden ${
+    isTopHero
+      ? "hero-inner px-5 sm:px-8 bg-transparent backdrop-blur-sm flex flex-col pt-4 pb-8"
+      : "rounded-[calc(16px-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-none transition-all duration-300"
+  }`;
+
+  const balanceRowClass = `hero-balance-row relative z-10 flex items-center active:scale-95 transition-opacity ${
+    isTopHero ? 'mb-8' : 'justify-center pb-6'
+  } ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`;
+
+  const statsRowClass = `flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium tracking-tight cursor-pointer active:opacity-60 transition-opacity ${
+    isTopHero ? 'text-zinc-900/50 dark:text-white/50' : 'text-zinc-500 dark:text-zinc-400'
+  }`;
 
   return (
-    <div
-      className={`relative w-full mx-auto group ${isTopHero
-        ? "hero-scroll-root z-30 overflow-hidden rounded-b-[16px]"
-        : "max-w-[400px] rounded-2xl p-[1.5px] overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.02)] transition-all duration-700"
-        }`}
-      role="region"
-      aria-label="Account Balance Summary"
-    >
-      {/* Background Layer */}
+    <div className={containerClass} role="region" aria-label="Account Balance Summary">
       {isTopHero ? (
-        <>
+        <div className="absolute inset-0 z-0 will-change-transform" style={{ background: gradientBg }}>
           <div
-            className="absolute inset-0 z-0 will-change-transform"
-            style={{
-              background: gradientBg,
-            }}
-          >
-            {/* Soft Accent Glow */}
-            <div
-              className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
-              style={{ backgroundColor: activeColor }}
-            />
-
-            {/* Overscroll Bleed: Extends the gradient upwards so pulling down doesn't show black */}
-            <div
-              className="absolute -top-[500px] left-0 right-0 h-[500px]"
-              style={{ backgroundColor: bleedColor }}
-            />
-          </div>
-        </>
+            className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
+            style={{ backgroundColor: activeColor }}
+          />
+          <div className="absolute -top-[500px] left-0 right-0 h-[500px] bg-[#0B0B0C]" />
+        </div>
       ) : (
         <div
           className="absolute inset-0 z-0 transition-opacity duration-500 opacity-[0.03] dark:opacity-[0.05]"
@@ -191,20 +209,9 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         />
       )}
 
-      <div
-        className={`relative z-10 w-full overflow-hidden ${isTopHero
-          ? "hero-inner px-5 sm:px-8 bg-transparent backdrop-blur-sm flex flex-col pt-4 pb-8"
-          : "rounded-[calc(16px-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-none transition-all duration-300"
-          }`}
-      >
-        {/* Safe-area spacer for top hero */}
-        {isTopHero && (
-          <div className="w-full" style={{ height: "env(safe-area-inset-top, 0px)" }} />
-        )}
+      <div className={innerClass}>
+        {isTopHero && <div className="w-full" style={{ height: "env(safe-area-inset-top, 0px)" }} />}
 
-
-
-        {/* Top Hero Specific Header: Greeting & Date */}
         {isTopHero && (
           <div className="mb-3 opacity-90">
             <h2 className="text-[15px] font-medium text-zinc-900/40 dark:text-white/40 tracking-tight">
@@ -216,30 +223,34 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
           </div>
         )}
 
-        {/* Primary: Massive Balance Number */}
-        <div
-          className={`hero-balance-row relative z-10 flex items-center active:scale-95 transition-opacity ${isTopHero ? 'mb-8' : 'justify-center pb-6'} ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`}
-          onClick={onAmountClick}
-        >
+        <div className={balanceRowClass} onClick={onAmountClick}>
           <div className={`flex items-baseline ${isTopHero ? 'will-change-transform' : ''}`}>
             <CountUp
               value={Math.trunc(currentBalance)}
               currency={false}
               prefix="₹"
-              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${isTopHero ? 'text-[2rem] sm:text-[2.4rem]' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'}`}
-              // @ts-ignore
+              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${
+                isTopHero ? 'text-[2rem] sm:text-[2.4rem]' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
+              }`}
               prefixStyle={isTopHero ? { color: activeColor, opacity: 0.4 } : {}}
-              className={`tracking-tighter font-semibold font-sans ${isTopHero ? 'text-[3.5rem] sm:text-[4.2rem] leading-none text-zinc-900 dark:text-white' : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'}`}
+              className={`tracking-tighter font-semibold font-sans ${
+                isTopHero 
+                  ? 'text-[3.5rem] sm:text-[4.2rem] leading-none text-zinc-900 dark:text-white' 
+                  : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
+              }`}
             />
             {hasDecimals && (
-              <span className={`font-medium tracking-tight ml-0.5 ${isTopHero ? 'text-[1.5rem] sm:text-[1.8rem] text-zinc-900/40 dark:text-white/40' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'}`}>
+              <span className={`font-medium tracking-tight ml-0.5 ${
+                isTopHero 
+                  ? 'text-[1.5rem] sm:text-[1.8rem] text-zinc-900/40 dark:text-white/40' 
+                  : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
+              }`}>
                 .{currentBalance.toFixed(2).split(".")[1]}
               </span>
             )}
           </div>
         </div>
 
-        {/* Progress Section */}
         {budgetAmount > 0 && (
           <div className="mb-4">
             <HeroProgressTimer
@@ -247,17 +258,12 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
               currentBalance={currentBalance}
               isTopHero={isTopHero}
               statusColor={statusColor}
+              activeColor={activeColor}
             />
           </div>
         )}
 
-        {/* Semantic Statistics Row */}
-        <div
-          className={`flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium tracking-tight cursor-pointer active:opacity-60 transition-opacity ${isTopHero ? 'text-zinc-900/50 dark:text-white/50' : 'text-zinc-500 dark:text-zinc-400'}`}
-          onClick={onTrendClick}
-          role="button"
-          aria-label="View Trend Details"
-        >
+        <div className={statsRowClass} onClick={onTrendClick} role="button" aria-label="View Trend Details">
           {budgetAmount > 0 ? (
             <>
               <span>{Math.min((currentBalance / budgetAmount) * 100, 100).toFixed(0)}% spent</span>
@@ -269,12 +275,12 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
           ) : (
             <span>Avg {formatCurrency(dailyAverage || 0).split('.')[0]}/day</span>
           )}
-
-
         </div>
       </div>
     </div>
   );
-};
+});
+
+HeroBalance.displayName = "HeroBalance";
 
 export default HeroBalance;

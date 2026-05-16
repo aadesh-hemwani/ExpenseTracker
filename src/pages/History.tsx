@@ -108,7 +108,7 @@ const MemoizedExpenseList = memo(
           {expenses.map((expense) => (
             <ExpenseCard
               key={expense.id}
-              t={expense}
+              expense={expense}
               onClick={(e) => onView(e)}
               onDelete={onDelete}
               onEdit={onEdit}

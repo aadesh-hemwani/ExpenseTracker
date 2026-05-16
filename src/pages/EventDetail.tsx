@@ -295,7 +295,7 @@ const EventDetail = () => {
               {expenses.map((expense) => (
                 <ExpenseCard
                   key={expense.id}
-                  t={expense}
+                  expense={expense}
                   onDelete={(id, amount, date) => deleteExpense(id, amount, date instanceof Timestamp ? date : new Date(date as any))}
                   onClick={(e) => openModal("view", e)}
                   onEdit={(e) => openModal("edit", e)}
