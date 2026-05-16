@@ -1,14 +1,15 @@
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { format, endOfMonth, eachDayOfInterval, startOfMonth } from "date-fns";
 import { Expense } from "../types";
 import Card from "./Card";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, Cell,
-    Treemap
+    Treemap, TooltipProps
 } from "recharts";
 import { motion } from "framer-motion";
 import CountUp from "./CountUp";
+import { Timestamp } from "firebase/firestore";
 
 interface DeepMonthAnalysisProps {
     expenses: Expense[];
@@ -16,18 +17,17 @@ interface DeepMonthAnalysisProps {
     theme?: string;
 }
 
-// Custom Tooltip for Recharts to match our app styling
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = memo(({ active, payload, label }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white dark:bg-gray-900 shadow-xl rounded-xl p-3 text-sm">
+            <div className="bg-white dark:bg-gray-900 shadow-xl rounded-xl p-3 text-sm border border-subtle">
                 <p className="font-bold text-gray-900 dark:text-white mb-1">{label}</p>
-                {payload.map((entry: any, index: number) => {
+                {payload.map((entry, index) => {
                     const isCount = entry.name === "Transactions";
                     return (
                         <p key={index} className="font-semibold flex items-center justify-between gap-4" style={{ color: entry.color || entry.fill }}>
                             <span>{entry.name}</span>
-                            <span>{isCount ? "" : "₹"}{isCount ? entry.value : Math.round(entry.value).toLocaleString('en-IN')}</span>
+                            <span>{isCount ? "" : "₹"}{isCount ? entry.value : Math.round(Number(entry.value)).toLocaleString('en-IN')}</span>
                         </p>
                     );
                 })}
@@ -35,12 +35,12 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         );
     }
     return null;
-};
+});
 
-// Custom Treemap Content
-const CustomizedTreemapContent = (props: any) => {
+CustomTooltip.displayName = "CustomTooltip";
+
+const CustomizedTreemapContent = memo((props: any) => {
     const { root, depth, x, y, width, height, index, colors, name } = props;
-
     if (!root || !root.children) return null;
 
     return (
@@ -74,21 +74,20 @@ const CustomizedTreemapContent = (props: any) => {
             ) : null}
         </g>
     );
-};
+});
 
+CustomizedTreemapContent.displayName = "CustomizedTreemapContent";
 
-const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, currentMonth, theme }) => {
+const DeepMonthAnalysis = memo(({ expenses, currentMonth, theme }: DeepMonthAnalysisProps) => {
     const isDark = theme === "dark";
     const textColor = isDark ? "#9ca3af" : "#6b7280";
     const gridColor = isDark ? "#1f2937" : "#f3f4f6";
 
     const chartData = useMemo(() => {
-        // 1. Prepare Daily Data (Area & Bar)
         const monthStart = startOfMonth(currentMonth);
         const monthEnd = endOfMonth(currentMonth);
         const daysInterval = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
-        // Initialize daily map
         const dailyMap = new Map();
         daysInterval.forEach(day => {
             dailyMap.set(format(day, "yyyy-MM-dd"), {
@@ -99,14 +98,11 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
             });
         });
 
-        // Aggregate daily spend
         expenses.forEach(e => {
             let d: Date;
             if (e.date instanceof Date) {
                 d = e.date;
-                // @ts-ignore
-            } else if (e.date && typeof e.date.toDate === 'function') {
-                // @ts-ignore
+            } else if (e.date instanceof Timestamp) {
                 d = e.date.toDate();
             } else {
                 d = new Date(e.date as any);
@@ -118,7 +114,6 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
             }
         });
 
-        // Calculate cumulative
         let runningTotal = 0;
         const dailyData = Array.from(dailyMap.values()).map(day => {
             runningTotal += day.spend;
@@ -126,7 +121,6 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
             return day;
         });
 
-        // 2. Prepare Category Data (Treemap/Pie)
         const categoryTotals: Record<string, number> = {};
         expenses.forEach((e) => {
             categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
@@ -134,7 +128,7 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
 
         const categoryData = Object.entries(categoryTotals)
             .map(([name, size]) => ({ name, size }))
-            .sort((a, b) => b.size - a.size); // Sort largest first
+            .sort((a, b) => b.size - a.size);
 
         const histogramBuckets = [
             { name: "0-100", min: 0, max: 100, count: 0, total: 0 },
@@ -159,23 +153,16 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
         return {
             dailyData,
             categoryData,
-            histogramData: histogramBuckets.filter(b => b.count > 0) // Only show non-empty buckets
+            histogramData: histogramBuckets.filter(b => b.count > 0)
         };
     }, [expenses, currentMonth]);
 
-    // Accent Colors for Charts - Refined Palette
     const COLORS = [
-        '#6366f1', // Indigo
-        '#8b5cf6', // Violet
-        '#d946ef', // Fuchsia
-        '#f43f5e', // Rose
-        '#fb7185', // Soft Rose
-        '#fb923c', // Orange
-        '#fca5a5', // Light Coral
-        '#38bdf8', // Sky
-        '#818cf8', // Soft Indigo
-        '#2dd4bf'  // Teal
+        '#6366f1', '#8b5cf6', '#d946ef', '#f43f5e', '#fb7185',
+        '#fb923c', '#fca5a5', '#38bdf8', '#818cf8', '#2dd4bf'
     ];
+
+    const totalSpend = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses]);
 
     return (
         <motion.div
@@ -183,7 +170,6 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6 w-full pb-8"
         >
-            {/* Header Stats */}
             {expenses.length > 0 && (
                 <div className="flex flex-col mb-2">
                     <span className="text-gray-500 dark:text-gray-400 font-medium text-sm block mb-1">
@@ -191,7 +177,7 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
                     </span>
                     <div className="flex items-end justify-between">
                         <span className="text-4xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
-                            ₹<CountUp value={expenses.reduce((sum, e) => sum + Number(e.amount), 0)} currency={false} />
+                            ₹<CountUp value={totalSpend} currency={false} />
                         </span>
                         <span className="px-3 py-1 bg-accent/10 text-accent font-bold text-xs rounded-full">
                             <CountUp value={expenses.length} currency={false} /> Transaction{expenses.length !== 1 ? 's' : ''}
@@ -199,7 +185,7 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
                     </div>
                 </div>
             )}
-            {/* 1. Cumulative Velocity (Area Chart) */}
+
             <Card>
                 <div className="mb-6">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Spending Velocity</h3>
@@ -230,7 +216,6 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
                 </div>
             </Card>
 
-            {/* 2. Daily Spikes (Bar Chart) */}
             <Card>
                 <div className="mb-6">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Daily Breakdown</h3>
@@ -259,7 +244,6 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
                 </div>
             </Card>
 
-            {/* 3. Expense Size Distribution (Histogram) */}
             <Card>
                 <div className="mb-6">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Transaction Sizes</h3>
@@ -284,7 +268,6 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
                 </div>
             </Card>
 
-            {/* 4. Category Treemap */}
             <Card>
                 <div className="mb-2">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">Category Density</h3>
@@ -313,6 +296,8 @@ const DeepMonthAnalysis: React.FC<DeepMonthAnalysisProps> = ({ expenses, current
 
         </motion.div>
     );
-};
+});
+
+DeepMonthAnalysis.displayName = "DeepMonthAnalysis";
 
 export default DeepMonthAnalysis;

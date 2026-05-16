@@ -1,6 +1,5 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { motion, AnimatePresence } from "framer-motion";
 import { format, subMonths } from "date-fns";
 import {
@@ -10,15 +9,13 @@ import {
 } from "../hooks/useExpenses";
 import { Timestamp } from "firebase/firestore";
 import { Expense } from "../types";
-import { getCategoryIcon, CATEGORY_COLORS } from "../utils/uiUtils";
-import { getCategoryBreakdown } from "../utils/analyticsHelpers";
-
-import IOSSpinner from "../components/ui/IOSSpinner";
 import { useAuth } from "../context/AuthContext";
 import HeroBalance from "../components/HeroBalance";
 import { useGlobalModal } from "../context/GlobalModalContext";
+import { ExpenseCard } from "../components/ExpenseCard";
+import { HeroBalanceSkeleton, ExpenseCardSkeleton } from "../components/ui/Skeleton";
 
-const container = {
+const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -28,14 +25,18 @@ const container = {
   },
 };
 
-const item = {
+const itemVariants = {
   hidden: { opacity: 0, y: 10 },
   show: { opacity: 1, y: 0 },
 };
 
-import { Trash2, Edit2, X } from "lucide-react";
-import React from "react";
-import { ExpenseCard } from "../components/ExpenseCard";
+interface DaySectionProps {
+  label: string;
+  expenses: Expense[];
+  onCardClick: (e: Expense) => void;
+  onCardDelete: (id: string, amount: number, date: Timestamp | Date) => void;
+  onCardEdit: (e: Expense) => void;
+}
 
 const DaySection = React.memo(({
   label,
@@ -43,27 +44,28 @@ const DaySection = React.memo(({
   onCardClick,
   onCardDelete,
   onCardEdit
-}: {
-  label: string,
-  expenses: Expense[],
-  onCardClick: (e: Expense) => void;
-  onCardDelete: (id: string, amount: number, date: any) => void;
-  onCardEdit: (e: Expense) => void;
-}) => {
-  const dailyTotal = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+}: DaySectionProps) => {
+  const dailyTotal = useMemo(() =>
+    expenses.reduce((sum, e) => sum + Number(e.amount), 0),
+    [expenses]
+  );
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <span className="text-[10px] font-bold text-zinc-400 dark:text-[#A0A0A0] uppercase tracking-[0.25em]">{label}</span>
-        <span className="text-sm font-bold text-zinc-900 dark:text-white">₹{dailyTotal.toLocaleString("en-IN")}</span>
+        <span className="text-[10px] font-bold text-zinc-400 dark:text-[#A0A0A0] uppercase tracking-[0.25em]">
+          {label}
+        </span>
+        <span className="text-sm font-bold text-zinc-900 dark:text-white">
+          ₹{dailyTotal.toLocaleString("en-IN")}
+        </span>
       </div>
       <div className="space-y-1.5">
         <AnimatePresence mode="popLayout" initial={false}>
-          {expenses.map((t) => (
-            <motion.div key={t.id} variants={item} layout>
+          {expenses.map((expense) => (
+            <motion.div key={expense.id} variants={itemVariants} layout>
               <ExpenseCard
-                expense={t}
+                expense={expense}
                 onClick={onCardClick}
                 onDelete={onCardDelete}
                 onEdit={onCardEdit}
@@ -76,16 +78,19 @@ const DaySection = React.memo(({
   );
 });
 
-const Home = () => {
+DaySection.displayName = "DaySection";
+
+const Home = React.memo(() => {
   const navigate = useNavigate();
   const { stats, loading: loadingStats } = useMonthlyStats();
   const { deleteExpense } = useExpenses();
-
   const { user } = useAuth();
   const { openModal } = useGlobalModal();
 
-  const [greeting, setGreeting] = useState("Good day");
-  const firstName = user?.displayName ? user.displayName.split(" ")[0] : "";
+  const firstName = useMemo(() =>
+    user?.displayName ? user.displayName.split(" ")[0] : "",
+    [user?.displayName]
+  );
 
   const now = useMemo(() => new Date(), []);
   const lastMonthDate = useMemo(() => subMonths(now, 1), [now]);
@@ -104,38 +109,25 @@ const Home = () => {
     true
   );
 
-  useEffect(() => {
-    const now = new Date();
+  const greeting = useMemo(() => {
     const hour = now.getHours();
     const isWeekend = [0, 6].includes(now.getDay());
 
     let pool: string[] = [];
 
-    if (hour >= 0 && hour < 4) {
-      pool = ["Up late", "Burning the midnight oil", "Still awake", "Quiet hours"];
-    } else if (hour >= 4 && hour < 7) {
-      pool = ["Early bird", "Rise and shine", "Up before the sun", "Peaceful morning"];
-    } else if (hour >= 7 && hour < 12) {
-      pool = ["Good morning", "Ready for the day", "Fresh start", "Let's get it"];
-    } else if (hour >= 12 && hour < 14) {
-      pool = ["Almost noon", "Lunch time", "Good afternoon"];
-    } else if (hour >= 14 && hour < 17) {
-      pool = ["Good afternoon", "Afternoon push", "Keep it up", "Doing great"];
-    } else if (hour >= 17 && hour < 21) {
-      pool = ["Good evening", "Evening check-in"];
-    } else {
-      pool = ["Good night", "Late evening"];
-    }
+    if (hour >= 0 && hour < 4) pool = ["Up late", "Burning the midnight oil", "Still awake", "Quiet hours"];
+    else if (hour >= 4 && hour < 7) pool = ["Early bird", "Rise and shine", "Up before the sun", "Peaceful morning"];
+    else if (hour >= 7 && hour < 12) pool = ["Good morning", "Ready for the day", "Fresh start", "Let's get it"];
+    else if (hour >= 12 && hour < 14) pool = ["Almost noon", "Lunch time", "Good afternoon"];
+    else if (hour >= 14 && hour < 17) pool = ["Good afternoon", "Afternoon push", "Keep it up", "Doing great"];
+    else if (hour >= 17 && hour < 21) pool = ["Good evening", "Evening check-in"];
+    else pool = ["Good night", "Late evening"];
 
-    if (isWeekend) {
-      pool.push("Happy weekend", "Weekend vibes", "Enjoy your weekend");
-    }
+    if (isWeekend) pool.push("Happy weekend", "Weekend vibes", "Enjoy your weekend");
 
-    const randomChoice = pool[Math.floor(Math.random() * pool.length)];
-    setGreeting(randomChoice);
-  }, []);
+    return pool[Math.floor(Math.random() * pool.length)];
+  }, [now]);
 
-  // Stable callbacks for memoized children
   const handleCardClick = React.useCallback((expense: Expense) => {
     openModal("view", expense);
   }, [openModal]);
@@ -144,82 +136,52 @@ const Home = () => {
     openModal("edit", expense);
   }, [openModal]);
 
-  const handleCardDelete = React.useCallback((id: string, amount: number, date: any) => {
+  const handleCardDelete = React.useCallback((id: string, amount: number, date: Timestamp | Date) => {
     deleteExpense(id, amount, date);
   }, [deleteExpense]);
 
-  // Simplified: Merge and Sort
   const recentExpenses = useMemo(() => {
     return [...thisMonthFullExpenses, ...lastMonthExpenses]
       .sort((a, b) => {
-        // Use timestamp comparison directly if possible, else helper
-        const tA =
-          a.date instanceof Timestamp ? a.date.toMillis() : Number(a.date);
-        const tB =
-          b.date instanceof Timestamp ? b.date.toMillis() : Number(b.date);
+        const tA = a.date instanceof Timestamp ? a.date.toMillis() : new Date(a.date).getTime();
+        const tB = b.date instanceof Timestamp ? b.date.toMillis() : new Date(b.date).getTime();
         return tB - tA;
       })
-      .slice(0, 18); // Show slightly fewer to keep grid dense
+      .slice(0, 18);
   }, [thisMonthFullExpenses, lastMonthExpenses]);
 
-  // Metrics Calculation
-  const {
-    currentMonthTotal,
-    percentageChange,
-    trendDirection,
-    topCategory,
-    dailyAverage,
-  } = useMemo(() => {
+  const metrics = useMemo(() => {
     const currentDay = now.getDate();
+    const thisMonthSum = thisMonthFullExpenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
-    // 1. Current Month Total
-    const thisMonthSum = thisMonthFullExpenses.reduce(
-      (sum: number, e: Expense) => sum + Number(e.amount),
-      0,
-    );
-
-    // 2. Last Month Partial (Compare up to same day)
-    const lastMonthPartialSum = lastMonthExpenses.reduce((acc: number, e: Expense) => {
-      const d =
-        e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
+    const lastMonthPartialSum = lastMonthExpenses.reduce((acc, e) => {
+      const d = e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date);
       if (d && d.getDate() <= currentDay) return acc + Number(e.amount);
       return acc;
     }, 0);
 
-    // 3. Trends
     let pctChange = 0;
     if (lastMonthPartialSum > 0) {
-      pctChange =
-        ((thisMonthSum - lastMonthPartialSum) / lastMonthPartialSum) * 100;
+      pctChange = ((thisMonthSum - lastMonthPartialSum) / lastMonthPartialSum) * 100;
     }
-    const isTrendingUp = thisMonthSum > lastMonthPartialSum;
 
-    // 4. Analytics Extras
-    const categoryData = getCategoryBreakdown(thisMonthFullExpenses);
-    const topCat = categoryData.length > 0 ? categoryData[0].name : "None";
     const avg = currentDay > 0 ? thisMonthSum / currentDay : 0;
 
     return {
-      currentMonthTotal: thisMonthSum,
+      total: thisMonthSum,
       percentageChange: Math.abs(pctChange).toFixed(0),
-      trendDirection: (isTrendingUp ? "up" : "down") as "up" | "down",
-      topCategory: topCat,
+      trendDirection: (thisMonthSum > lastMonthPartialSum ? "up" : "down") as "up" | "down",
       dailyAverage: avg,
     };
   }, [lastMonthExpenses, thisMonthFullExpenses, now]);
 
-  // Memoize grouped recent expenses
   const groupedRecentExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
+    const todayStr = format(now, "yyyy-MM-dd");
+    const yesterdayStr = format(new Date(now.getTime() - 86400000), "yyyy-MM-dd");
 
     recentExpenses.forEach((expense) => {
-      const date =
-        expense.date instanceof Timestamp
-          ? expense.date.toDate()
-          : new Date(expense.date);
-
-      const todayStr = format(now, "yyyy-MM-dd");
-      const yesterdayStr = format(new Date(now.getTime() - 86400000), "yyyy-MM-dd");
+      const date = expense.date instanceof Timestamp ? expense.date.toDate() : new Date(expense.date);
       const dateStr = format(date, "yyyy-MM-dd");
 
       let dateLabel = format(date, "MMM dd");
@@ -233,11 +195,20 @@ const Home = () => {
     return Object.entries(groups);
   }, [recentExpenses, now]);
 
-  // Loading State
   if (loadingCurrent || loadingStats) {
     return (
-      <div className="flex justify-center items-center h-[50vh]">
-        <IOSSpinner size={32} />
+      <div className="space-y-8 pb-12">
+        <header className="-mx-5">
+          <HeroBalanceSkeleton />
+        </header>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center px-1">
+            <div className="w-32 h-6 bg-gray-200 dark:bg-white/10 animate-pulse rounded-md" />
+          </div>
+          <div className="space-y-4">
+            {[1, 2, 3, 4, 5].map(i => <ExpenseCardSkeleton key={i} />)}
+          </div>
+        </div>
       </div>
     );
   }
@@ -246,28 +217,23 @@ const Home = () => {
     <div className="space-y-8 pb-12">
       <header className="sticky top-0 z-50 -mx-5">
         <HeroBalance
-          currentBalance={currentMonthTotal}
+          currentBalance={metrics.total}
           budgetAmount={user?.monthlyBudgetCap}
-          trendDirection={trendDirection}
-          percentageChange={percentageChange}
-          topCategory={topCategory}
-          dailyAverage={dailyAverage}
+          trendDirection={metrics.trendDirection}
+          percentageChange={metrics.percentageChange}
+          dailyAverage={metrics.dailyAverage}
           greeting={greeting}
           firstName={firstName}
           isTopHero={true}
-          onTrendClick={() =>
-            navigate("/analytics", { state: { scrollToTrajectory: true } })
-          }
-          onAmountClick={() =>
-            navigate("/history", { state: { viewMode: "analysis" } })
-          }
+          onTrendClick={() => navigate("/analytics", { state: { scrollToTrajectory: true } })}
+          onAmountClick={() => navigate("/history", { state: { viewMode: "analysis" } })}
         />
       </header>
 
       <section className="space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Recent Activity</h3>
-        </div>
+        <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
+          Recent Activity
+        </h3>
 
         <div className="space-y-6 pb-6">
           {recentExpenses.length === 0 ? (
@@ -276,7 +242,7 @@ const Home = () => {
             </div>
           ) : (
             <motion.div
-              variants={container}
+              variants={containerVariants}
               initial="hidden"
               animate="show"
               className="flex flex-col space-y-10"
@@ -298,6 +264,8 @@ const Home = () => {
       </section>
     </div>
   );
-};
+});
+
+Home.displayName = "Home";
 
 export default Home;

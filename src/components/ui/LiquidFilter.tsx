@@ -1,7 +1,6 @@
-import React from "react";
+import { memo } from "react";
 
-// Simple SVG Filter for Liquid/Gooey Effect
-export const LiquidFilter = () => (
+export const LiquidFilter = memo(() => (
   <svg className="absolute w-0 h-0 overflow-hidden pointer-events-none visibility-hidden" aria-hidden="true">
     <defs>
       <filter id="liquid-filter">
@@ -15,7 +14,6 @@ export const LiquidFilter = () => (
         <feBlend in="SourceGraphic" in2="liquid" />
       </filter>
 
-      {/* Internal Glass Shadow Filter */}
       <filter id="glass-inner-shadow">
         <feDropShadow
           dx="0"
@@ -35,4 +33,7 @@ export const LiquidFilter = () => (
       </filter>
     </defs>
   </svg>
-);
+));
+
+LiquidFilter.displayName = "LiquidFilter";
+

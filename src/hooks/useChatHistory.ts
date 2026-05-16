@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "../firebase";
 import {
     collection,
@@ -8,7 +8,9 @@ import {
     addDoc,
     getDocs,
     Timestamp,
-    writeBatch
+    writeBatch,
+    QuerySnapshot,
+    DocumentData
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 
@@ -25,7 +27,7 @@ export const useChatHistory = () => {
     const { user } = useAuth();
 
     useEffect(() => {
-        if (!user) {
+        if (!user?.uid) {
             setMessages([]);
             setLoading(false);
             return;
@@ -34,10 +36,10 @@ export const useChatHistory = () => {
         const chatsRef = collection(db, "users", user.uid, "chats");
         const q = query(chatsRef, orderBy("timestamp", "asc"));
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
+        const unsubscribe = onSnapshot(q, (snapshot: QuerySnapshot<DocumentData>) => {
             const fetchedMessages = snapshot.docs.map(doc => {
                 const data = doc.data();
-                let timestamp = new Date(); // fallback
+                let timestamp = new Date();
                 if (data.timestamp instanceof Timestamp) {
                     timestamp = data.timestamp.toDate();
                 } else if (data.timestamp) {
@@ -56,15 +58,14 @@ export const useChatHistory = () => {
             setLoading(false);
         }, (err) => {
             console.error("Error fetching chat history:", err);
-            // Fallback: If index is still building or permissions fail, just don't crash the app
             setLoading(false);
         });
 
         return () => unsubscribe();
-    }, [user]);
+    }, [user?.uid]);
 
     const addMessage = useCallback(async (text: string, sender: "user" | "ai") => {
-        if (!user) return;
+        if (!user?.uid) return;
         try {
             const chatsRef = collection(db, "users", user.uid, "chats");
             await addDoc(chatsRef, {
@@ -75,10 +76,10 @@ export const useChatHistory = () => {
         } catch (err) {
             console.error("Failed to add message to history:", err);
         }
-    }, [user]);
+    }, [user?.uid]);
 
     const clearHistory = useCallback(async () => {
-        if (!user) return;
+        if (!user?.uid) return;
         try {
             const chatsRef = collection(db, "users", user.uid, "chats");
             const snapshot = await getDocs(chatsRef);
@@ -94,7 +95,13 @@ export const useChatHistory = () => {
         } catch (err) {
             console.error("Failed to clear chat history:", err);
         }
-    }, [user]);
+    }, [user?.uid]);
 
-    return { messages, loading, addMessage, clearHistory };
+    return useMemo(() => ({
+        messages,
+        loading,
+        addMessage,
+        clearHistory
+    }), [messages, loading, addMessage, clearHistory]);
 };
+

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import {
   PieChart,
   Pie,
@@ -6,15 +6,17 @@ import {
   ResponsiveContainer,
   Tooltip,
   Legend,
+  TooltipProps,
 } from "recharts";
 import { Expense } from "../types";
+import { CATEGORY_COLORS } from "../utils/uiUtils";
 
 interface CategoryDonutChartProps {
   expenses: Expense[];
   animate?: boolean;
 }
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = memo(({ active, payload }: TooltipProps<number, string>) => {
   if (active && payload && payload.length) {
     const { name, value } = payload[0];
     return (
@@ -24,18 +26,18 @@ const CustomTooltip = ({ active, payload }: any) => {
             {name}
           </span>
           <span className="text-xl font-bold text-primary">
-            ₹{value.toLocaleString("en-IN")}
+            ₹{value?.toLocaleString("en-IN")}
           </span>
         </div>
       </div>
     );
   }
   return null;
-};
+});
 
-import { CATEGORY_COLORS } from "../utils/uiUtils";
+CustomTooltip.displayName = "CustomTooltip";
 
-const CategoryDonutChart = ({
+const CategoryDonutChart = memo(({
   expenses,
   animate = true,
 }: CategoryDonutChartProps) => {
@@ -46,13 +48,12 @@ const CategoryDonutChart = ({
 
     expenses.forEach((expense) => {
       const category = expense.category || "Uncategorized";
-      categoryTotals[category] =
-        (categoryTotals[category] || 0) + Number(expense.amount);
+      categoryTotals[category] = (categoryTotals[category] || 0) + Number(expense.amount);
     });
 
     return Object.entries(categoryTotals)
       .map(([name, value]) => ({ name, value }))
-      .sort((a, b) => b.value - a.value); // Sort by highest spend
+      .sort((a, b) => b.value - a.value);
   }, [expenses]);
 
   if (data.length === 0) return null;
@@ -80,7 +81,7 @@ const CategoryDonutChart = ({
               {data.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill={CATEGORY_COLORS[entry.name] || "#64748b"}
+                  fill={CATEGORY_COLORS[entry.name as keyof typeof CATEGORY_COLORS] || "#64748b"}
                   className="stroke-transparent outline-none"
                 />
               ))}
@@ -107,6 +108,9 @@ const CategoryDonutChart = ({
       </div>
     </div>
   );
-};
+});
+
+CategoryDonutChart.displayName = "CategoryDonutChart";
 
 export default CategoryDonutChart;
+

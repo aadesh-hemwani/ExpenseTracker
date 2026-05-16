@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import React, { useEffect, memo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const Login = () => {
+const Login = memo(() => {
     const { googleSignIn, user } = useAuth();
     const navigate = useNavigate();
 
@@ -35,6 +35,9 @@ const Login = () => {
             </div>
         </div>
     );
-};
+});
+
+Login.displayName = "Login";
 
 export default Login;
+

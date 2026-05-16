@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, memo } from "react";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useTheme } from "../../context/ThemeContext";
@@ -9,17 +9,20 @@ interface LiquidFABProps {
   icon?: React.ReactNode;
 }
 
-export const LiquidFAB: React.FC<LiquidFABProps> = ({ onClick, icon }) => {
+export const LiquidFAB: React.FC<LiquidFABProps> = memo(({ onClick, icon }) => {
   const { accentColor, accentColors } = useTheme();
-  // @ts-ignore
-  const activeColor = accentColors[accentColor]?.default || "#6366f1";
+
+  const activeColor = useMemo(() => {
+    const config = accentColors[accentColor as keyof typeof accentColors];
+    return config?.default || "#6366f1";
+  }, [accentColor, accentColors]);
 
   return (
     <motion.button
       onClick={onClick}
-      className="w-16 h-16 rounded-full flex items-center justify-center liquid-pill-effect backdrop-blur-sm"
+      className="w-16 h-16 rounded-full flex items-center justify-center liquid-pill-effect backdrop-blur-sm pointer-events-auto"
       style={{
-        backgroundColor: `${activeColor}25`, // Slightly more than nav pill for prominence
+        backgroundColor: `${activeColor}25`,
         borderColor: `${activeColor}50`,
       }}
       whileTap={{ scale: 0.95 }}
@@ -31,4 +34,7 @@ export const LiquidFAB: React.FC<LiquidFABProps> = ({ onClick, icon }) => {
       </div>
     </motion.button>
   );
-};
+});
+
+LiquidFAB.displayName = "LiquidFAB";
+

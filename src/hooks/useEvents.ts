@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { db } from "../firebase";
 import {
   collection,
@@ -26,7 +26,6 @@ export const useEvents = () => {
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  // Real-time listener on events collection
   useEffect(() => {
     if (!user?.uid) {
       setLoading(false);
@@ -88,7 +87,6 @@ export const useEvents = () => {
 
       const eventRef = doc(db, "users", user.uid, "events", id);
       try {
-        // Sanitize updates: remove undefined or NaN values to avoid Firestore errors
         const data: Record<string, any> = {};
         Object.entries(updates).forEach(([key, value]) => {
           if (value === undefined || (typeof value === "number" && isNaN(value))) {
@@ -105,30 +103,24 @@ export const useEvents = () => {
         await updateDoc(eventRef, data);
       } catch (e) {
         console.error("Failed to update event:", e);
-        throw e; // Rethrow to let the UI handle/know about the failure
+        throw e;
       }
     },
     [user?.uid]
   );
 
-  /**
-   * Delete an event.
-   * - action "move": reassigns all expenses under this event to the given targetContextId (e.g. 'regular' for personal regular)
-   * - action "delete": deletes all expenses under this event, decrementing stats accordingly
-   */
   const deleteEvent = useCallback(
     async (
       eventId: string,
       action: "move" | "delete",
       targetContext?: "personal",
-      targetContextId?: string // 'regular' | 'one-off' | another eventId
+      targetContextId?: string
     ) => {
       if (!user?.uid) return;
 
       const eventRef = doc(db, "users", user.uid, "events", eventId);
       const expensesRef = collection(db, "users", user.uid, "expenses");
 
-      // Find all expenses under this event
       const expensesQuery = query(
         expensesRef,
         where("context", "==", "event"),
@@ -137,50 +129,33 @@ export const useEvents = () => {
 
       try {
         const snapshot = await getDocs(expensesQuery);
-
         const batch = writeBatch(db);
 
         if (action === "move" && targetContextId) {
-          // Move all expenses to the target context
           snapshot.docs.forEach((d) => {
             batch.update(d.ref, {
               context: targetContext || "personal",
               contextId: targetContextId,
-              // Also keep type for backward compat
-              type:
-                targetContextId === "one-off" ? "One-off" : "Regular",
+              type: targetContextId === "one-off" ? "One-off" : "Regular",
             });
           });
         } else {
-          // Delete all expenses and decrement stats
           const statsRef = collection(db, "users", user.uid, "stats");
 
           snapshot.docs.forEach((d) => {
             const data = d.data();
             const amount = Number(data.amount);
             const dateField = data.date;
-            const dateObj =
-              dateField instanceof Timestamp
-                ? dateField.toDate()
-                : new Date(dateField);
+            const dateObj = dateField instanceof Timestamp ? dateField.toDate() : new Date(dateField);
             const monthKey = format(dateObj, "yyyy-MM");
             const statDocRef = doc(statsRef, monthKey);
 
             batch.delete(d.ref);
-            batch.set(
-              statDocRef,
-              {
-                total: increment(-amount),
-                count: increment(-1),
-              },
-              { merge: true }
-            );
+            batch.set(statDocRef, { total: increment(-amount), count: increment(-1) }, { merge: true });
           });
         }
 
-        // Delete the event itself
         batch.delete(eventRef);
-
         await batch.commit();
       } catch (e) {
         console.error("Failed to delete event:", e);
@@ -189,5 +164,12 @@ export const useEvents = () => {
     [user?.uid]
   );
 
-  return { events, loading, addEvent, updateEvent, deleteEvent };
+  return useMemo(() => ({
+    events,
+    loading,
+    addEvent,
+    updateEvent,
+    deleteEvent
+  }), [events, loading, addEvent, updateEvent, deleteEvent]);
 };
+

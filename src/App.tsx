@@ -33,6 +33,13 @@ function App() {
       }
     };
 
+    const setVh = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty("--vh", `${vh}px`);
+    };
+
+    setVh();
+    window.addEventListener("resize", setVh);
     document.addEventListener("gesturestart", handleGestureStart);
     window.addEventListener("scroll", handleScrollReset);
 
@@ -40,6 +47,7 @@ function App() {
     window.scrollTo(0, 0);
 
     return () => {
+      window.removeEventListener("resize", setVh);
       document.removeEventListener("gesturestart", handleGestureStart);
       window.removeEventListener("scroll", handleScrollReset);
     };

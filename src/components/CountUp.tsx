@@ -1,5 +1,5 @@
+import React, { useEffect, useMemo, memo } from 'react';
 import { motion, useTransform, useMotionValue, animate } from 'framer-motion';
-import { useEffect } from 'react';
 
 interface CountUpProps {
     value: number | string;
@@ -11,42 +11,34 @@ interface CountUpProps {
     currency?: boolean;
 }
 
-const CountUp = ({ value, duration = 0.75, className, prefix, prefixClassName, prefixStyle, currency = true }: CountUpProps) => {
-    // 1. Create a MotionValue for the count
+const CountUp = memo(({ 
+    value, 
+    duration = 0.75, 
+    className, 
+    prefix, 
+    prefixClassName, 
+    prefixStyle, 
+    currency = true 
+}: CountUpProps) => {
     const count = useMotionValue(0);
 
-    // 2. Create a "spring" version effectively for smooth counting
-    // Or just animate the value directly in useEffect.
-    // Let's use simple `animate` for linear or ease-out counting
-
     useEffect(() => {
-        // Only valid numbers
         const finalValue = Number(value) || 0;
-
-        // Animate from current to final
         const controls = animate(count, finalValue, {
             duration: duration,
             ease: "easeOut"
         });
 
         return controls.stop;
-    }, [value, duration]);
+    }, [value, duration, count]);
 
-    // 3. Transform the MotionValue to a string with formatting
-    const displayValue = useTransform(count, (latest: number) => {
-        if (currency) {
-            return new Intl.NumberFormat('en-IN', {
-                style: 'currency',
-                currency: 'INR',
-                maximumFractionDigits: 0
-            }).format(latest);
-        } else {
-            return new Intl.NumberFormat('en-IN', {
-                style: 'decimal',
-                maximumFractionDigits: 0
-            }).format(latest);
-        }
-    });
+    const formatter = useMemo(() => new Intl.NumberFormat('en-IN', {
+        style: currency ? 'currency' : 'decimal',
+        currency: 'INR',
+        maximumFractionDigits: 0
+    }), [currency]);
+
+    const displayValue = useTransform(count, (latest: number) => formatter.format(latest));
 
     if (prefix !== undefined) {
         return (
@@ -58,6 +50,9 @@ const CountUp = ({ value, duration = 0.75, className, prefix, prefixClassName, p
     }
 
     return <motion.span className={className}>{displayValue}</motion.span>;
-};
+});
+
+CountUp.displayName = "CountUp";
 
 export default CountUp;
+

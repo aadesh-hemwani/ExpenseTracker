@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo, memo } from "react";
 import {
     BarChart,
     Bar,
@@ -9,25 +9,28 @@ import {
     ResponsiveContainer,
     Cell,
     LabelList,
+    TooltipProps,
 } from "recharts";
 import { formatCurrency } from "../utils/formatUtils";
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CustomTooltip = memo(({ active, payload, label }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-white/10 dark:bg-gray-900/90 backdrop-blur-xl p-3 border border-gray-100/10 dark:border-white/10 shadow-2xl rounded-2xl">
                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">{label}</p>
                 <p className="text-lg font-black text-gray-900 dark:text-white">
-                    {formatCurrency(payload[0].value)}
+                    {formatCurrency(payload[0].value as number)}
                 </p>
             </div>
         );
     }
     return null;
-};
+});
+
+CustomTooltip.displayName = "CustomTooltip";
 
 export interface MonthlyTrendChartProps {
-    data: any[];
+    data: { name: string; total: number; key: string }[];
     gridColor: string;
     textColor: string;
     cursorColor: string;
@@ -35,17 +38,17 @@ export interface MonthlyTrendChartProps {
     accentColors: any;
 }
 
-const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
+const MonthlyTrendChart = memo(({
     data,
     gridColor,
     textColor,
     cursorColor,
     accentColor,
     accentColors,
-}) => {
-    const maxTotal = React.useMemo(() => Math.max(...data.map((d) => d.total || 0)), [data]);
-    const currentMonthKey = React.useMemo(() => new Date().toISOString().slice(0, 7), []);
-    const primaryColor = accentColors[accentColor]?.default || "#6366f1";
+}: MonthlyTrendChartProps) => {
+    const maxTotal = useMemo(() => Math.max(...data.map((d) => d.total || 0)), [data]);
+    const currentMonthKey = useMemo(() => new Date().toISOString().slice(0, 7), []);
+    const primaryColor = useMemo(() => accentColors[accentColor]?.default || "#6366f1", [accentColor, accentColors]);
 
     return (
         <ResponsiveContainer width="100%" height="100%">
@@ -104,9 +107,9 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
                     content={<CustomTooltip />}
                     cursor={{ fill: cursorColor, opacity: 0.1 }}
                 />
-                <Bar 
-                    dataKey="total" 
-                    radius={[8, 8, 8, 8]} 
+                <Bar
+                    dataKey="total"
+                    radius={[8, 8, 8, 8]}
                     barSize={32}
                     animationDuration={1200}
                     animationBegin={0}
@@ -114,7 +117,8 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
                     <LabelList
                         dataKey="total"
                         position="top"
-                        content={({ x, y, width, value, index }: any) => {
+                        content={(props: any) => {
+                            const { x, y, width, value, index } = props;
                             const isHighlighted = data[index]?.total === maxTotal || data[index]?.key === currentMonthKey;
                             if (value === 0 || !isHighlighted) return null;
                             return (
@@ -152,6 +156,8 @@ const MonthlyTrendChart: React.FC<MonthlyTrendChartProps> = ({
             </BarChart>
         </ResponsiveContainer>
     );
-};
+});
+
+MonthlyTrendChart.displayName = "MonthlyTrendChart";
 
 export default MonthlyTrendChart;

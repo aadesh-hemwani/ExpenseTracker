@@ -1,3 +1,4 @@
+import React, { memo } from "react";
 import { X } from "lucide-react";
 import "./LiquidGlass.css";
 
@@ -6,7 +7,7 @@ interface LiquidCloseProps {
   className?: string;
 }
 
-export const LiquidClose: React.FC<LiquidCloseProps> = ({
+export const LiquidClose: React.FC<LiquidCloseProps> = memo(({
   onClick,
   className = "",
 }) => {
@@ -19,4 +20,7 @@ export const LiquidClose: React.FC<LiquidCloseProps> = ({
       <X size={20} />
     </button>
   );
-};
+});
+
+LiquidClose.displayName = "LiquidClose";
+

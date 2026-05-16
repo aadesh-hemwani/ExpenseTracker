@@ -1,3 +1,4 @@
+import React, { memo, useMemo } from "react";
 import { getCategoryIcon, CATEGORIES } from "../utils/uiUtils";
 import { createPortal } from "react-dom";
 import { formatCurrency } from "../utils/formatUtils";
@@ -13,24 +14,22 @@ interface ExpenseListModalProps {
   expenses?: Expense[];
 }
 
-const ExpenseListModal = ({
+const ExpenseListModal = memo(({
   title,
   onClose,
   expenses = [],
 }: ExpenseListModalProps) => {
-  const total = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const total = useMemo(() => expenses.reduce((sum, e) => sum + Number(e.amount), 0), [expenses]);
 
   const getDate = (date: any): Date => {
     if (date instanceof Timestamp) return date.toDate();
     if (date instanceof Date) return date;
-    // Fallback for string dates if they exist, or return new Date()
     if (typeof date === "string") return new Date(date);
     return new Date();
   };
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none">
-      {/* Backdrop (Click to close) */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -40,7 +39,6 @@ const ExpenseListModal = ({
         onClick={onClose}
       />
 
-      {/* Content Card */}
       <motion.div
         initial={{ y: "100%", opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -48,7 +46,6 @@ const ExpenseListModal = ({
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
         className="relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[20px] p-6 shadow-2xl border border-gray-200/50 dark:border-white/10 max-h-[70vh] flex flex-col mb-3 md:mb-0 pointer-events-auto"
       >
-        {/* Modal Header */}
         <div className="flex justify-between items-center mb-6 shrink-0">
           <div>
             <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -69,7 +66,6 @@ const ExpenseListModal = ({
           <LiquidClose onClick={onClose} />
         </div>
 
-        {/* Scrollable Transaction List */}
         <div className="overflow-y-auto pr-2 pb-6 min-h-[200px] no-scrollbar">
           {expenses.length > 0 ? (
             <div className="flex flex-col">
@@ -105,6 +101,8 @@ const ExpenseListModal = ({
     </div>,
     document.body
   );
-};
+});
+
+ExpenseListModal.displayName = "ExpenseListModal";
 
 export default ExpenseListModal;

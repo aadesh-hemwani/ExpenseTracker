@@ -1,89 +1,59 @@
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { motion } from "framer-motion";
 
 interface TrajectoryChartProps {
-  currentMonthData: number[]; // Cumulative sum array for this month
-  lastMonthData: number[]; // Cumulative sum array for last month
+  currentMonthData: number[];
+  lastMonthData: number[];
   currencySymbol?: string;
   trendDirection: "up" | "down";
 }
 
-const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
+const TrajectoryChart = memo(({
   currentMonthData,
   lastMonthData,
   currencySymbol = "₹",
   trendDirection,
-}) => {
+}: TrajectoryChartProps) => {
   const chartHeight = 150;
   const chartWidth = 300;
   const padding = 20;
 
-  // Calculate scales
-  const { maxY, pointsCurrent, pointsLast, daysInMonth } = useMemo(() => {
+  const { pointsCurrent, pointsLast, daysInMonth } = useMemo(() => {
     const allValues = [...currentMonthData, ...lastMonthData];
-    const maxVal = Math.max(...allValues, 100); // Ensure non-zero max
-    // Add some headroom
+    const maxVal = Math.max(...allValues, 100);
     const buffer = maxVal * 0.1;
     const finalMax = maxVal + buffer;
 
-    // Standardize x-axis to data length (dynamic zoom)
-    // If data is less than 2 days (e.g. 1st of month), use 2 to prevent divide by zero
-    const daysInMonth = Math.max(
-      currentMonthData.length,
-      lastMonthData.length,
-      2,
-    );
-    const xStep =
-      daysInMonth > 1
-        ? (chartWidth - padding * 2) / (daysInMonth - 1)
-        : chartWidth - padding * 2;
+    const daysCount = Math.max(currentMonthData.length, lastMonthData.length, 2);
+    const xStep = daysCount > 1 ? (chartWidth - padding * 2) / (daysCount - 1) : chartWidth - padding * 2;
 
-    // Helper to generate point coordinates
     const getPoints = (data: number[]) => {
       return data.map((val, index) => {
         const x = padding + index * xStep;
-        // Invert Y because SVG 0 is top
-        const y =
-          chartHeight -
-          padding -
-          (val / finalMax) * (chartHeight - padding * 2);
+        const y = chartHeight - padding - (val / finalMax) * (chartHeight - padding * 2);
         return { x, y, val };
       });
     };
 
     return {
-      maxY: finalMax,
       pointsCurrent: getPoints(currentMonthData),
       pointsLast: getPoints(lastMonthData),
-      daysInMonth,
+      daysInMonth: daysCount,
     };
   }, [currentMonthData, lastMonthData]);
 
-  // Generate SVG Path commands
-  const generatePath = (points: { x: number; y: number }[]) => {
-    if (points.length === 0) return "";
+  const pathLast = useMemo(() => {
+    if (pointsLast.length === 0) return "";
+    return `M ${pointsLast[0].x} ${pointsLast[0].y} ` + pointsLast.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ");
+  }, [pointsLast]);
 
-    // Start at first point
-    let d = `M ${points[0].x} ${points[0].y}`;
+  const pathCurrent = useMemo(() => {
+    if (pointsCurrent.length === 0) return "";
+    return `M ${pointsCurrent[0].x} ${pointsCurrent[0].y} ` + pointsCurrent.slice(1).map(p => `L ${p.x} ${p.y}`).join(" ");
+  }, [pointsCurrent]);
 
-    // Simple line to subsequent points
-    // For smoother curves, we could use bezier curves, but straight lines are accurate for daily steps
-    for (let i = 1; i < points.length; i++) {
-      d += ` L ${points[i].x} ${points[i].y}`;
-    }
-    return d;
-  };
-
-  const pathLast = generatePath(pointsLast);
-  const pathCurrent = generatePath(pointsCurrent);
-
-  // Last point of current data for the "pulse" dot
   const endPoint = pointsCurrent[pointsCurrent.length - 1];
-
-  const strokeClassCurrent =
-    trendDirection === "down"
-      ? "text-green-600 dark:text-green-400"
-      : "text-red-600 dark:text-red-400";
+  const strokeClassCurrent = trendDirection === "down" ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400";
   const strokeClassLast = "text-gray-300 dark:text-zinc-600";
 
   return (
@@ -93,7 +63,6 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
           viewBox={`0 0 ${chartWidth} ${chartHeight}`}
           className="w-full h-full overflow-visible"
         >
-          {/* Grid lines (optional - Horizontal) */}
           <line
             x1={padding}
             y1={chartHeight - padding}
@@ -112,7 +81,6 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
             {currencySymbol}0
           </text>
 
-          {/* X Axis Labels */}
           <text
             x={padding}
             y={chartHeight - 2}
@@ -130,7 +98,6 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
             Day {daysInMonth}
           </text>
 
-          {/* Last Month Line (Dashed) */}
           <motion.path
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
@@ -143,7 +110,6 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
             className={strokeClassLast}
           />
 
-          {/* Current Month Line (Solid) */}
           <motion.path
             initial={{ pathLength: 0, opacity: 0 }}
             animate={{ pathLength: 1, opacity: 1 }}
@@ -157,7 +123,6 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
             className={strokeClassCurrent}
           />
 
-          {/* End Dot (Current) */}
           {endPoint && (
             <motion.circle
               cx={endPoint.x}
@@ -172,23 +137,19 @@ const TrajectoryChart: React.FC<TrajectoryChartProps> = ({
         </svg>
         <div className="absolute -bottom-6 right-2 flex gap-3 text-[9px] font-medium text-gray-400 dark:text-zinc-600 pointer-events-none">
           <div className="flex items-center gap-1">
-            <div
-              className={`w-2 h-0.5 border-t border-dashed border-gray-400 dark:border-zinc-500`}
-            ></div>
+            <div className="w-2 h-0.5 border-t border-dashed border-gray-400 dark:border-zinc-500" />
             <span>Last Month</span>
           </div>
           <div className="flex items-center gap-1">
-            <div
-              className={`w-2 h-0.5 rounded-full ${
-                trendDirection === "down" ? "bg-green-500" : "bg-red-500"
-              }`}
-            ></div>
+            <div className={`w-2 h-0.5 rounded-full ${trendDirection === "down" ? "bg-green-500" : "bg-red-500"}`} />
             <span>This Month</span>
           </div>
         </div>
       </div>
     </div>
   );
-};
+});
+
+TrajectoryChart.displayName = "TrajectoryChart";
 
 export default TrajectoryChart;

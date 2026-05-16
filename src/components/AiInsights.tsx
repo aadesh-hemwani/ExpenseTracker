@@ -1,4 +1,4 @@
-import { useState, useRef, memo } from "react";
+import React, { useState, useRef, memo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Cpu } from "lucide-react";
 import { Insight } from "../utils/insights";
@@ -12,18 +12,16 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  if (!insights.length && !isLoading) return null;
-
-  const handleScroll = () => {
+  const handleScroll = useCallback(() => {
     if (containerRef.current) {
       const scrollLeft = containerRef.current.scrollLeft;
       const width = containerRef.current.clientWidth;
-      // Provide a small buffer for snapping
       const index = Math.round(scrollLeft / width);
-      // Clamp to bounds
       setActiveIndex(Math.min(Math.max(0, index), insights.length - 1));
     }
-  };
+  }, [insights.length]);
+
+  if (!insights.length && !isLoading) return null;
 
   return (
     <div className="pt-2">
@@ -59,32 +57,21 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
             className={`
-                            min-w-full md:min-w-[320px] p-5
-                            ${insight.bg} backdrop-blur-md
-                            rounded-[20px] dark:border-none border border-subtle
-                            shadow-sm
-                            snap-center flex flex-col gap-3 relative overflow-hidden group
-                        `}
+              min-w-full md:min-w-[320px] p-5
+              ${insight.bg} backdrop-blur-md
+              rounded-[20px] dark:border-none border border-subtle
+              shadow-sm snap-center flex flex-col gap-3 relative overflow-hidden group
+            `}
           >
-            {/* Header: Icon + Title */}
             <div className="flex items-center gap-3 relative z-10">
-              <div
-                className={`p-2 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-sm`}
-              >
-                <insight.icon
-                  size={20}
-                  className={insight.color}
-                />
+              <div className="p-2 rounded-xl bg-white/50 dark:bg-black/20 backdrop-blur-sm">
+                <insight.icon size={20} className={insight.color} />
               </div>
-
-              <span
-                className={`text-xs font-bold uppercase tracking-wider ${insight.color} opacity-90`}
-              >
+              <span className={`text-xs font-bold uppercase tracking-wider ${insight.color} opacity-90`}>
                 {insight.title}
               </span>
             </div>
 
-            {/* Text - Better readability */}
             <p className="text-gray-900 dark:text-gray-100 font-medium text-[15px] leading-snug relative z-10">
               {insight.text}
             </p>
@@ -92,19 +79,18 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
         ))}
       </div>
 
-      {/* Pagination Dots */}
       {insights.length > 1 && (
         <div className="flex justify-center gap-1.5 -mt-2 mb-4">
           {insights.map((_, i) => (
             <div
               key={i}
               className={`
-                                h-1 rounded-full transition-all duration-300
-                                ${i === activeIndex
+                h-1 rounded-full transition-all duration-300
+                ${i === activeIndex
                   ? "w-4 bg-indigo-500/80 shadow-[0_0_8px_rgba(99,102,241,0.5)]"
                   : "w-1 bg-gray-300/50 dark:bg-gray-700/50"
                 }
-                            `}
+              `}
             />
           ))}
         </div>
@@ -114,3 +100,4 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
 };
 
 export default memo(AiInsights);
+

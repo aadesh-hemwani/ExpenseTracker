@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import React, { useState, useEffect, useCallback, useMemo, memo } from "react";
+import { collection, getDocs, query, orderBy, doc, writeBatch, Timestamp } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -10,12 +10,20 @@ import Analytics from "./Analytics";
 import History from "./History";
 import { format } from "date-fns";
 import { generateEmbedding } from "../services/gemini";
-import { doc, writeBatch } from "firebase/firestore";
 
-const Admin = () => {
+interface AdminUser {
+  id: string;
+  displayName?: string;
+  email?: string;
+  photoURL?: string;
+  isAdmin?: boolean;
+  createdAt?: Timestamp;
+}
+
+const Admin = memo(() => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -23,24 +31,22 @@ const Admin = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState("");
 
-  // Protect the route
   useEffect(() => {
     if (user && user.isAdmin === false) {
       navigate("/");
     }
   }, [user, navigate]);
 
-  // Fetch Users
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const usersRef = collection(db, "users");
         const q = query(usersRef, orderBy("createdAt", "desc"));
         const snapshot = await getDocs(q);
-        const userList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+        const userList = snapshot.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
+        })) as AdminUser[];
         setUsers(userList);
       } catch (err: any) {
         console.error("Error fetching users:", err);
@@ -55,17 +61,17 @@ const Admin = () => {
     }
   }, [user]);
 
-  const handleUserClick = (userId: string) => {
+  const handleUserClick = useCallback((userId: string) => {
     setSelectedUserId(userId);
     setViewMode("analytics");
-  };
+  }, []);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     setSelectedUserId(null);
     setSyncStatus("");
-  };
+  }, []);
 
-  const handleSyncEmbeddings = async (targetUserId: string) => {
+  const handleSyncEmbeddings = useCallback(async (targetUserId: string) => {
     if (!window.confirm("Are you sure you want to generate embeddings for ALL past expenses? This will consume Gemini API quota.")) return;
 
     setIsSyncing(true);
@@ -74,7 +80,7 @@ const Admin = () => {
     try {
       const expensesRef = collection(db, "users", targetUserId, "expenses");
       const snapshot = await getDocs(expensesRef);
-      const expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const expenses = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
       const expensesWithoutEmbeddings = expenses.filter((e: any) => !e.embedding);
 
@@ -86,7 +92,6 @@ const Admin = () => {
 
       setSyncStatus(`Found ${expensesWithoutEmbeddings.length} expenses to sync. Generating...`);
 
-      // Process in small batches to avoid rate limits
       const BATCH_SIZE = 10;
       for (let i = 0; i < expensesWithoutEmbeddings.length; i += BATCH_SIZE) {
         const batch = expensesWithoutEmbeddings.slice(i, i + BATCH_SIZE);
@@ -96,7 +101,7 @@ const Admin = () => {
 
         await Promise.all(batch.map(async (expense: any) => {
           let dateObj = new Date();
-          if (expense.date && expense.date.toDate) {
+          if (expense.date instanceof Timestamp) {
             dateObj = expense.date.toDate();
           } else if (expense.date) {
             dateObj = new Date(expense.date);
@@ -111,7 +116,6 @@ const Admin = () => {
         }));
 
         await firestoreBatch.commit();
-        // Artificial delay to respect API rate limits
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
 
@@ -122,19 +126,18 @@ const Admin = () => {
     } finally {
       setIsSyncing(false);
     }
-  };
+  }, []);
 
-  if (!user?.isAdmin) {
-    return null; // Or a loading spinner while redirecting
-  }
+  const selectedUser = useMemo(() =>
+    users.find((u) => u.id === selectedUserId),
+    [users, selectedUserId]
+  );
 
-  // --- IMPERSONATION VIEW ---
+  if (!user?.isAdmin) return null;
+
   if (selectedUserId) {
-    const selectedUser = users.find((u) => u.id === selectedUserId);
-
     return (
       <div className="pb-20 pt-4 animate-in slide-in-from-right duration-300">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <LiquidBack onClick={handleBack} />
@@ -155,7 +158,6 @@ const Admin = () => {
             </div>
           </div>
 
-          {/* View Switcher */}
           <div className="flex bg-gray-100 dark:bg-white/5 p-1 rounded-xl">
             <button
               onClick={() => setViewMode("analytics")}
@@ -184,7 +186,6 @@ const Admin = () => {
           </div>
         )}
 
-        {/* Content */}
         <div key={viewMode} className="animate-in fade-in duration-300">
           {viewMode === "analytics" ? (
             <Analytics userId={selectedUserId} readOnly={true} />
@@ -196,9 +197,8 @@ const Admin = () => {
     );
   }
 
-  // --- USER LIST VIEW ---
   return (
-    <div className="pt-4 pb-20 space-y-6 animate-in fade-in duration-500">
+    <div className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-32 space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">
           Admin
@@ -224,9 +224,8 @@ const Admin = () => {
           {users.map((u) => (
             <Card
               key={u.id}
-              as="button"
               onClick={() => handleUserClick(u.id)}
-              className="flex items-center justify-between group hover:border-accent/50 transition-colors"
+              className="flex items-center justify-between group hover:border-accent/50 transition-colors cursor-pointer"
             >
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-full bg-gray-100 dark:bg-white/5 overflow-hidden flex items-center justify-center text-gray-400">
@@ -260,6 +259,8 @@ const Admin = () => {
       )}
     </div>
   );
-};
+});
+
+Admin.displayName = "Admin";
 
 export default Admin;

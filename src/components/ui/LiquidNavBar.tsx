@@ -1,23 +1,29 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
+import { LucideIcon } from "lucide-react";
 
 import "./LiquidGlass.css";
 
 interface LiquidNavBarProps {
-  items: { icon: any; path: string; label?: string }[];
+  items: { icon: LucideIcon; path: string; label?: string }[];
 }
 
 export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) => {
   const navigate = useNavigate();
   const location = useLocation();
-
   const { accentColor, accentColors } = useTheme();
-  // @ts-ignore
-  const activeColor = accentColors[accentColor]?.default || "#6366f1";
 
-  const activeIndex = items.findIndex((item) => item.path === location.pathname);
+  const activeColor = useMemo(() => {
+    const config = accentColors[accentColor as keyof typeof accentColors];
+    return config?.default || "#6366f1";
+  }, [accentColor, accentColors]);
+
+  const activeIndex = useMemo(() => 
+    items.findIndex((item) => item.path === location.pathname),
+    [items, location.pathname]
+  );
 
   return (
     <nav className="relative flex items-center h-16 px-1.5 liquid-glass-effect rounded-full pointer-events-auto">
@@ -31,7 +37,6 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) 
             onClick={() => navigate(item.path)}
             className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 pt-1 rounded-full tap-highlight-transparent group"
           >
-            {/* Active Pill Background */}
             <AnimatePresence>
               {isActive && (
                 <motion.div
@@ -56,12 +61,10 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) 
                 color={isActive ? activeColor : "currentColor"}
                 size={22}
                 strokeWidth={isActive ? 2.5 : 2}
-                className={`transition-all duration-300 ${isActive ? "scale-110" : "text-gray-500 dark:text-gray-400 opacity-80 group-hover:opacity-100"
-                  }`}
+                className={`transition-all duration-300 ${isActive ? "scale-110" : "text-gray-500 dark:text-gray-400 opacity-80 group-hover:opacity-100"}`}
               />
               <span
-                className={`text-[9px] font-bold uppercase tracking-wider transition-colors duration-300 ${isActive ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400 opacity-80 group-hover:opacity-100"
-                  }`}
+                className={`text-[9px] font-bold uppercase tracking-wider transition-colors duration-300 ${isActive ? "text-gray-900 dark:text-white" : "text-gray-500 dark:text-gray-400 opacity-80 group-hover:opacity-100"}`}
                 style={isActive ? { color: activeColor } : {}}
               >
                 {item.label}
@@ -73,3 +76,6 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) 
     </nav>
   );
 });
+
+LiquidNavBar.displayName = "LiquidNavBar";
+

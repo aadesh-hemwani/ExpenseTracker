@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
@@ -27,7 +27,7 @@ import { Timestamp } from "firebase/firestore";
 import { format } from "date-fns";
 import { getEventGradient } from "../utils/uiUtils";
 
-const container = {
+const containerVariants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -37,19 +37,18 @@ const container = {
   },
 };
 
-const item = {
+const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   show: { opacity: 1, y: 0 },
 };
 
-// Helper to convert startDate/endDate to Date object
 const toDate = (d: Timestamp | Date | undefined): Date => {
   if (!d) return new Date();
   if (d instanceof Timestamp) return d.toDate();
   return new Date(d);
 };
 
-const Profile = () => {
+const Profile = React.memo(() => {
   const { user, logOut } = useAuth();
   const { theme, toggleTheme, accentColor, setAccentColor, accentColors } = useTheme();
   const navigate = useNavigate();
@@ -59,7 +58,6 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 
-  // Event form state
   const [showAddEventForm, setShowAddEventForm] = useState(false);
   const [newEventName, setNewEventName] = useState("");
   const [newEventStart, setNewEventStart] = useState(format(new Date(), "yyyy-MM-dd'T'HH:mm"));
@@ -67,7 +65,6 @@ const Profile = () => {
   const [newEventBudget, setNewEventBudget] = useState("");
   const [savingEvent, setSavingEvent] = useState(false);
 
-  // Fetch current budget from Firestore on mount
   useEffect(() => {
     const fetchUserData = async () => {
       if (user?.uid) {
@@ -79,10 +76,9 @@ const Profile = () => {
       }
     };
     fetchUserData();
-  }, [user]);
+  }, [user?.uid]);
 
-  // Handle Budget Update
-  const handleSaveBudget = async (e: React.FormEvent) => {
+  const handleSaveBudget = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.uid) return;
     setLoading(true);
@@ -101,17 +97,17 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.uid, budget]);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await logOut();
     } catch (error) {
       console.error("Failed to log out", error);
     }
-  };
+  }, [logOut]);
 
-  const handleAddEvent = async (e: React.FormEvent) => {
+  const handleAddEvent = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEventName.trim()) return;
     setSavingEvent(true);
@@ -134,25 +130,58 @@ const Profile = () => {
     } finally {
       setSavingEvent(false);
     }
-  };
+  }, [newEventName, newEventStart, newEventEnd, newEventBudget, addEvent]);
+
+  const handleAutoCalculate = useCallback(async () => {
+    if (!user?.uid) return;
+    setLoading(true);
+    try {
+      const { collection, query, limit, getDocs } = await import("firebase/firestore");
+      const q = query(collection(db, "users", user.uid, "expenses"), limit(300));
+
+      const snapshot = await getDocs(q);
+      const expenses = snapshot.docs.map((d) => d.data());
+
+      if (expenses.length === 0) {
+        setMessage("No transaction history found to analyze.");
+        setLoading(false);
+        return;
+      }
+
+      const { calculateRecommendedBudget } = await import("../services/gemini");
+      const rec = await calculateRecommendedBudget(expenses as any);
+
+      if (rec) {
+        setBudget(rec.recommendedBudget.toString());
+        setMessage(`✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`);
+      } else {
+        setMessage("Could not generate a suggestion.");
+      }
+    } catch (e) {
+      console.error(e);
+      setMessage("Failed to analyze data.");
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.uid]);
+
+  const accentColorList = useMemo(() => Object.entries(accentColors), [accentColors]);
 
   return (
     <motion.div
-      variants={container}
+      variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="pt-4 max-w-lg mx-auto"
+      className="pt-[calc(env(safe-area-inset-top)+2rem)] pb-32 max-w-lg mx-auto"
     >
-      {/* Header */}
       <motion.h1
-        variants={item}
+        variants={itemVariants}
         className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white mb-8"
       >
         Profile
       </motion.h1>
 
-      {/* User Card */}
-      <motion.div variants={item}>
+      <motion.div variants={itemVariants}>
         <Card className="flex flex-col items-center text-center mb-6">
           <div className="relative mb-4">
             {user?.photoURL ? (
@@ -163,11 +192,7 @@ const Profile = () => {
               />
             ) : (
               <div className="w-24 h-24 rounded-full bg-accent/20 flex items-center justify-center border-4 border-white dark:border-gray-900 shadow-lg">
-                <User
-                  color="var(--color-accent)"
-                  size={40}
-                  className="text-accent"
-                />
+                <User color="var(--color-accent)" size={40} className="text-accent" />
               </div>
             )}
             <div className="absolute bottom-0 right-0 bg-green-500 w-6 h-6 rounded-full border-4 border-white dark:border-gray-900"></div>
@@ -196,72 +221,44 @@ const Profile = () => {
         </Card>
       </motion.div>
 
-      {/* Settings Section */}
-      <motion.div variants={item} className="space-y-6 pb-32">
-        {/* Appearance Settings */}
+      <motion.div variants={itemVariants} className="space-y-6 pb-32">
         <Card>
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 rounded-lg text-indigo-600 dark:text-indigo-400">
               <Palette size={20} color="currentColor" />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Appearance
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Appearance</h3>
           </div>
 
-          {/* Dark Mode Toggle */}
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div
-                className={`p-2 rounded-full transition-colors ${theme === "dark"
-                  ? "bg-gray-800 text-yellow-400"
-                  : "bg-yellow-100 text-yellow-600"
-                  }`}
-              >
-                {theme === "dark" ? (
-                  <Moon size={20} color="currentColor" />
-                ) : (
-                  <Sun size={20} color="currentColor" />
-                )}
+              <div className={`p-2 rounded-full transition-colors ${theme === "dark" ? "bg-gray-800 text-yellow-400" : "bg-yellow-100 text-yellow-600"}`}>
+                {theme === "dark" ? <Moon size={20} color="currentColor" /> : <Sun size={20} color="currentColor" />}
               </div>
               <div>
                 <p className="font-semibold text-gray-900 dark:text-white">Dark Mode</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  Adjust the appearance to reduce glare.
-                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Adjust the appearance to reduce glare.</p>
               </div>
             </div>
             <button
               onClick={toggleTheme}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${theme === "dark" ? "bg-accent" : "bg-gray-200"
-                }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${theme === "dark" ? "bg-accent" : "bg-gray-200"}`}
             >
-              <span
-                className={`${theme === "dark" ? "translate-x-6" : "translate-x-1"
-                  } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-              />
+              <span className={`${theme === "dark" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
             </button>
           </div>
 
-          {/* Accent Color Picker */}
           <div>
             <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">
               Accent Color{" "}
-              <span className="text-gray-900 dark:text-white ml-1 font-normal opacity-60">
-                • {accentColors[accentColor]?.name || "Custom"}
-              </span>
+              <span className="text-gray-900 dark:text-white ml-1 font-normal opacity-60">• {accentColors[accentColor as keyof typeof accentColors]?.name || "Custom"}</span>
             </label>
             <div className="flex flex-wrap gap-4">
-              {Object.entries(accentColors).map(([key, colors]) => (
+              {accentColorList.map(([key, colors]) => (
                 <button
                   key={key}
-                  // @ts-ignore
-                  onClick={() => setAccentColor(key)}
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 ${accentColor === key
-                    ? "ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110 shadow-md"
-                    : "ring-1 ring-black/5 dark:ring-white/10"
-                    }`}
-                  // @ts-ignore
+                  onClick={() => setAccentColor(key as any)}
+                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 ${accentColor === key ? "ring-2 ring-offset-2 ring-gray-900 dark:ring-white scale-110 shadow-md" : "ring-1 ring-black/5 dark:ring-white/10"}`}
                   style={{ backgroundColor: colors.default }}
                   aria-label={`Select ${colors.name} accent color`}
                   title={colors.name}
@@ -273,7 +270,6 @@ const Profile = () => {
           </div>
         </Card>
 
-        {/* Events Section */}
         <Card>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -291,7 +287,6 @@ const Profile = () => {
             </button>
           </div>
 
-          {/* Add Event Form */}
           <AnimatePresence>
             {showAddEventForm && (
               <motion.form
@@ -366,7 +361,6 @@ const Profile = () => {
             )}
           </AnimatePresence>
 
-          {/* Events List */}
           {eventsLoading ? (
             <div className="py-4 text-center text-sm text-gray-400">Loading events...</div>
           ) : events.length === 0 ? (
@@ -407,76 +401,20 @@ const Profile = () => {
           )}
         </Card>
 
-        {/* Budget Setting */}
         <Card>
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 bg-accent/10 rounded-lg text-accent">
               <Wallet size={20} />
             </div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-              Monthly Budget
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Monthly Budget</h3>
           </div>
 
           <form onSubmit={handleSaveBudget}>
             <div className="flex justify-between items-center mb-2">
-              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">
-                Spending Cap (₹)
-              </label>
+              <label className="block text-xs font-medium text-gray-400 uppercase tracking-wider">Spending Cap (₹)</label>
               <button
                 type="button"
-                onClick={async () => {
-                  setLoading(true);
-                  try {
-                    const {
-                      collection,
-                      query,
-                      limit,
-                      getDocs,
-                    } = await import("firebase/firestore");
-                    const q = query(
-                      collection(db, "users", user?.uid || "", "expenses"),
-                      limit(300),
-                    );
-
-                    console.log(`🪄 Auto-Budget: Fetching for user ${user?.uid}...`);
-                    const snapshot = await getDocs(q);
-                    console.log(`🪄 Auto-Budget: Found ${snapshot.size} transactions.`);
-
-                    let expenses = snapshot.docs.map((d) => d.data());
-
-                    expenses.sort((a, b) => {
-                      const dateA = a.date?.toDate ? a.date.toDate() : new Date(a.date);
-                      const dateB = b.date?.toDate ? b.date.toDate() : new Date(b.date);
-                      return dateB.getTime() - dateA.getTime();
-                    });
-
-                    const localTotal = expenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-                    console.log(`🪄 Auto-Budget: Calculated Total: ${localTotal}`);
-
-                    if (expenses.length === 0) {
-                      setMessage("No transaction history found to analyze.");
-                      setLoading(false);
-                      return;
-                    }
-
-                    const { calculateRecommendedBudget } = await import("../services/gemini");
-                    // @ts-ignore
-                    const rec = await calculateRecommendedBudget(expenses);
-
-                    if (rec) {
-                      setBudget(rec.recommendedBudget.toString());
-                      setMessage(`✨ AI Suggestion: ₹${rec.recommendedBudget}\n${rec.reasoning}`);
-                    } else {
-                      setMessage("Could not generate a suggestion.");
-                    }
-                  } catch (e) {
-                    console.error(e);
-                    setMessage("Failed to analyze data.");
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
+                onClick={handleAutoCalculate}
                 className="text-xs flex items-center gap-1 text-indigo-500 font-bold hover:text-indigo-600 transition-colors"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
@@ -503,17 +441,13 @@ const Profile = () => {
               </button>
             </div>
             {message && (
-              <p
-                className={`text-xs mt-3 ${message.includes("Failed") ? "text-red-500" : "text-green-600"
-                  } font-medium whitespace-pre-wrap leading-relaxed`}
-              >
+              <p className={`text-xs mt-3 ${message.includes("Failed") ? "text-red-500" : "text-green-600"} font-medium whitespace-pre-wrap leading-relaxed`}>
                 {message}
               </p>
             )}
           </form>
         </Card>
 
-        {/* Danger Zone / Logout */}
         <button
           onClick={handleLogout}
           className="w-full p-4 flex items-center justify-center gap-2 text-red-600 font-bold bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
@@ -523,14 +457,13 @@ const Profile = () => {
         </button>
       </motion.div>
 
-      <motion.p
-        variants={item}
-        className="text-center text-xs text-gray-300 dark:text-gray-600 pt-4"
-      >
+      <motion.p variants={itemVariants} className="text-center text-xs text-gray-300 dark:text-gray-600 pt-4">
         Version 1.0.0 • Expense Tracker PWA
       </motion.p>
     </motion.div>
   );
-};
+});
+
+Profile.displayName = "Profile";
 
 export default Profile;

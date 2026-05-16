@@ -23,18 +23,11 @@ import { Expense } from "../types";
 import { getMonthFromCache, saveMonthToCache, updateExpenseInCache, deleteMonthFromCache } from "../utils/indexedDB";
 import { generateEmbedding } from "../services/gemini";
 
-
-
-
 export interface MonthlyStat {
   monthKey: string;
   total: number;
   count: number;
 }
-
-// --- HUB FOR ALL EXPENSE LOGIC ---
-
-
 
 // 2. Hook for History Screen (Fetch Aggregated Stats)
 export const useMonthlyStats = (userId?: string) => {
@@ -44,8 +37,8 @@ export const useMonthlyStats = (userId?: string) => {
   const targetUserId = userId || user?.uid;
 
   useEffect(() => {
-    let unsubscribe: () => void;
-    let retryTimeout: NodeJS.Timeout;
+    let unsubscribe: (() => void) | undefined;
+    let retryTimeout: NodeJS.Timeout | undefined;
     let isActive = true;
 
     if (!targetUserId) {
@@ -70,16 +63,13 @@ export const useMonthlyStats = (userId?: string) => {
           console.error("useMonthlyStats error:", error);
           if (isActive) {
             setLoading(false);
-            // Retry after 2 seconds if not a permission denied error
             if (error.code !== "permission-denied") {
               retryTimeout = setTimeout(connect, 2000);
             }
           }
-          if (safetyTimeout) clearTimeout(safetyTimeout);
         }
       );
 
-      // Safety Timeout for initial load
       const safetyTimeout = setTimeout(() => {
         if (isActive) {
           console.warn("useMonthlyStats subscription timed out");
@@ -87,12 +77,10 @@ export const useMonthlyStats = (userId?: string) => {
         }
       }, 8000);
 
-      const cleanup = () => {
-        unsubscribe();
+      return () => {
+        if (unsubscribe) unsubscribe();
         clearTimeout(safetyTimeout);
       };
-      // Store cleanup for top level use
-      return cleanup;
     };
 
     const cleanupFn = connect();
@@ -121,9 +109,9 @@ export const useExpensesForMonth = (
   const targetUserId = userId || user?.uid;
 
   // Effect A: Real-time Subscription (Current Month Only)
-  // Dependencies: user, date, subscribe. NOT stats.
   useEffect(() => {
     let isActive = true;
+    let unsubscribe: (() => void) | undefined;
 
     if (!targetUserId || !date) {
       setExpenses([]);
@@ -138,14 +126,7 @@ export const useExpensesForMonth = (
     if (subscribe && isCurrentMonth) {
       setLoading(true);
       const start = new Date(date.getFullYear(), date.getMonth(), 1);
-      const end = new Date(
-        date.getFullYear(),
-        date.getMonth() + 1,
-        0,
-        23,
-        59,
-        59
-      );
+      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
 
       const collectionRef = collection(db, "users", targetUserId, "expenses");
       const q = query(
@@ -155,28 +136,28 @@ export const useExpensesForMonth = (
         orderBy("date", "desc")
       );
 
-      const unsubscribe = onSnapshot(
+      unsubscribe = onSnapshot(
         q,
         (snapshot: QuerySnapshot<DocumentData>) => {
           if (!isActive) return;
-          const docs = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            date: doc.data().date?.toDate(),
-          })) as Expense[];
+          const docs = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
+            };
+          }) as Expense[];
           setExpenses(docs);
           setLoading(false);
-          if (timeoutId) clearTimeout(timeoutId);
         },
         (error) => {
           if (!isActive) return;
           console.error("Snapshot error:", error);
           setLoading(false);
-          if (timeoutId) clearTimeout(timeoutId);
         }
       );
 
-      // Safety Timeout
       const timeoutId = setTimeout(() => {
         if (isActive) {
           console.warn("useExpensesForMonth subscription timed out");
@@ -186,14 +167,13 @@ export const useExpensesForMonth = (
 
       return () => {
         isActive = false;
-        unsubscribe();
+        if (unsubscribe) unsubscribe();
         clearTimeout(timeoutId);
       };
     }
   }, [targetUserId, date, subscribe]);
 
   // Effect B: Historical Data Fetching (Past Months)
-  // Dependencies: user, date, stats (to verify cache).
   useEffect(() => {
     let isActive = true;
 
@@ -203,7 +183,6 @@ export const useExpensesForMonth = (
     const currentMonthKey = format(new Date(), "yyyy-MM");
     const isCurrentMonth = monthKey === currentMonthKey;
 
-    // Skip if this is the current month (handled by Effect A)
     if (subscribe && isCurrentMonth) return;
 
     if (!statsLoaded) {
@@ -217,8 +196,6 @@ export const useExpensesForMonth = (
       if (!isActive) return;
       setLoading(true);
 
-      // Only clear if we are switching to a completely different month
-      // This prevents flashing when merely re-validating stats (like in Home screen)
       setExpenses((prev) => {
         if (prev.length > 0 && prev[0].date) {
           const prevMonth = format(prev[0].date instanceof Date ? prev[0].date : new Date(), "yyyy-MM");
@@ -230,7 +207,6 @@ export const useExpensesForMonth = (
       const isSelf = targetUserId === user?.uid;
 
       try {
-        // A. Try Cache (Self only)
         if (isSelf && matchingStat && matchingStat.count > 0) {
           const cached = await getMonthFromCache(monthKey);
           if (
@@ -239,30 +215,19 @@ export const useExpensesForMonth = (
             cached.total === matchingStat.total &&
             cached.count === matchingStat.count
           ) {
-            console.log(`[Cache Hit] ${monthKey}`);
             setExpenses(cached.data);
             setLoading(false);
             return;
           }
         }
 
-        // B. Fetch from Network (Skip if offline)
         if (!navigator.onLine) {
-          console.log(`[Offline Bypass] ${monthKey}`);
           setLoading(false);
           return;
         }
 
-        console.log(`[Network Fetch] ${monthKey}`);
         const start = new Date(date.getFullYear(), date.getMonth(), 1);
-        const end = new Date(
-          date.getFullYear(),
-          date.getMonth() + 1,
-          0,
-          23,
-          59,
-          59
-        );
+        const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
         const collectionRef = collection(db, "users", targetUserId, "expenses");
         const q = query(
           collectionRef,
@@ -274,13 +239,15 @@ export const useExpensesForMonth = (
         const snapshot = await getDocs(q);
         if (!isActive) return;
 
-        const docs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date?.toDate(),
-        })) as Expense[];
+        const docs = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
+          };
+        }) as Expense[];
 
-        // C. Update Cache (Self only)
         if (isSelf) {
           const trueTotal = docs.reduce((sum, e) => sum + Number(e.amount), 0);
           const trueCount = docs.length;
@@ -308,12 +275,11 @@ export const useExpensesForMonth = (
     return () => {
       isActive = false;
     };
+  }, [targetUserId, date, subscribe, statsLoaded, allStats, user?.uid]);
 
-  }, [targetUserId, date, subscribe, statsLoaded, allStats, user]); // Dependencies merged
-
-  // Effect C: Listen for local updates to patch state without refetching
+  // Effect C: Listen for local updates
   useEffect(() => {
-    const handleLocalUpdate = (e: CustomEvent) => {
+    const handleLocalUpdate = (e: CustomEvent<{ id: string; updates: Partial<Expense> }>) => {
        const { id, updates } = e.detail;
        setExpenses(prev => prev.map(exp => {
            if (exp.id === id) {
@@ -333,8 +299,7 @@ export const useExpensesForMonth = (
   return { expenses, loading };
 };
 
-// 3.5. Hook for fetching RECENT expenses based on time range (for Chat/AI)
-// Default: Current Month + Last Month (monthsLookback = 1)
+// 3.5. Hook for fetching RECENT expenses based on time range
 export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -350,15 +315,9 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
     setLoading(true);
     const collectionRef = collection(db, "users", targetUserId, "expenses");
 
-    // Calculate start date: 1st day of (CurrentMonth - monthsLookback)
     let q;
-
     if (monthsLookback === -1) {
-      // Infinite lookback: get all expenses for the user ever
-      q = query(
-        collectionRef,
-        orderBy("date", "desc")
-      );
+      q = query(collectionRef, orderBy("date", "desc"));
     } else {
       const now = new Date();
       const startDate = new Date(now.getFullYear(), now.getMonth() - monthsLookback, 1);
@@ -374,22 +333,23 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
     const unsubscribe = onSnapshot(
       q,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const docs = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date?.toDate(),
-        })) as Expense[];
+        const docs = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
+          };
+        }) as Expense[];
         setExpenses(docs);
         setLoading(false);
       },
       (error) => {
         console.error("useRecentExpenses error:", error);
         setLoading(false);
-        if (timeoutId) clearTimeout(timeoutId);
       }
     );
 
-    // Safety Timeout
     const timeoutId = setTimeout(() => {
       console.warn("useRecentExpenses subscription timed out");
       setLoading(false);
@@ -404,7 +364,7 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
   return { expenses, loading };
 };
 
-// 4. Global Action Hook (Add/Delete/Sync) - Exposed as 'useExpenses'
+// 4. Global Action Hook
 export const useExpenses = () => {
   const { user } = useAuth();
 
@@ -425,34 +385,27 @@ export const useExpenses = () => {
       const collectionRef = collection(db, "users", user.uid, "expenses");
       const statsRef = collection(db, "users", user.uid, "stats");
 
-      // Date Logic
-      let finalDate: any = serverTimestamp(); // Default to server time
       let dateObj = new Date();
+      let finalDate: Timestamp | ReturnType<typeof serverTimestamp> = serverTimestamp();
 
       if (customDate) {
         dateObj = new Date(customDate);
-        // Do not override time; use the time provided in customDate
         finalDate = Timestamp.fromDate(dateObj);
       }
 
       const monthKey = format(dateObj, "yyyy-MM");
       const statDocRef = doc(statsRef, monthKey);
-
-      // Create doc ref outside to get ID
       const newExpenseRef = doc(collectionRef);
 
-      // Calculate embedding for the expense
       const expenseString = `Spent ${amount} on ${category} on ${format(dateObj, "yyyy-MM-dd")}. Note: ${note}`;
       const embedding = await generateEmbedding(expenseString);
 
-      // Derive context values (with backward-compat fallback)
       const resolvedContext = context || 'personal';
       const resolvedContextId = contextId || (type === 'One-off' ? 'one-off' : 'regular');
 
       try {
         const batch = writeBatch(db);
 
-        // 1. Set Expense
         const expenseData: any = {
           amount: Number(amount),
           category,
@@ -463,23 +416,11 @@ export const useExpenses = () => {
           type: type || 'Regular',
           context: resolvedContext,
           contextId: resolvedContextId,
+          ...(embedding && { embedding }),
         };
 
-        if (embedding) {
-          expenseData.embedding = embedding;
-        }
-
         batch.set(newExpenseRef, expenseData);
-
-        // 2. Update Aggregated Stats (Optimistic with increment)
-        batch.set(
-          statDocRef,
-          {
-            total: increment(Number(amount)),
-            count: increment(1),
-          },
-          { merge: true }
-        );
+        batch.set(statDocRef, { total: increment(Number(amount)), count: increment(1) }, { merge: true });
 
         await batch.commit();
         return newExpenseRef.id;
@@ -491,7 +432,6 @@ export const useExpenses = () => {
     [user]
   );
 
-
   const updateExpense = useCallback(
     async (id: string, updates: Partial<Expense>) => {
       if (!user) return;
@@ -501,25 +441,15 @@ export const useExpenses = () => {
 
       try {
         const result = await runTransaction(db, async (transaction) => {
-          // 1. Get current expense
           const expenseDoc = await transaction.get(docRef);
-          if (!expenseDoc.exists()) throw "Expense document does not exist!";
-          const currentData = expenseDoc.data() as Expense;
+          if (!expenseDoc.exists()) throw new Error("Expense document does not exist!");
+          const currentData = expenseDoc.data() as DocumentData;
 
-          // 2. Determine if amount or date changed
           const oldAmount = Number(currentData.amount);
-          const newAmount =
-            updates.amount !== undefined ? Number(updates.amount) : oldAmount;
+          const newAmount = updates.amount !== undefined ? Number(updates.amount) : oldAmount;
           const amountChanged = oldAmount !== newAmount;
 
-          let oldDateObj = new Date();
-          // @ts-ignore
-          if (currentData.date && currentData.date.toDate) {
-            // @ts-ignore
-            oldDateObj = currentData.date.toDate();
-          } else if (currentData.date) {
-            oldDateObj = new Date(currentData.date as any);
-          }
+          let oldDateObj = currentData.date instanceof Timestamp ? currentData.date.toDate() : new Date(currentData.date);
           const oldMonthKey = format(oldDateObj, "yyyy-MM");
 
           let newMonthKey = oldMonthKey;
@@ -527,85 +457,43 @@ export const useExpenses = () => {
           let finalNewDate = currentData.date;
 
           if (updates.date) {
-            let newDateObj = new Date();
-            if (updates.date instanceof Timestamp) {
-              newDateObj = updates.date.toDate();
-            } else {
-              newDateObj = new Date(updates.date);
-            }
+            const newDateObj = updates.date instanceof Timestamp ? updates.date.toDate() : new Date(updates.date);
             newMonthKey = format(newDateObj, "yyyy-MM");
             dateChanged = oldMonthKey !== newMonthKey;
-            finalNewDate = updates.date; // Use the provided date format (likely Date object, will be converted by Firestore)
+            finalNewDate = updates.date;
           }
 
-          // 3. Update Stats if needed
           if (amountChanged || dateChanged) {
             const oldStatDocRef = doc(statsRef, oldMonthKey);
             const newStatDocRef = doc(statsRef, newMonthKey);
 
             if (dateChanged) {
-              // Moved to a different month
-              // Decrement from old month
-              transaction.set(
-                oldStatDocRef,
-                {
-                  total: increment(-oldAmount),
-                  count: increment(-1),
-                },
-                { merge: true }
-              );
-              // Increment to new month
-              transaction.set(
-                newStatDocRef,
-                {
-                  total: increment(newAmount),
-                  count: increment(1),
-                },
-                { merge: true }
-              );
+              transaction.set(oldStatDocRef, { total: increment(-oldAmount), count: increment(-1) }, { merge: true });
+              transaction.set(newStatDocRef, { total: increment(newAmount), count: increment(1) }, { merge: true });
             } else if (amountChanged) {
-              // Same month, different amount
               const diff = newAmount - oldAmount;
               if (diff !== 0) {
-                transaction.set(
-                  oldStatDocRef,
-                  {
-                    total: increment(diff),
-                  },
-                  { merge: true }
-                );
+                transaction.set(oldStatDocRef, { total: increment(diff) }, { merge: true });
               }
             }
           }
 
-          // 4. Update the actual expense document
-          // Removes undefined values to avoid Firestore errors
-          const sanitized = Object.fromEntries(
-            Object.entries(updates).filter(([_, v]) => v !== undefined)
-          );
-
-          // Make sure we write the final date correctly if it was passed
-          if (updates.date !== undefined) {
-            sanitized.date = finalNewDate;
-          }
+          const sanitized = Object.fromEntries(Object.entries(updates).filter(([_, v]) => v !== undefined));
+          if (updates.date !== undefined) sanitized.date = finalNewDate;
 
           transaction.set(docRef, sanitized, { merge: true });
-          
           return { oldMonthKey, newMonthKey, sanitized };
         });
 
         if (result) {
-            const { oldMonthKey, newMonthKey, sanitized } = result;
-            if (oldMonthKey === newMonthKey) {
-                await updateExpenseInCache(oldMonthKey, id, sanitized);
-            } else {
-                await deleteMonthFromCache(oldMonthKey);
-                await deleteMonthFromCache(newMonthKey);
-            }
-
-            window.dispatchEvent(new CustomEvent('local_expense_update', { 
-               detail: { id, updates: sanitized } 
-            }));
+          const { oldMonthKey, newMonthKey, sanitized } = result;
+          if (oldMonthKey === newMonthKey) {
+            await updateExpenseInCache(oldMonthKey, id, sanitized);
+          } else {
+            await deleteMonthFromCache(oldMonthKey);
+            await deleteMonthFromCache(newMonthKey);
+          }
+          window.dispatchEvent(new CustomEvent('local_expense_update', { detail: { id, updates: sanitized } }));
         }
       } catch (e) {
         console.error("Failed to update expense", e);
@@ -627,38 +515,22 @@ export const useExpenses = () => {
           let monthKey = "";
 
           if (amount !== undefined && date) {
-            // OPTIMIZATION: Use passed constraints to avoid reading the doc
-            // This is crucial if Read quota is exceeded
             expenseAmount = Number(amount);
-            // Ensure we have a Date object
             const d = date instanceof Timestamp ? date.toDate() : (date as Date);
             monthKey = format(d, "yyyy-MM");
           } else {
-            // Fallback: Read doc if we don't have details (Will fail if quota exceeded)
             const expenseDoc = await transaction.get(docRef);
-            if (!expenseDoc.exists()) throw "Document does not exist!";
-            const data = expenseDoc.data();
+            if (!expenseDoc.exists()) throw new Error("Document does not exist!");
+            const data = expenseDoc.data() as DocumentData;
             expenseAmount = Number(data.amount);
-            const dateField = data.date;
-            const d = dateField instanceof Timestamp ? dateField.toDate() : new Date(dateField);
+            const d = data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date);
             monthKey = format(d, "yyyy-MM");
           }
 
           const statDocRef = doc(statsRef, monthKey);
-
-          // 1. Delete Expense
           transaction.delete(docRef);
-
-          // 2. Decrement Stats
           if (expenseAmount !== undefined && monthKey) {
-            transaction.set(
-              statDocRef,
-              {
-                total: increment(-expenseAmount),
-                count: increment(-1),
-              },
-              { merge: true }
-            );
+            transaction.set(statDocRef, { total: increment(-expenseAmount), count: increment(-1) }, { merge: true });
           }
         });
       } catch (e) {
@@ -669,12 +541,7 @@ export const useExpenses = () => {
   );
 
   const updateMonthlyStat = useCallback(
-    async (
-      monthKey: string,
-      total: number,
-      count: number,
-      targetUserId?: string
-    ) => {
+    async (monthKey: string, total: number, count: number, targetUserId?: string) => {
       const uid = targetUserId || user?.uid;
       if (!uid) return;
 
@@ -682,9 +549,6 @@ export const useExpenses = () => {
       const statDocRef = doc(statsRef, monthKey);
       try {
         await setDoc(statDocRef, { total, count }, { merge: true });
-        console.log(
-          `Stats updated for ${monthKey}: Total ${total}, Count ${count}`
-        );
       } catch (e) {
         console.error("Failed to update stats:", e);
       }
@@ -701,3 +565,4 @@ export const useExpenses = () => {
     loading: false,
   }), [addExpense, deleteExpense, updateMonthlyStat, updateExpense]);
 };
+

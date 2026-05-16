@@ -1,32 +1,30 @@
+import React, { memo } from "react";
 import { motion } from "framer-motion";
-import { useMemo, ElementType, ReactNode, ComponentProps } from "react";
 
-interface CardProps extends ComponentProps<typeof motion.div> {
-  children?: ReactNode;
+interface CardProps extends React.ComponentPropsWithoutRef<typeof motion.div> {
+  children?: React.ReactNode;
   className?: string;
-  as?: ElementType;
 }
 
-const Card = ({
+const Card = memo(({
   children,
   className = "",
-  as: Component = "div",
   ...props
 }: CardProps) => {
-  // @ts-ignore - Dynamic motion component creation is tricky to type strictly without casting
-  const MotionComponent = useMemo(() => motion.create(Component), [Component]);
-
   return (
-    <MotionComponent
+    <motion.div
       whileTap={{ scale: 0.98 }}
       whileHover={{ scale: 1.01 }}
-      transition={{ type: "spring", stiffness: 400, damping: 20 }}
-      className={`glass-card p-6 rounded-2xl shadow-sm ${className}`}
+      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+      className={`glass-card p-6 rounded-2xl shadow-sm border-transparent dark:border-none ${className}`}
       {...props}
     >
       {children}
-    </MotionComponent>
+    </motion.div>
   );
-};
+});
+
+Card.displayName = "Card";
 
 export default Card;
+

@@ -1,12 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Send, Bot, Loader2, Trash2 } from "lucide-react";
 import { useRecentExpenses } from "../hooks/useExpenses";
 import { useChatHistory } from "../hooks/useChatHistory";
 import { chatWithFinancialAssistant } from "../services/gemini";
 import { useAuth } from "../context/AuthContext";
+import { Timestamp } from "firebase/firestore";
 
-const WelcomeMessage = () => (
+const WelcomeMessage = memo(() => (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -38,32 +39,35 @@ const WelcomeMessage = () => (
             ))}
         </div>
     </motion.div>
-);
+));
 
+WelcomeMessage.displayName = "WelcomeMessage";
 
-const Chat = () => {
+const Chat = memo(() => {
     const { user } = useAuth();
     const { messages, addMessage, clearHistory } = useChatHistory();
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const chatAreaRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+
+    const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
+        messagesEndRef.current?.scrollIntoView({ behavior });
+    }, []);
 
     const handleInputFocus = useCallback(() => {
         setIsKeyboardOpen(true);
         document.documentElement.classList.add("keyboard-open");
-        // Scroll to bottom after keyboard animation settles
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 300);
-    }, []);
+        setTimeout(() => scrollToBottom(), 300);
+    }, [scrollToBottom]);
 
     const handleInputBlur = useCallback(() => {
         setIsKeyboardOpen(false);
         document.documentElement.classList.remove("keyboard-open");
     }, []);
 
-    const formatMessageText = (text: string) => {
+    const formatMessageText = useCallback((text: string) => {
         const lines = text.split('\n');
         return lines.map((line, i) => (
             <React.Fragment key={i}>
@@ -76,23 +80,24 @@ const Chat = () => {
                 {i < lines.length - 1 && <br />}
             </React.Fragment>
         ));
-    };
+    }, []);
 
     const { expenses, loading } = useRecentExpenses(-1);
 
-    const earliestDate = expenses.length > 0
-        ? new Date(Math.min(...expenses.map(e => (e.date as any).toDate ? (e.date as any).toDate().getTime() : new Date(e.date as any).getTime())))
-        : null;
-
-    const scrollToBottom = useCallback(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, []);
+    const earliestDate = useMemo(() => {
+        if (expenses.length === 0) return null;
+        const timestamps = expenses.map(e => {
+            if (e.date instanceof Timestamp) return e.date.toMillis();
+            if (e.date instanceof Date) return e.date.getTime();
+            return new Date(e.date).getTime();
+        });
+        return new Date(Math.min(...timestamps));
+    }, [expenses]);
 
     useEffect(() => {
         scrollToBottom();
     }, [messages, isTyping, scrollToBottom]);
 
-    // Cleanup keyboard-open class on unmount
     useEffect(() => {
         return () => document.documentElement.classList.remove("keyboard-open");
     }, []);
@@ -123,14 +128,17 @@ const Chat = () => {
         }
     };
 
+    const handleClearHistory = useCallback(() => {
+        if (window.confirm("Clear entire chat history?")) {
+            clearHistory();
+        }
+    }, [clearHistory]);
+
     return (
         <div className="absolute inset-0 flex flex-col h-full">
-            {/* Minimal Header */}
             <div className={`pt-[calc(env(safe-area-inset-top)+0.75rem)] px-5 md:px-8 pb-3 shrink-0 flex items-center justify-between transition-all duration-200 ${isKeyboardOpen ? "hidden" : ""}`}>
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        Ask AI
-                    </h1>
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Ask AI</h1>
                     <p className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
                         {expenses.length} expenses{earliestDate && ` · since ${earliestDate.toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}`}
                     </p>
@@ -138,11 +146,7 @@ const Chat = () => {
 
                 {messages.length > 0 && (
                     <button
-                        onClick={() => {
-                            if (window.confirm("Clear entire chat history?")) {
-                                clearHistory();
-                            }
-                        }}
+                        onClick={handleClearHistory}
                         className="p-2 text-gray-400 hover:text-red-500 dark:text-gray-500 dark:hover:text-red-400 transition-colors"
                         title="Clear History"
                     >
@@ -151,14 +155,9 @@ const Chat = () => {
                 )}
             </div>
 
-            {/* Divider */}
             {!isKeyboardOpen && <div className="h-px bg-gray-100 dark:bg-white/5 mx-5 md:mx-8 shrink-0" />}
 
-            {/* Chat Area */}
-            <div
-                ref={chatAreaRef}
-                className="flex-1 overflow-y-auto no-scrollbar px-5 md:px-8 flex flex-col min-h-0"
-            >
+            <div className="flex-1 overflow-y-auto no-scrollbar px-5 md:px-8 flex flex-col min-h-0">
                 {messages.length === 0 ? (
                     <WelcomeMessage />
                 ) : (
@@ -182,7 +181,6 @@ const Chat = () => {
                             ))}
                         </AnimatePresence>
 
-                        {/* Typing Indicator */}
                         {isTyping && (
                             <motion.div
                                 initial={{ opacity: 0, y: 6 }}
@@ -201,11 +199,9 @@ const Chat = () => {
                 )}
             </div>
 
-            {/* Input — sticks to bottom, moves above keyboard on mobile */}
             <div
-                className={`left-0 right-0 px-5 md:px-8 z-10 ${
-                    isKeyboardOpen ? "sticky bottom-0 pb-1 pt-2 bg-white/90 dark:bg-[#0A0A0A]/90 backdrop-blur-md" : "fixed bottom-28 md:bottom-6"
-                }`}
+                className={`left-0 right-0 px-5 md:px-8 z-10 ${isKeyboardOpen ? "sticky bottom-0 pb-1 pt-2 bg-white/90 dark:bg-[#0A0A0A]/90 backdrop-blur-md" : "fixed bottom-28 md:bottom-6"
+                    }`}
             >
                 <div className="max-w-2xl mx-auto">
                     <form onSubmit={handleSendMessage} className="backdrop-blur-md bg-white/70 dark:bg-[#0A0A0A]/70 rounded-full p-1 flex items-center gap-1 border border-gray-200/50 dark:border-white/5 shadow-sm">
@@ -237,7 +233,8 @@ const Chat = () => {
             </div>
         </div>
     );
-};
+});
+
+Chat.displayName = "Chat";
 
 export default Chat;
-

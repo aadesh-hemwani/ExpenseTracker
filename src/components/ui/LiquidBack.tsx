@@ -1,4 +1,4 @@
-import React from "react";
+import React, { memo } from "react";
 import { ChevronLeft } from "lucide-react";
 import "./LiquidGlass.css";
 
@@ -7,7 +7,7 @@ interface LiquidBackProps {
   className?: string;
 }
 
-export const LiquidBack: React.FC<LiquidBackProps> = ({
+export const LiquidBack: React.FC<LiquidBackProps> = memo(({
   onClick,
   className = "",
 }) => {
@@ -20,4 +20,7 @@ export const LiquidBack: React.FC<LiquidBackProps> = ({
       <ChevronLeft size={24} />
     </button>
   );
-};
+});
+
+LiquidBack.displayName = "LiquidBack";
+

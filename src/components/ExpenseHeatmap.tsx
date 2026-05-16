@@ -1,8 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { format, isToday, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns";
 import { motion } from "framer-motion";
 import { Expense } from "../types";
 import CountUp from "./CountUp";
+import { Timestamp } from "firebase/firestore";
 
 interface DistributionStats {
   p50: number;
@@ -21,9 +22,6 @@ interface ExpenseHeatmapProps {
   selectedDate: Date | null;
 }
 
-/**
- * Calculates percentiles and averages for daily spending.
- */
 const calculateDistributionStats = (dailyTotals: number[]): DistributionStats => {
   const sortedTotals = [...dailyTotals].filter(v => v > 0).sort((a, b) => a - b);
   const n = sortedTotals.length;
@@ -47,9 +45,6 @@ const calculateDistributionStats = (dailyTotals: number[]): DistributionStats =>
   return { p50: median, p80, p95, average, median, max, total: sum };
 };
 
-/**
- * Interpolates between two HSL colors.
- */
 const interpolateColor = (val: number, start: number[], end: number[]) => {
   const h = start[0] + (end[0] - start[0]) * val;
   const s = start[1] + (end[1] - start[1]) * val;
@@ -58,57 +53,47 @@ const interpolateColor = (val: number, start: number[], end: number[]) => {
   return `hsla(${h}, ${s}%, ${l}%, ${a})`;
 };
 
-/**
- * Maps a value to a color intensity based on distribution stats.
- */
 const getColor = (value: number, stats: DistributionStats) => {
   if (value <= 0) return "transparent";
 
-  // Define HSL colors: [h, s, l, a]
-  const GREEN = [142, 70, 45, 0.15];  // Low - subtle green
-  const AMBER = [45, 93, 47, 0.3];   // Mid - amber
-  const RED = [0, 84, 60, 0.45];     // High - orange/red
+  const GREEN = [142, 70, 45, 0.15];
+  const AMBER = [45, 93, 47, 0.3];
+  const RED = [0, 84, 60, 0.45];
 
-  // Cap value at P95 to prevent outliers from skewing the scale
   const cappedValue = Math.min(value, stats.p95);
 
   if (cappedValue <= stats.p50) {
-    // 0 to P50: -> Green
     const t = cappedValue / (stats.p50 || 1);
     return interpolateColor(t, [142, 70, 45, 0.05], GREEN);
   } else if (cappedValue <= stats.p80) {
-    // P50 to P80: Green -> Amber
     const t = (cappedValue - stats.p50) / (stats.p80 - stats.p50 || 1);
     return interpolateColor(t, GREEN, AMBER);
   } else {
-    // P80 to P95: Amber -> Red
     const t = (cappedValue - stats.p80) / (stats.p95 - stats.p80 || 1);
     return interpolateColor(t, AMBER, RED);
   }
 };
 
-const ExpenseHeatmap: React.FC<ExpenseHeatmapProps> = ({
+const ExpenseHeatmap = memo(({
   expenses,
   currentMonth,
   onSelectDate,
   selectedDate,
-}) => {
+}: ExpenseHeatmapProps) => {
   const { calendarDays, startPadding } = useMemo(() => {
     const start = startOfMonth(currentMonth);
     const end = endOfMonth(currentMonth);
     const days = eachDayOfInterval({ start, end });
-    const padding = start.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const padding = start.getDay();
     return { calendarDays: days, startPadding: padding };
   }, [currentMonth]);
 
   const dailyTotalsMap = useMemo(() => {
     const map: Record<string, number> = {};
     expenses.forEach((e) => {
-      // @ts-ignore
       if (!e.date) return;
-      // @ts-ignore
-      const dateVal = e.date.toDate ? e.date.toDate() : e.date;
-      const dayKey = format(new Date(dateVal), "yyyy-MM-dd");
+      const dateVal = e.date instanceof Timestamp ? e.date.toDate() : new Date(e.date as any);
+      const dayKey = format(dateVal, "yyyy-MM-dd");
       map[dayKey] = (map[dayKey] || 0) + Number(e.amount);
     });
     return map;
@@ -137,7 +122,6 @@ const ExpenseHeatmap: React.FC<ExpenseHeatmapProps> = ({
           </div>
         ))}
 
-        {/* Start Padding */}
         {Array.from({ length: startPadding }).map((_, i) => (
           <div key={`pad-${i}`} className="h-14 md:h-20" />
         ))}
@@ -187,7 +171,6 @@ const ExpenseHeatmap: React.FC<ExpenseHeatmapProps> = ({
         })}
       </div>
 
-      {/* Stats Footer */}
       <div className="flex items-center justify-between px-2 pt-2 border-t border-subtle/30">
         <div className="flex gap-6">
           <div className="flex flex-col">
@@ -226,6 +209,8 @@ const ExpenseHeatmap: React.FC<ExpenseHeatmapProps> = ({
       </div>
     </div>
   );
-};
+});
+
+ExpenseHeatmap.displayName = "ExpenseHeatmap";
 
 export default ExpenseHeatmap;

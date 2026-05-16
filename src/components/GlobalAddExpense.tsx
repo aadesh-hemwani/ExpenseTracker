@@ -1,4 +1,4 @@
-import React, { useState, memo, useEffect, useCallback, useRef } from "react";
+import React, { useState, memo, useEffect, useCallback, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation, animate } from "framer-motion";
@@ -23,7 +23,7 @@ const NOTE_PLACEHOLDERS: Record<string, string> = {
   Misc: "Add a note...",
 };
 
-const AnimatedPercentage = ({ value, color }: { value: number; color: string }) => {
+const AnimatedPercentage = memo(({ value, color }: { value: number; color: string }) => {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
@@ -49,8 +49,38 @@ const AnimatedPercentage = ({ value, color }: { value: number; color: string }) 
       {display.toFixed(1)}<span className="text-2xl ml-0.5">%</span>
     </motion.div>
   );
-};
+});
 
+AnimatedPercentage.displayName = "AnimatedPercentage";
+
+interface NumKeyProps {
+  val: string;
+  label?: React.ReactNode;
+  transparent?: boolean;
+  onPress: (val: string) => void;
+}
+
+const NumKey = memo(({ val, label, transparent = false, onPress }: NumKeyProps) => (
+  <motion.button
+    whileTap={{
+      scale: 0.95,
+      backgroundColor: transparent ? "transparent" : "rgba(255,255,255,0.15)",
+    }}
+    transition={{ duration: 0.05 }}
+    onClick={() => {
+      if (navigator.vibrate) navigator.vibrate(10);
+      onPress(val);
+    }}
+    className={`
+      relative h-14 sm:h-16 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-normal select-none touch-manipulation transition-colors duration-200
+      ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white"}
+    `}
+  >
+    {label || val}
+  </motion.button>
+));
+
+NumKey.displayName = "NumKey";
 
 const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const { addExpense, updateExpense } = useExpenses();
@@ -59,13 +89,11 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const { isOpen, mode, expenseData, closeModal, setMode, openModal, updateExpenseData } = useGlobalModal();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Inputs
   const [amountStr, setAmountStr] = useState("0");
   const [category, setCategory] = useState("Food");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date());
 
-  // Context state
   const [contextType, setContextType] = useState<"personal" | "event">("personal");
   const [personalType, setPersonalType] = useState<"regular" | "one-off">("regular");
   const [selectedEventId, setSelectedEventId] = useState<string>("");
@@ -73,12 +101,11 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPersonalDropdown, setShowPersonalDropdown] = useState(false);
   const [showEventDropdown, setShowEventDropdown] = useState(false);
-  const [amountKey, setAmountKey] = useState(0); // triggers scale animation
+  const [amountKey, setAmountKey] = useState(0);
   const personalChipRef = useRef<HTMLButtonElement>(null);
   const eventChipRef = useRef<HTMLButtonElement>(null);
   const controls = useAnimation();
 
-  // Handle Deep Links
   useEffect(() => {
     const action = searchParams.get("action");
     const amountParam = searchParams.get("amount");
@@ -87,14 +114,12 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
     if (action === "add") {
       openModal("add");
-
       if (amountParam) setAmountStr(amountParam);
       if (noteParam) setNote(noteParam);
       if (categoryParam) setCategory(categoryParam);
     }
   }, [searchParams, openModal]);
 
-  // Sync Data on Open — resolve context/contextId from expenseData
   useEffect(() => {
     if (isOpen) {
       if (mode === "add") {
@@ -110,18 +135,14 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
         setCategory(expenseData.category);
         setNote(expenseData.note || "");
 
-        // Handle Firestore Timestamp or Date
-        // @ts-ignore
-        const d = expenseData.date?.toDate ? expenseData.date.toDate() : new Date(expenseData.date);
+        const d = expenseData.date instanceof Timestamp ? expenseData.date.toDate() : new Date(expenseData.date as any);
         setDate(d);
 
-        // Resolve context
         const ctx = expenseData.context || "personal";
         setContextType(ctx);
         if (ctx === "event") {
           setSelectedEventId(expenseData.contextId || "");
         } else {
-          // personal: derive from contextId or legacy type
           const cid = expenseData.contextId || (expenseData.type === "One-off" ? "one-off" : "regular");
           setPersonalType(cid as "regular" | "one-off");
         }
@@ -159,13 +180,11 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
           return prev + val;
         });
       }
-      // Trigger keystroke animation
       setAmountKey((k) => k + 1);
     },
     [amountStr],
   );
 
-  // Close dropdowns on outside click
   useEffect(() => {
     if (!showPersonalDropdown && !showEventDropdown) return;
     const handleClick = (e: MouseEvent) => {
@@ -191,7 +210,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
       return;
     }
 
-    // Validate event selection
     if (contextType === "event" && !selectedEventId) {
       if (navigator.vibrate) navigator.vibrate(200);
       return;
@@ -199,7 +217,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
     setIsSubmitting(true);
 
-    // Compute context fields
     const context: "personal" | "event" = contextType;
     const contextId = contextType === "event" ? selectedEventId : personalType;
     const legacyType = contextType === "personal"
@@ -230,14 +247,13 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
         setMode("view");
       } else {
-        // ADD MODE
         await addExpense(
           amountVal.toString(),
           category,
           note,
           date,
-          undefined, // icon
-          undefined, // iconType
+          undefined,
+          undefined,
           legacyType,
           context,
           contextId
@@ -271,45 +287,23 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
     updateExpenseData,
   ]);
 
-  // Numpad Button Component
-  const NumKey = ({
-    val,
-    label,
-    transparent = false,
-  }: {
-    val: string;
-    label?: React.ReactNode;
-    transparent?: boolean;
-  }) => (
-    <motion.button
-      whileTap={{
-        scale: 0.95,
-        backgroundColor: transparent ? "transparent" : "rgba(255,255,255,0.15)",
-      }}
-      transition={{ duration: 0.05 }}
-      onClick={() => {
-        if (navigator.vibrate) navigator.vibrate(10);
-        val === "DONE" ? handleSave() : handleNumpadPress(val);
-      }}
-      className={`
-        relative h-14 sm:h-16 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-normal select-none touch-manipulation transition-colors duration-200
-        ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white"}
-      `}
-    >
-      {label || val}
-    </motion.button>
-  );
+  const onKeyClick = useCallback((val: string) => {
+    if (val === "DONE") {
+      handleSave();
+    } else {
+      handleNumpadPress(val);
+    }
+  }, [handleSave, handleNumpadPress]);
 
   const isReadOnly = mode === "view";
 
-  // Get display labels for view mode
-  const contextLabel = () => {
+  const contextLabel = useMemo(() => {
     if (contextType === "event") {
       const ev = events.find(e => e.id === selectedEventId);
       return ev ? ev.name : "Event";
     }
     return personalType === "one-off" ? "One-off" : "Regular";
-  };
+  }, [contextType, personalType, selectedEventId, events]);
 
   return (
     <>
@@ -318,10 +312,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
       {createPortal(
         <AnimatePresence>
           {isOpen && (
-            <div
-              className={`fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 items-end`}
-            >
-              {/* Backdrop */}
+            <div className="fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 items-end">
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -330,10 +321,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                 className="absolute inset-0 bg-gray-900/60 dark:bg-black/40 backdrop-blur-[8px] pointer-events-auto"
                 onClick={handleCloseModal}
               />
-              <>
-              </>
 
-              {/* Modal Content */}
               <motion.div
                 initial={{ y: "110%" }}
                 animate={{ y: 0 }}
@@ -346,16 +334,13 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                 }}
                 className="relative z-10 w-full max-w-md bg-white dark:bg-[#121316] rounded-t-[20px] shadow-lg overflow-hidden pb-safe pointer-events-auto"
               >
-                {/* Drag Handle */}
                 <div className="w-full h-6 flex items-center justify-center pt-2">
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full" />
                 </div>
 
                 <div className="px-5 pb-3 pt-1 flex flex-col h-full space-y-3">
-                  {/* Top Bar */}
                   <div className="flex justify-between items-center w-full">
                     <div className="flex items-center space-x-1.5 flex-nowrap min-w-0">
-                      {/* Date Picker */}
                       <div className="relative flex-shrink-0">
                         <button className="flex items-center space-x-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-xs whitespace-nowrap">
                           <Calendar size={13} className="text-current flex-shrink-0" />
@@ -381,7 +366,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                         )}
                       </div>
 
-                      {/* Time Picker */}
                       <div className="relative flex-shrink-0">
                         <button className="flex items-center space-x-1.5 bg-gray-100 dark:bg-white/5 px-3 py-1.5 rounded-full font-semibold text-gray-600 dark:text-gray-300 pointer-events-none text-xs whitespace-nowrap">
                           <Clock size={13} className="text-current flex-shrink-0" />
@@ -431,7 +415,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     </div>
                   </div>
 
-                  {/* Main Amount Display — Hero */}
                   <div className="flex flex-col items-center justify-center py-2">
                     <motion.div
                       key={amountKey}
@@ -447,14 +430,12 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     </motion.div>
                   </div>
 
-                  {/* Categories Horizontal Scroll */}
                   <div
                     ref={(el) => {
-                      // Scroll to selected category on mount/update
                       if (el && isOpen) {
                         const index = CATEGORIES.indexOf(category);
                         if (index !== -1) {
-                          const itemWidth = 88; // 72px width + 16px gap approx
+                          const itemWidth = 88;
                           const scrollLeft = index * itemWidth - (el.clientWidth / 2) + (itemWidth / 2);
                           el.scrollTo({ left: scrollLeft, behavior: "smooth" });
                         }
@@ -476,10 +457,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                               opacity: isSelected ? 1 : (isReadOnly ? 0.3 : 0.7),
                               filter: isSelected ? "grayscale(0%)" : (isReadOnly ? "grayscale(100%)" : "grayscale(0%)")
                             }}
-                            className={`
-                              flex flex-col items-center justify-center space-y-2 min-w-[72px]
-                              transition-colors duration-200
-                            `}
+                            className="flex flex-col items-center justify-center space-y-2 min-w-[72px] transition-colors duration-200"
                           >
                             <div
                               className={`
@@ -512,7 +490,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     </div>
                   </div>
 
-                  {/* Note Input Row */}
                   <div className="w-full">
                     <input
                       type="text"
@@ -524,7 +501,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     />
                   </div>
 
-                  {/* Context Selector Row */}
                   <div className="grid grid-cols-2 gap-3 w-full">
                     {isReadOnly ? (
                       <>
@@ -533,12 +509,11 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                           <span>{contextType === "event" ? "Event" : "Personal"}</span>
                         </div>
                         <div className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500 truncate">
-                          <span>{contextLabel()}</span>
+                          <span>{contextLabel}</span>
                         </div>
                       </>
                     ) : (
                       <>
-                        {/* Personal / Event Toggle */}
                         <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1 gap-1">
                           <button
                             onClick={() => setContextType("personal")}
@@ -567,7 +542,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                           </button>
                         </div>
 
-                        {/* Sub-picker (Regular/One-off or Event name) */}
                         <div className="relative">
                           {contextType === "personal" ? (
                             <>
@@ -664,9 +638,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     )}
                   </div>
 
-                  {/* Numpad & Actions Container */}
                   <div className="mt-auto pb-4 w-full relative">
-                    {/* View Mode Actions (Visible only in View Mode) */}
                     {isReadOnly && expenseData && (
                       <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
@@ -689,15 +661,11 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
                               return (
                                 <div className="flex flex-col space-y-4">
-                                  {/* Scale Component (Realistic Ruler) */}
                                   <div className="relative w-full h-16 flex flex-col items-center">
                                     <div className="relative w-full">
-                                      {/* Ticks and Baseline Container */}
                                       <div className="relative w-full h-10 flex items-end">
-                                        {/* Baseline */}
                                         <div className="absolute w-full h-[1px] bg-gray-200 dark:bg-white/20 bottom-0" />
 
-                                        {/* Utilization Baseline Highlight */}
                                         <motion.div
                                           initial={{ width: 0 }}
                                           animate={{ width: `${pct}%` }}
@@ -706,7 +674,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                           style={{ backgroundColor: catColor }}
                                         />
 
-                                        {/* Ticks (1% increments) */}
                                         <div className="absolute inset-0 flex justify-between items-end pointer-events-none">
                                           {Array.from({ length: 101 }).map((_, i) => {
                                             const isMajor = i % 10 === 0;
@@ -732,7 +699,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                           })}
                                         </div>
 
-                                        {/* Labels (Every 10%) */}
                                         <div className="absolute left-0 right-0 top-full pt-2 flex justify-between pointer-events-none">
                                           {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((t) => (
                                             <div key={t} className="flex flex-col items-center w-0 overflow-visible">
@@ -743,7 +709,6 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                           ))}
                                         </div>
 
-                                        {/* Precision Marker (Floating dot or Line) */}
                                         <motion.div
                                           initial={{ opacity: 0, y: 10 }}
                                           animate={{ opacity: 1, y: 0, left: `${pct}%` }}
@@ -760,16 +725,11 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                     </div>
                                   </div>
 
-                                  {/* Vertical Stacked Contribution Info */}
                                   <div className="flex flex-col items-center pt-2 text-center">
                                     <AnimatedPercentage value={pct} color={catColor} />
-
-                                    <p
-                                      className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1 mb-2"
-                                    >
+                                    <p className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest mt-1 mb-2">
                                       of your monthly spend of {" "}
                                       <span className="text-gray-500 dark:text-gray-400">₹{total.toLocaleString()}</span>
-
                                     </p>
                                   </div>
                                 </div>
@@ -786,35 +746,26 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                       </motion.div>
                     )}
 
-                    {/* Numpad Grid (Hidden in View Mode but keeps height if we use visibility, but here we use absolute overlay or conditional rendering with fixed height wrapper) */}
-                    {/* Actually, to keep height perfectly, we can render Numpad with opacity-0 pointer-events-none in view mode, AND overlay the actions */}
-
                     <div className={`flex flex-col gap-4 transition-all duration-300 ${isReadOnly ? 'opacity-0 pointer-events-none filter blur-sm' : 'opacity-100'}`}>
-                      {/* Grid */}
-                      <motion.div
-                        className="grid grid-cols-3 gap-2"
-                      >
+                      <motion.div className="grid grid-cols-3 gap-2">
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                          <NumKey key={num} val={num.toString()} />
+                          <NumKey key={num} val={num.toString()} onPress={onKeyClick} />
                         ))}
                         <NumKey
                           val="."
                           transparent
-                          label={
-                            <span className="text-2xl font-bold pb-2">.</span>
-                          }
+                          onPress={onKeyClick}
+                          label={<span className="text-2xl font-bold pb-2">.</span>}
                         />
-                        <NumKey val="0" />
+                        <NumKey val="0" onPress={onKeyClick} />
                         <NumKey
                           val="BACKSPACE"
                           transparent
-                          label={
-                            <Delete size={28} className="text-current" />
-                          }
+                          onPress={onKeyClick}
+                          label={<Delete size={28} className="text-current" />}
                         />
                       </motion.div>
 
-                      {/* Action Button — Smart CTA */}
                       <div className="mt-2">
                         <motion.button
                           whileTap={{ scale: 0.98 }}
@@ -838,13 +789,15 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                   </div>
                 </div>
               </motion.div>
-            </div >
+            </div>
           )}
-        </AnimatePresence >,
+        </AnimatePresence>,
         document.body,
       )}
     </>
   );
 });
+
+GlobalAddExpense.displayName = "GlobalAddExpense";
 
 export default GlobalAddExpense;

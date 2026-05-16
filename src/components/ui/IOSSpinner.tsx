@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 
 interface IOSSpinnerProps {
   color?: string;
@@ -6,18 +6,17 @@ interface IOSSpinnerProps {
   className?: string;
 }
 
-const IOSSpinner: React.FC<IOSSpinnerProps> = ({
+const IOSSpinner = memo(({
   color = "currentColor",
   size = 24,
   className = "",
-}) => {
-  // 12 petals for iOS style
+}: IOSSpinnerProps) => {
   const petals = Array.from({ length: 12 });
 
   return (
     <div
       className={`relative inline-block ${className}`}
-      style={{ width: size, height: size, color: color }}
+      style={{ width: size, height: size, color }}
     >
       {petals.map((_, i) => (
         <div
@@ -32,6 +31,9 @@ const IOSSpinner: React.FC<IOSSpinnerProps> = ({
       ))}
     </div>
   );
-};
+});
+
+IOSSpinner.displayName = "IOSSpinner";
 
 export default IOSSpinner;
+

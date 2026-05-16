@@ -1,11 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, memo } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Trash2, TentTree, ChevronLeft, Calendar, Wallet, AlertTriangle, X, Clock, Edit2 } from "lucide-react";
 import { format, differenceInDays, differenceInHours } from "date-fns";
 import { Timestamp, collection, query, where, onSnapshot, DocumentData, QuerySnapshot } from "firebase/firestore";
-import { useEffect } from "react";
 import { db } from "../firebase";
 import { useAuth } from "../context/AuthContext";
 import { useEvents } from "../hooks/useEvents";
@@ -14,11 +13,10 @@ import { useTheme } from "../context/ThemeContext";
 import { useGlobalModal } from "../context/GlobalModalContext";
 import { Expense, Event } from "../types";
 import { ExpenseCard } from "../components/ExpenseCard";
-import { getCategoryIcon, getEventGradient } from "../utils/uiUtils";
+import { getEventGradient } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import IOSSpinner from "../components/ui/IOSSpinner";
 
-// Helper to convert Timestamp or Date to JS Date
 const toDate = (d: Timestamp | Date | undefined): Date => {
   if (!d) return new Date();
   if (d instanceof Timestamp) return d.toDate();
@@ -27,7 +25,7 @@ const toDate = (d: Timestamp | Date | undefined): Date => {
 
 type DeleteAction = "move-regular" | "move-oneoff" | "delete-all";
 
-const EventDetail = () => {
+const EventDetail = memo(() => {
   const { eventId } = useParams<{ eventId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -42,7 +40,6 @@ const EventDetail = () => {
   const [deleteAction, setDeleteAction] = useState<DeleteAction>("move-regular");
   const [isDeletingEvent, setIsDeletingEvent] = useState(false);
 
-  // Edit State
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState("");
   const [editStart, setEditStart] = useState("");
@@ -50,13 +47,11 @@ const EventDetail = () => {
   const [editBudget, setEditBudget] = useState("");
   const [isUpdatingEvent, setIsUpdatingEvent] = useState(false);
 
-  // Find this event from the events list
   const event: Event | undefined = useMemo(
     () => events.find((e) => e.id === eventId),
     [events, eventId]
   );
 
-  // Real-time listener for expenses under this event
   useEffect(() => {
     if (!user?.uid || !eventId) {
       setExpensesLoading(false);
@@ -73,12 +68,15 @@ const EventDetail = () => {
     const unsubscribe = onSnapshot(
       q,
       (snapshot: QuerySnapshot<DocumentData>) => {
-        const docs = snapshot.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-          date: d.data().date?.toDate ? d.data().date.toDate() : new Date(d.data().date),
-        })) as Expense[];
-        // Sort by date descending
+        const docs = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            ...data,
+            date: data.date?.toDate ? data.date.toDate() : new Date(data.date),
+          } as Expense;
+        });
+
         docs.sort((a, b) => {
           const aDate = a.date instanceof Date ? a.date : new Date(a.date as any);
           const bDate = b.date instanceof Date ? b.date : new Date(b.date as any);
@@ -87,7 +85,8 @@ const EventDetail = () => {
         setExpenses(docs);
         setExpensesLoading(false);
       },
-      () => {
+      (error) => {
+        console.error("Firestore error:", error);
         setExpensesLoading(false);
       }
     );
@@ -148,6 +147,21 @@ const EventDetail = () => {
     }
   }, [eventId, editName, editStart, editEnd, editBudget, updateEvent]);
 
+  const durationData = useMemo(() => {
+    if (!event) return null;
+    const start = toDate(event.startDate);
+    const end = toDate(event.endDate);
+    const days = differenceInDays(end, start);
+    const hours = differenceInHours(end, start) % 24;
+
+    let str = "";
+    if (days > 0) str += `${days} day${days !== 1 ? 's' : ''}`;
+    if (hours > 0) str += `${days > 0 ? ', ' : ''}${hours} hr${hours !== 1 ? 's' : ''}`;
+    if (!str) str = "Less than an hour";
+
+    return { str, start, end };
+  }, [event]);
+
   if (eventsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -156,7 +170,7 @@ const EventDetail = () => {
     );
   }
 
-  if (!event) {
+  if (!event || !durationData) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-4">
         <p className="text-gray-500 dark:text-gray-400 font-medium">Event not found.</p>
@@ -167,24 +181,12 @@ const EventDetail = () => {
     );
   }
 
-  const start = toDate(event.startDate);
-  const end = toDate(event.endDate);
+  const { str: durationStr, start, end } = durationData;
   const budgetUsed = event.budget ? (totalSpent / event.budget) * 100 : 0;
-
-  // Calculate duration
-  const days = differenceInDays(end, start);
-  const hours = differenceInHours(end, start) % 24;
-
-  let durationStr = "";
-  if (days > 0) durationStr += `${days} day${days !== 1 ? 's' : ''}`;
-  if (hours > 0) durationStr += `${days > 0 ? ', ' : ''}${hours} hr${hours !== 1 ? 's' : ''}`;
-  if (!durationStr) durationStr = "Less than an hour";
-
   const gradientClass = getEventGradient(event.id, theme);
 
   return (
-    <div className="pt-4 max-w-lg mx-auto pb-32">
-      {/* Header */}
+    <div className="pt-[calc(env(safe-area-inset-top)+2rem)] max-w-lg mx-auto pb-32">
       <div className="flex items-center gap-3 mb-6">
         <button
           onClick={() => navigate("/profile")}
@@ -203,7 +205,6 @@ const EventDetail = () => {
         </button>
       </div>
 
-      {/* Event Info Card */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
@@ -244,7 +245,6 @@ const EventDetail = () => {
             </div>
           </div>
 
-          {/* Budget Bar */}
           {event.budget && (
             <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/10">
               <div className="flex items-center justify-between text-xs mb-2">
@@ -260,9 +260,8 @@ const EventDetail = () => {
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(budgetUsed, 100)}%` }}
                   transition={{ duration: 1, ease: "easeOut" }}
-                  className={`h-full rounded-full ${
-                    budgetUsed > 100 ? "bg-red-500" : budgetUsed > 80 ? "bg-amber-400" : "bg-emerald-500"
-                  }`}
+                  className={`h-full rounded-full ${budgetUsed > 100 ? "bg-red-500" : budgetUsed > 80 ? "bg-amber-400" : "bg-emerald-500"
+                    }`}
                 />
               </div>
               {budgetUsed > 100 && (
@@ -275,10 +274,8 @@ const EventDetail = () => {
         </div>
       </motion.div>
 
-      {/* Expenses List */}
       <div className="mb-6">
         <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Expenses</h2>
-
         {expensesLoading ? (
           <div className="flex items-center justify-center py-10">
             <IOSSpinner size={28} />
@@ -290,23 +287,22 @@ const EventDetail = () => {
             <p className="text-xs text-gray-300 dark:text-gray-700 mt-1">Add an expense and select this event.</p>
           </div>
         ) : (
-          <AnimatePresence>
-            <div className="space-y-2">
+          <div className="space-y-2">
+            <AnimatePresence>
               {expenses.map((expense) => (
                 <ExpenseCard
                   key={expense.id}
                   expense={expense}
-                  onDelete={(id, amount, date) => deleteExpense(id, amount, date instanceof Timestamp ? date : new Date(date as any))}
+                  onDelete={(id, amount, date) => deleteExpense(id, amount, date instanceof Timestamp ? date.toDate() : new Date(date as any))}
                   onClick={(e) => openModal("view", e)}
                   onEdit={(e) => openModal("edit", e)}
                 />
               ))}
-            </div>
-          </AnimatePresence>
+            </AnimatePresence>
+          </div>
         )}
       </div>
 
-      {/* Delete Event Button */}
       <button
         onClick={() => setShowDeleteModal(true)}
         className="w-full py-4 flex items-center justify-center gap-2 text-red-600 font-bold bg-red-50 dark:bg-red-900/10 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-2xl transition-colors"
@@ -315,7 +311,6 @@ const EventDetail = () => {
         Delete Event
       </button>
 
-      {/* Delete Confirmation Modal */}
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showDeleteModal && (
@@ -335,12 +330,10 @@ const EventDetail = () => {
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="relative z-10 bg-white dark:bg-[#121316] w-full md:w-[95%] max-w-md rounded-t-[20px] md:rounded-[20px] p-6 shadow-lg border-t border-gray-200/50 dark:border-none flex flex-col pointer-events-auto pb-safe md:mb-0"
               >
-                {/* Drag Handle for mobile */}
                 <div className="w-full h-4 flex items-center justify-center md:hidden mb-2 absolute top-0 left-0 right-0">
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full mt-2" />
                 </div>
 
-                {/* Header */}
                 <div className="flex items-start justify-between mb-4 mt-2 md:mt-0">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-red-100 dark:bg-red-500/20 rounded-full flex items-center justify-center">
@@ -366,7 +359,6 @@ const EventDetail = () => {
                   What should happen to the expenses tied to this event?
                 </p>
 
-                {/* Options */}
                 <div className="space-y-2 mb-6">
                   {[
                     { id: "move-regular", label: "Move to Personal → Regular", description: "Expenses will appear as regular personal expenses." },
@@ -394,7 +386,6 @@ const EventDetail = () => {
                   ))}
                 </div>
 
-                {/* Confirm Button */}
                 <button
                   onClick={handleDeleteEvent}
                   disabled={isDeletingEvent}
@@ -403,9 +394,7 @@ const EventDetail = () => {
                     : "bg-accent hover:brightness-110 shadow-lg shadow-accent/25"
                     }`}
                 >
-                  {isDeletingEvent ? (
-                    <IOSSpinner size={20} color="#fff" />
-                  ) : (
+                  {isDeletingEvent ? <IOSSpinner size={20} color="#fff" /> : (
                     <>
                       <Trash2 size={16} />
                       {deleteAction === "delete-all" ? "Delete Event & Expenses" : "Confirm & Delete Event"}
@@ -419,7 +408,6 @@ const EventDetail = () => {
         document.body
       )}
 
-      {/* Edit Event Modal */}
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showEditModal && (
@@ -439,12 +427,10 @@ const EventDetail = () => {
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 className="relative z-10 bg-white dark:bg-black w-full md:w-[95%] max-w-md rounded-t-[20px] md:rounded-[20px] p-6 shadow-2xl border-t border-gray-200/50 dark:border-white/10 flex flex-col pointer-events-auto pb-safe md:mb-0"
               >
-                {/* Drag Handle for mobile */}
                 <div className="w-full h-4 flex items-center justify-center md:hidden mb-2 absolute top-0 left-0 right-0">
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full mt-2" />
                 </div>
 
-                {/* Header */}
                 <div className="flex items-start justify-between mb-6 mt-2 md:mt-0">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">Edit Event</h3>
                   <button
@@ -506,13 +492,9 @@ const EventDetail = () => {
                     <button
                       type="submit"
                       disabled={isUpdatingEvent || !editName.trim() || !editStart || !editEnd}
-                      className="w-full py-4 bg-accent text-white rounded-2xl text-sm font-bold shadow-lg shadow-accent/25 disabled:opacity-50 transition-all active:scale-98 flex items-center justify-center p-0 m-0 cursor-pointer"
+                      className="w-full py-4 bg-accent text-white rounded-2xl text-sm font-bold shadow-lg shadow-accent/25 disabled:opacity-50 transition-all active:scale-98 flex items-center justify-center cursor-pointer"
                     >
-                      {isUpdatingEvent ? (
-                        <IOSSpinner size={20} color="#fff" />
-                      ) : (
-                        "Save Changes"
-                      )}
+                      {isUpdatingEvent ? <IOSSpinner size={20} color="#fff" /> : "Save Changes"}
                     </button>
                   </div>
                 </form>
@@ -522,9 +504,10 @@ const EventDetail = () => {
         </AnimatePresence>,
         document.body
       )}
-
     </div>
   );
-};
+});
+
+EventDetail.displayName = "EventDetail";
 
 export default EventDetail;

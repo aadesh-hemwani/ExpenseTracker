@@ -1,22 +1,21 @@
-import React, { useMemo } from "react";
+import React, { useMemo, memo } from "react";
 import { Expense } from "../types";
 import Card from "./Card";
 import { TrendingUp, Activity, Calendar, PieChart } from "lucide-react";
 import { motion } from "framer-motion";
+import { Timestamp } from "firebase/firestore";
 
 interface MonthInsightsProps {
     expenses: Expense[];
     currentMonth: Date;
 }
 
-const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth }) => {
+const MonthInsights = memo(({ expenses, currentMonth }: MonthInsightsProps) => {
     const insights = useMemo(() => {
         if (!expenses.length) return null;
 
-        // 1. Basic Stats
         const totalSpend = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
-        // 2. Spending Ranges
         const ranges = { micro: 0, small: 0, medium: 0, large: 0 };
         expenses.forEach((e) => {
             const amt = Number(e.amount);
@@ -33,10 +32,7 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
             large: Math.round((ranges.large / expenses.length) * 100) || 0,
         };
 
-        // 3. Daily Average & Velocity
         const today = new Date();
-        // If the month being viewed is in the past, divide by total days in that month.
-        // If it's the current month, divide by the current day of the month.
         let daysPassed = 1;
         if (
             currentMonth.getFullYear() === today.getFullYear() &&
@@ -44,26 +40,20 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
         ) {
             daysPassed = today.getDate();
         } else {
-            // Get the last day of the viewed month
             daysPassed = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
         }
 
         const dailyAverage = totalSpend / daysPassed;
-
-        // Projected
         const totalDaysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
         const projectedTotal = dailyAverage * totalDaysInMonth;
 
-        // 4. Busiest Day of the Week
-        const daysOfWeek = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
+        const daysOfWeek = [0, 0, 0, 0, 0, 0, 0];
         const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         expenses.forEach((e) => {
             let d: Date;
             if (e.date instanceof Date) {
                 d = e.date;
-                // @ts-ignore
-            } else if (e.date && typeof e.date.toDate === 'function') {
-                // @ts-ignore
+            } else if (e.date instanceof Timestamp) {
                 d = e.date.toDate();
             } else {
                 d = new Date(e.date as any);
@@ -75,7 +65,6 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
         const busiestDayIndex = daysOfWeek.indexOf(maxDayAmount);
         const busiestDayName = dayNames[busiestDayIndex];
 
-        // 5. Category Concentration
         const categoryTotals: Record<string, number> = {};
         expenses.forEach((e) => {
             categoryTotals[e.category] = (categoryTotals[e.category] || 0) + Number(e.amount);
@@ -102,7 +91,6 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
         <div className="mb-8 -mx-5 md:mx-0">
             <div className="flex overflow-x-auto gap-4 pb-4 px-5 md:px-0 snap-x snap-mandatory no-scrollbar text-sm after:content-[''] after:w-4 after:shrink-0 md:after:hidden">
 
-                {/* Card 1: Daily Velocity */}
                 <Card className="min-w-[240px] snap-center shrink-0 flex flex-col justify-between">
                     <div className="flex items-center gap-2 text-blue-500 mb-3">
                         <Activity size={18} />
@@ -120,7 +108,6 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
                     </div>
                 </Card>
 
-                {/* Card 2: Spending Ranges */}
                 <Card className="min-w-[280px] snap-center shrink-0">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2 text-indigo-500">
@@ -165,7 +152,6 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
                     </div>
                 </Card>
 
-                {/* Card 3: Busiest Day */}
                 <Card className="min-w-[200px] snap-center shrink-0 flex flex-col justify-between">
                     <div className="flex items-center gap-2 text-yellow-500 mb-3">
                         <Calendar size={18} />
@@ -181,7 +167,6 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
                     </div>
                 </Card>
 
-                {/* Card 4: Top Category */}
                 <Card className="min-w-[200px] snap-center shrink-0 flex flex-col justify-between">
                     <div className="flex items-center gap-2 text-orange-500 mb-3">
                         <TrendingUp size={18} />
@@ -200,6 +185,8 @@ const MonthInsights: React.FC<MonthInsightsProps> = ({ expenses, currentMonth })
             </div>
         </div>
     );
-};
+});
+
+MonthInsights.displayName = "MonthInsights";
 
 export default MonthInsights;
