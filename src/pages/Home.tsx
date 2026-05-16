@@ -53,12 +53,12 @@ const DaySection = React.memo(({
   const dailyTotal = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex justify-between items-center px-1">
+    <div className="space-y-4">
+      <div className="flex justify-between items-center">
         <span className="text-[10px] font-bold text-zinc-400 dark:text-[#A0A0A0] uppercase tracking-[0.25em]">{label}</span>
         <span className="text-sm font-bold text-zinc-900 dark:text-white">₹{dailyTotal.toLocaleString("en-IN")}</span>
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <AnimatePresence mode="popLayout" initial={false}>
           {expenses.map((t) => (
             <motion.div key={t.id} variants={item} layout>
@@ -243,8 +243,8 @@ const Home = () => {
   }
 
   return (
-    <div className="space-y-10 pb-8">
-      <header className="sticky top-0 z-50 -mx-5 -mt-[calc(env(safe-area-inset-top)+2rem)] mb-6">
+    <div className="space-y-8 pb-12">
+      <header className="sticky top-0 z-50 -mx-5">
         <HeroBalance
           currentBalance={currentMonthTotal}
           budgetAmount={user?.monthlyBudgetCap}
@@ -265,13 +265,13 @@ const Home = () => {
       </header>
 
       <section className="space-y-5">
-        <div className="flex items-center justify-between px-2">
+        <div className="flex items-center justify-between">
           <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">Recent Activity</h3>
         </div>
 
-        <div className="space-y-4 pb-6">
+        <div className="space-y-6 pb-6">
           {recentExpenses.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-[24px]">
+            <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-[20px]">
               <p className="text-tertiary text-sm">No expenses yet.</p>
             </div>
           ) : (
@@ -279,7 +279,7 @@ const Home = () => {
               variants={container}
               initial="hidden"
               animate="show"
-              className="flex flex-col space-y-4"
+              className="flex flex-col space-y-10"
               layout
             >
               {groupedRecentExpenses.map(([label, expenses]) => (

@@ -360,7 +360,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       variants={container}
       initial="hidden"
       animate="show"
-      className="space-y-8 pt-4"
+      className="space-y-16 pt-6 pb-20"
     >
       {/* Header */}
       <motion.div variants={item} className="flex justify-between items-start">
@@ -384,14 +384,14 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       </motion.div>
 
       {/* KPI Cards */}
-      <motion.div variants={item} className="grid grid-cols-2 gap-4">
+      <motion.div variants={item} className="grid grid-cols-2 gap-6">
         <motion.div
           whileTap={{ scale: 0.98 }}
           transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-5 bg-gradient-to-br from-accent to-indigo-600 dark:from-accent dark:to-indigo-500 text-white rounded-3xl shadow-sm backdrop-blur-md"
+          className="p-5 bg-gradient-to-br from-accent to-indigo-600 dark:from-accent dark:to-indigo-500 text-white rounded-[20px] shadow-sm backdrop-blur-md"
         >
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-medium text-white/90 uppercase tracking-wider">
+            <span className="text-[9px] font-bold text-white/90 uppercase tracking-[0.15em]">
               This Month
             </span>
             <ArrowRight
@@ -408,7 +408,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
 
         <Card className="p-5">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">
+            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.15em]">
               Top Category
             </span>
             <PieChart
@@ -436,7 +436,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
           <Card className="p-6">
             <div className="flex justify-between items-end mb-2">
               <div>
-                <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.15em]">
                   Monthly Budget
                 </p>
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
@@ -496,7 +496,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
       </motion.div>
 
       {/* Trajectory Chart from Home Hero Card */}
-      <motion.div variants={item} className="pt-2" ref={trajectoryChartRef}>
+      <motion.div variants={item} className="pt-8" ref={trajectoryChartRef}>
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-accent/10 rounded-lg">
             {trendDirection === "up" ? (
@@ -541,7 +541,7 @@ const Analytics = ({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
         </Card>
       </motion.div>
 
-      <motion.div variants={item} className="pt-2">
+      <motion.div variants={item} className="pt-8">
         {/* Monthly Trend Chart */}
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-indigo-500/10 rounded-lg">

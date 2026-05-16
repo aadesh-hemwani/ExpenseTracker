@@ -65,21 +65,21 @@ const MonthCard = memo(({ monthKey, total, onClick }: MonthCardProps) => {
     <Card
       as="button"
       onClick={() => onClick(date)}
-      className="text-left flex flex-col justify-between h-32 group"
+      className="text-left flex flex-col justify-between h-28 group"
     >
       <div className="flex justify-between items-start w-full">
-        <span className="text-sm font-bold text-gray-400 uppercase tracking-wider group-hover:text-accent transition-colors">
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] group-hover:text-accent transition-colors">
           {format(date, "MMMM")}
         </span>
         {isSameMonth(date, new Date()) && (
-          <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
         )}
       </div>
       <div>
-        <span className="text-2xl font-bold text-gray-900 dark:text-white block">
+        <span className="text-xl font-bold text-gray-900 dark:text-white block">
           {renderAmount(total)}
         </span>
-        <span className="text-xs text-gray-400 font-medium">
+        <span className="text-[10px] text-gray-400 font-medium">
           {format(date, "yyyy")}
         </span>
       </div>
@@ -441,7 +441,7 @@ const CalendarView = ({
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: "100%", opacity: 0 }}
                   transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                  className="w-full sm:max-w-md bg-white dark:bg-[#121212] rounded-t-3xl sm:rounded-3xl shadow-2xl relative z-10 pointer-events-auto flex flex-col max-h-[90vh]"
+                  className="w-full sm:max-w-md bg-white dark:bg-[#121316] rounded-t-[20px] sm:rounded-[20px] shadow-lg relative z-10 pointer-events-auto flex flex-col max-h-[90vh]"
                 >
                   {/* Header */}
                   <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between shrink-0">
@@ -584,8 +584,8 @@ const CalendarView = ({
                 key={f.id}
                 onClick={() => setFilters(prev => ({ ...prev, type: f.id, contextId: undefined }))}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${filters.type === f.id && !filters.contextId
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
+                  ? "bg-black text-white dark:bg-white dark:text-black"
+                  : "bg-gray-100 text-gray-600 dark:bg-white/5 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10"
                   }`}
               >
                 {f.label}
@@ -603,8 +603,8 @@ const CalendarView = ({
                 key={ev.id}
                 onClick={() => setFilters(prev => ({ ...prev, type: "event", contextId: ev.id }))}
                 className={`px-4 py-2 rounded-full text-sm font-semibold transition-all whitespace-nowrap flex items-center gap-1.5 ${filters.type === "event" && filters.contextId === ev.id
-                    ? "bg-purple-600 text-white"
-                    : "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/20"
+                  ? "bg-purple-600 text-white"
+                  : "bg-purple-50 text-purple-600 dark:bg-purple-500/10 dark:text-purple-400 hover:bg-purple-100 dark:hover:bg-purple-500/20"
                   }`}
               >
                 🎉 {ev.name}

@@ -21,7 +21,7 @@ const Card = ({
       whileTap={{ scale: 0.98 }}
       whileHover={{ scale: 1.01 }}
       transition={{ type: "spring", stiffness: 400, damping: 20 }}
-      className={`glass-card p-6 rounded-3xl shadow-sm ${className}`}
+      className={`glass-card p-6 rounded-2xl shadow-sm ${className}`}
       {...props}
     >
       {children}

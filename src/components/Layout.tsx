@@ -90,7 +90,7 @@ const NAV_ITEMS = [
 
 const Layout = () => {
   const location = useLocation();
-  const { accentColor, accentColors } = useTheme();
+  const { theme, accentColor, accentColors } = useTheme();
   const { openModal } = useGlobalModal();
   const mainRef = useRef<HTMLDivElement>(null);
   // @ts-ignore
@@ -104,15 +104,15 @@ const Layout = () => {
   }, [location.pathname]);
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">
+    <div className="h-[calc(var(--vh,1dvh)*100)] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">
       <LiquidFilter />
       {/* Dynamic Background Aura */}
       <div
         className="fixed inset-0 z-0 pointer-events-none transition-all duration-1000 ease-in-out"
         style={{
           background: `
-            radial-gradient(circle at 0% 0%, ${activeColor}45 0%, transparent 25%),
-            radial-gradient(circle at 100% 100%, ${activeColor}35 0%, transparent 25%)
+            radial-gradient(circle at 0% 0%, ${theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'} 0%, transparent 40%),
+            radial-gradient(circle at 100% 100%, ${theme === 'dark' ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)'} 0%, transparent 40%)
           `
         }}
       />
@@ -176,7 +176,7 @@ const Layout = () => {
         <div
           className={`relative z-10 max-w-2xl mx-auto ${location.pathname === "/chat"
             ? "h-full"
-            : `px-5 pb-32 md:p-12 ${location.pathname === "/history"
+            : `px-5 pb-32 md:p-12 ${location.pathname === "/history" || location.pathname === "/"
               ? "pt-0"
               : "pt-[calc(env(safe-area-inset-top)+2rem)]"
             }`

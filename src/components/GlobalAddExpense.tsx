@@ -344,7 +344,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                   stiffness: 300,
                   mass: 0.8,
                 }}
-                className="relative z-10 w-full max-w-md bg-white dark:bg-[#121212] rounded-t-[40px] shadow-2xl overflow-hidden pb-safe pointer-events-auto border-t border-white/10"
+                className="relative z-10 w-full max-w-md bg-white dark:bg-[#121316] rounded-t-[20px] shadow-lg overflow-hidden pb-safe pointer-events-auto"
               >
                 {/* Drag Handle */}
                 <div className="w-full h-6 flex items-center justify-center pt-2">

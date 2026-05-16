@@ -61,7 +61,7 @@ const AiInsights = ({ insights = [], isLoading = false }: AiInsightsProps) => {
             className={`
                             min-w-full md:min-w-[320px] p-5
                             ${insight.bg} backdrop-blur-md
-                            rounded-3xl border border-subtle
+                            rounded-[20px] dark:border-none border border-subtle
                             shadow-sm
                             snap-center flex flex-col gap-3 relative overflow-hidden group
                         `}

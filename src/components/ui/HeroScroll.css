@@ -1,5 +1,4 @@
 /* Static top hero spacing. The previous scroll-driven collapse was removed for a calmer iOS PWA feel. */
 .hero-scroll-root .hero-inner {
-  padding-top: 14px;
-  padding-bottom: 22px;
+  /* Spacing handled in component for better control */
 }

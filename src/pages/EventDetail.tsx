@@ -207,7 +207,7 @@ const EventDetail = () => {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`bg-gradient-to-br ${gradientClass} rounded-3xl p-6 mb-6 shadow-xl relative overflow-hidden border border-transparent dark:border-white/5`}
+        className={`bg-gradient-to-br ${gradientClass} rounded-[20px] p-6 mb-6 shadow-sm relative overflow-hidden border border-transparent dark:border-none`}
       >
         <div className="relative z-10">
           <div className="flex justify-between items-start mb-6">
@@ -218,7 +218,7 @@ const EventDetail = () => {
               <p className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-1">
                 {formatCurrency(totalSpent)}
               </p>
-              <p className="text-xs font-bold uppercase tracking-wider text-gray-800/60 dark:text-white/60">
+              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-800/60 dark:text-white/60">
                 Total spent
               </p>
             </div>
@@ -248,7 +248,7 @@ const EventDetail = () => {
           {event.budget && (
             <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/10">
               <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-gray-800/60 dark:text-white/60 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                <span className="text-gray-800/60 dark:text-white/60 font-bold uppercase tracking-[0.15em] flex items-center gap-1.5">
                   <Wallet size={12} /> Budget
                 </span>
                 <span className="font-bold text-gray-900 dark:text-white">
@@ -284,7 +284,7 @@ const EventDetail = () => {
             <IOSSpinner size={28} />
           </div>
         ) : expenses.length === 0 ? (
-          <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-2xl">
+          <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-[20px]">
             <TentTree size={36} className="text-gray-200 dark:text-gray-700 mx-auto mb-3" />
             <p className="text-sm font-medium text-gray-400 dark:text-gray-600">No expenses for this event yet.</p>
             <p className="text-xs text-gray-300 dark:text-gray-700 mt-1">Add an expense and select this event.</p>
@@ -333,7 +333,7 @@ const EventDetail = () => {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: "100%", opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative z-10 bg-white dark:bg-black w-full md:w-[95%] max-w-md rounded-t-[40px] md:rounded-3xl p-6 shadow-2xl border-t border-gray-200/50 dark:border-white/10 flex flex-col pointer-events-auto pb-safe md:mb-0"
+                className="relative z-10 bg-white dark:bg-[#121316] w-full md:w-[95%] max-w-md rounded-t-[20px] md:rounded-[20px] p-6 shadow-lg border-t border-gray-200/50 dark:border-none flex flex-col pointer-events-auto pb-safe md:mb-0"
               >
                 {/* Drag Handle for mobile */}
                 <div className="w-full h-4 flex items-center justify-center md:hidden mb-2 absolute top-0 left-0 right-0">
@@ -437,7 +437,7 @@ const EventDetail = () => {
                 animate={{ y: 0, opacity: 1 }}
                 exit={{ y: "100%", opacity: 0 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                className="relative z-10 bg-white dark:bg-black w-full md:w-[95%] max-w-md rounded-t-[40px] md:rounded-3xl p-6 shadow-2xl border-t border-gray-200/50 dark:border-white/10 flex flex-col pointer-events-auto pb-safe md:mb-0"
+                className="relative z-10 bg-white dark:bg-black w-full md:w-[95%] max-w-md rounded-t-[20px] md:rounded-[20px] p-6 shadow-2xl border-t border-gray-200/50 dark:border-white/10 flex flex-col pointer-events-auto pb-safe md:mb-0"
               >
                 {/* Drag Handle for mobile */}
                 <div className="w-full h-4 flex items-center justify-center md:hidden mb-2 absolute top-0 left-0 right-0">

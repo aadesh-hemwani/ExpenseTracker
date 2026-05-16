@@ -173,8 +173,8 @@ const Chat = () => {
                                     className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
                                 >
                                     <div className={`max-w-[80%] px-4 py-3 text-[14px] leading-relaxed ${msg.sender === "user"
-                                        ? "bg-accent text-white rounded-[20px] rounded-br-md"
-                                        : "bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 rounded-[20px] rounded-bl-md"
+                                        ? "bg-accent text-white rounded-[16px] rounded-br-md"
+                                        : "bg-gray-100 dark:bg-white/5 text-gray-800 dark:text-gray-200 rounded-[16px] rounded-bl-md"
                                         }`}>
                                         {formatMessageText(msg.text)}
                                     </div>
@@ -189,7 +189,7 @@ const Chat = () => {
                                 animate={{ opacity: 1, y: 0 }}
                                 className="flex justify-start"
                             >
-                                <div className="bg-gray-100 dark:bg-white/5 rounded-[20px] rounded-bl-md px-5 py-3.5 flex items-center gap-1.5">
+                                <div className="bg-gray-100 dark:bg-white/5 rounded-[16px] rounded-bl-md px-5 py-3.5 flex items-center gap-1.5">
                                     <motion.div className="w-1.5 h-1.5 bg-gray-400 rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0 }} />
                                     <motion.div className="w-1.5 h-1.5 bg-gray-400 rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} />
                                     <motion.div className="w-1.5 h-1.5 bg-gray-400 rounded-full" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} />

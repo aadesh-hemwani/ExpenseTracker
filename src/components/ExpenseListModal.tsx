@@ -46,7 +46,7 @@ const ExpenseListModal = ({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: "100%", opacity: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-        className="relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[50px] md:rounded-3xl p-6 shadow-2xl border border-gray-200/50 dark:border-white/10 max-h-[70vh] flex flex-col mb-3 md:mb-0 pointer-events-auto"
+        className="relative z-10 bg-white dark:bg-black w-[95%] max-w-md rounded-[20px] p-6 shadow-2xl border border-gray-200/50 dark:border-white/10 max-h-[70vh] flex flex-col mb-3 md:mb-0 pointer-events-auto"
       >
         {/* Modal Header */}
         <div className="flex justify-between items-center mb-6 shrink-0">

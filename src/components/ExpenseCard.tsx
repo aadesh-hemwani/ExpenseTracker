@@ -82,14 +82,14 @@ export const ExpenseCard = ({
         onPointerUp={endPress}
         onPointerLeave={endPress}
         onClick={handleClick}
-        className="bg-white/80 dark:bg-[#1C1C1E] rounded-[20px] px-3.5 py-3 flex items-center gap-3 text-left w-full min-h-[74px] relative overflow-hidden group border border-black/5 dark:border-white/5 transition-colors hover:bg-zinc-50 dark:hover:bg-[#252529]"
+        className="bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-3 flex items-center gap-4 text-left w-full min-h-[68px] relative overflow-hidden group border-none transition-colors hover:bg-white/60 dark:hover:bg-white/[0.04]"
       >
         <div
-          className="relative z-10 w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-zinc-100 dark:bg-white/[0.06]"
+          className="relative z-10 w-10 h-10 rounded-[12px] flex items-center justify-center shrink-0 bg-white/60 dark:bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
           style={{ color: accentColor }}
         >
           <div className="opacity-80">
-            {getCategoryIcon(t.category, "22px")}
+            {getCategoryIcon(t.category, "20px")}
           </div>
         </div>
 
@@ -101,14 +101,14 @@ export const ExpenseCard = ({
 
             return (
               <>
-                <div className="text-[15px] font-semibold text-zinc-900 dark:text-white leading-tight truncate">
+                <div className="text-[18px] font-semibold text-zinc-900 dark:text-white leading-tight truncate">
                   {main.trim()}
                 </div>
-                <div className="mt-1 flex items-center gap-1.5 min-w-0 text-[11px] font-bold uppercase tracking-wider text-zinc-400 dark:text-[#A0A0A0]">
+                <div className="mt-1 flex items-center gap-1.5 min-w-0 text-[12px] font-medium text-zinc-400 dark:text-[#A0A0A0] opacity-70">
                   <span className="truncate">{t.category}</span>
                   {subNote && (
                     <>
-                      <div className="w-1 h-1 rounded-full bg-zinc-300 dark:bg-white/20 shrink-0" />
+                      <div className="w-0.5 h-0.5 rounded-full bg-zinc-300 dark:bg-white/20 shrink-0" />
                       <span className="normal-case tracking-normal font-medium text-zinc-400 dark:text-white/45 truncate">
                         {subNote}
                       </span>
@@ -121,11 +121,11 @@ export const ExpenseCard = ({
         </div>
 
         <div className="relative z-10 flex flex-col items-end justify-center shrink-0 max-w-[42%]">
-          <span className={`font-bold text-zinc-900 dark:text-white tracking-tight whitespace-nowrap ${amount.length >= 8 ? 'text-lg' : 'text-xl'
+          <span className={`font-bold text-zinc-900 dark:text-white tracking-tighter whitespace-nowrap ${amount.length >= 8 ? 'text-[16px]' : 'text-[19px]'
             }`}>
             ₹{amount}
           </span>
-          <span className="mt-1 text-[11px] text-zinc-400 dark:text-[#A0A0A0]/70 font-medium whitespace-nowrap">{time}</span>
+          <span className="mt-1 text-[10px] text-zinc-400/60 dark:text-[#A0A0A0]/40 font-medium whitespace-nowrap">{time}</span>
         </div>
       </motion.button>
 
@@ -136,7 +136,7 @@ export const ExpenseCard = ({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute inset-0 z-30 bg-white/95 dark:bg-[#1C1C1E]/95 rounded-[22px] flex items-center justify-center gap-4 backdrop-blur-sm"
+            className="absolute inset-0 z-30 bg-white/95 dark:bg-[#121316]/95 rounded-2xl flex items-center justify-center gap-4 backdrop-blur-sm"
           >
             <button
               onClick={handleEdit}
@@ -167,7 +167,7 @@ export const ExpenseCard = ({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute inset-0 z-40 bg-red-500 rounded-[22px] flex flex-col items-center justify-center p-2 text-white"
+            className="absolute inset-0 z-40 bg-red-500 rounded-2xl flex flex-col items-center justify-center p-2 text-white"
           >
             <span className="text-[10px] font-bold uppercase tracking-wider mb-2">Are you sure?</span>
             <div className="flex flex-row gap-2 w-full px-1">

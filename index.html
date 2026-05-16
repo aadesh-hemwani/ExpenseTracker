@@ -11,6 +11,43 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="/pwa-192x192.png">
   <meta name="theme-color" content="#000000" />
+  <script>
+    // Robust iOS PWA viewport height fix
+    // Uses visualViewport.height (most accurate on iOS) and handles
+    // keyboard open/close, cold launch, and orientation changes.
+    (function () {
+      var lastHeight = 0;
+      function setVH() {
+        // Prefer visualViewport.height — it excludes the keyboard on iOS
+        var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+        if (h === lastHeight) return;
+        lastHeight = h;
+        document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
+      }
+
+      // Run immediately (catches cold launch)
+      setVH();
+
+      // Also run after a brief delay to catch iOS PWA status bar adjustment
+      setTimeout(setVH, 50);
+      setTimeout(setVH, 300);
+
+      // Listen on every event that can shift the viewport
+      window.addEventListener('resize', setVH);
+      window.addEventListener('orientationchange', function() {
+        setTimeout(setVH, 100); // wait for orientation to settle
+      });
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', setVH);
+        window.visualViewport.addEventListener('scroll', setVH);
+      }
+
+      // When the keyboard closes, snap the vh back immediately
+      document.addEventListener('focusout', function() {
+        setTimeout(setVH, 100);
+      }, true);
+    })();
+  </script>
   <title>Expenses.</title>
   <meta name="description" content="Minimalist Expense Tracker" />
   <script>
