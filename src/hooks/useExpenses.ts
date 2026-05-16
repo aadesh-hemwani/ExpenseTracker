@@ -18,8 +18,9 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
-import { format } from "date-fns";
+import { format, isSameMonth } from "date-fns";
 import { Expense } from "../types";
+import { useExpenseData } from "../context/ExpenseContext";
 import { getMonthFromCache, saveMonthToCache, updateExpenseInCache, deleteMonthFromCache } from "../utils/indexedDB";
 import { generateEmbedding } from "../services/gemini";
 
@@ -31,66 +32,33 @@ export interface MonthlyStat {
 
 // 2. Hook for History Screen (Fetch Aggregated Stats)
 export const useMonthlyStats = (userId?: string) => {
+  const { user } = useAuth();
+  const { stats: globalStats, loadingStats: globalLoading } = useExpenseData();
+  
+  // If it's the current user, use the centralized data
+  const isSelf = !userId || userId === user?.uid;
+
   const [stats, setStats] = useState<MonthlyStat[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const { user } = useAuth();
-  const targetUserId = userId || user?.uid;
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    let retryTimeout: NodeJS.Timeout | undefined;
-    let isActive = true;
-
-    if (!targetUserId) {
-      setLoading(false);
-      return;
+    if (isSelf) {
+        setStats(globalStats);
+        setLoading(globalLoading);
+        return;
     }
 
-    const connect = () => {
-      const statsRef = collection(db, "users", targetUserId, "stats");
-      unsubscribe = onSnapshot(
-        statsRef,
-        (snapshot: QuerySnapshot<DocumentData>) => {
-          if (!isActive) return;
-          const docs = snapshot.docs.map((doc) => ({
-            monthKey: doc.id,
-            ...doc.data(),
-          })) as MonthlyStat[];
-          setStats(docs);
-          setLoading(false);
-        },
-        (error) => {
-          console.error("useMonthlyStats error:", error);
-          if (isActive) {
-            setLoading(false);
-            if (error.code !== "permission-denied") {
-              retryTimeout = setTimeout(connect, 2000);
-            }
-          }
-        }
-      );
+    // Fallback for OTHER users (e.g. admin viewing someone else)
+    let unsubscribe: (() => void) | undefined;
+    const statsRef = collection(db, "users", userId!, "stats");
+    unsubscribe = onSnapshot(statsRef, (snapshot) => {
+      const docs = snapshot.docs.map(d => ({ monthKey: d.id, ...d.data() })) as MonthlyStat[];
+      setStats(docs);
+      setLoading(false);
+    });
 
-      const safetyTimeout = setTimeout(() => {
-        if (isActive) {
-          console.warn("useMonthlyStats subscription timed out");
-          setLoading(false);
-        }
-      }, 8000);
-
-      return () => {
-        if (unsubscribe) unsubscribe();
-        clearTimeout(safetyTimeout);
-      };
-    };
-
-    const cleanupFn = connect();
-
-    return () => {
-      isActive = false;
-      if (cleanupFn) cleanupFn();
-      if (retryTimeout) clearTimeout(retryTimeout);
-    };
-  }, [targetUserId]);
+    return () => unsubscribe?.();
+  }, [userId, isSelf, globalStats, globalLoading]);
 
   return { stats, loading };
 };
@@ -108,70 +76,21 @@ export const useExpensesForMonth = (
   const { user } = useAuth();
   const targetUserId = userId || user?.uid;
 
-  // Effect A: Real-time Subscription (Current Month Only)
+  const { currentMonthExpenses: globalExpenses, loadingCurrentMonth: globalLoading } = useExpenseData();
+
+  // Effect A: Centralized Data (Current Month Only)
   useEffect(() => {
-    let isActive = true;
-    let unsubscribe: (() => void) | undefined;
+    if (!targetUserId || !date) return;
 
-    if (!targetUserId || !date) {
-      setExpenses([]);
-      setLoading(false);
-      return;
+    const isSelf = targetUserId === user?.uid;
+    if (!isSelf || !subscribe) return;
+
+    const isToday = isSameMonth(date, new Date());
+    if (isToday) {
+      setExpenses(globalExpenses);
+      setLoading(globalLoading);
     }
-
-    const monthKey = format(date, "yyyy-MM");
-    const currentMonthKey = format(new Date(), "yyyy-MM");
-    const isCurrentMonth = monthKey === currentMonthKey;
-
-    if (subscribe && isCurrentMonth) {
-      setLoading(true);
-      const start = new Date(date.getFullYear(), date.getMonth(), 1);
-      const end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
-
-      const collectionRef = collection(db, "users", targetUserId, "expenses");
-      const q = query(
-        collectionRef,
-        where("date", ">=", Timestamp.fromDate(start)),
-        where("date", "<=", Timestamp.fromDate(end)),
-        orderBy("date", "desc")
-      );
-
-      unsubscribe = onSnapshot(
-        q,
-        (snapshot: QuerySnapshot<DocumentData>) => {
-          if (!isActive) return;
-          const docs = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data,
-              date: data.date instanceof Timestamp ? data.date.toDate() : new Date(data.date),
-            };
-          }) as Expense[];
-          setExpenses(docs);
-          setLoading(false);
-        },
-        (error) => {
-          if (!isActive) return;
-          console.error("Snapshot error:", error);
-          setLoading(false);
-        }
-      );
-
-      const timeoutId = setTimeout(() => {
-        if (isActive) {
-          console.warn("useExpensesForMonth subscription timed out");
-          setLoading(false);
-        }
-      }, 8000);
-
-      return () => {
-        isActive = false;
-        if (unsubscribe) unsubscribe();
-        clearTimeout(timeoutId);
-      };
-    }
-  }, [targetUserId, date, subscribe]);
+  }, [targetUserId, date, subscribe, globalExpenses, globalLoading, user?.uid]);
 
   // Effect B: Historical Data Fetching (Past Months)
   useEffect(() => {
@@ -301,12 +220,21 @@ export const useExpensesForMonth = (
 
 // 3.5. Hook for fetching RECENT expenses based on time range
 export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) => {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const { user } = useAuth();
+  const { currentMonthExpenses: globalExpenses, loadingCurrentMonth: globalLoading } = useExpenseData();
+  const isSelf = !userId || userId === user?.uid;
   const targetUserId = userId || user?.uid;
 
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
   useEffect(() => {
+    if (isSelf && monthsLookback === 1) {
+      setExpenses(globalExpenses);
+      setLoading(globalLoading);
+      return;
+    }
+
     if (!targetUserId) {
       setLoading(false);
       return;
@@ -350,16 +278,8 @@ export const useRecentExpenses = (monthsLookback: number = 1, userId?: string) =
       }
     );
 
-    const timeoutId = setTimeout(() => {
-      console.warn("useRecentExpenses subscription timed out");
-      setLoading(false);
-    }, 8000);
-
-    return () => {
-      unsubscribe();
-      clearTimeout(timeoutId);
-    };
-  }, [targetUserId, monthsLookback]);
+    return () => unsubscribe();
+  }, [targetUserId, monthsLookback, isSelf, globalExpenses, globalLoading]);
 
   return { expenses, loading };
 };

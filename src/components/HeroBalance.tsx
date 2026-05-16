@@ -50,7 +50,7 @@ const HeroProgressTimer = React.memo(({
   useEffect(() => {
     const interval = setInterval(() => {
       setTimeState(calculateTimeState());
-    }, 1000);
+    }, 60 * 60 * 1000); // Update every hour instead of every second
     return () => clearInterval(interval);
   }, []);
 

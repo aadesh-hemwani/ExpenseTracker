@@ -7,7 +7,6 @@ import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion, AnimatePresence } from "framer-motion";
 import { LiquidFAB } from "./ui/LiquidFAB";
 import { useGlobalModal } from "../context/GlobalModalContext";
-import { LiquidFilter } from "./ui/LiquidFilter";
 
 const ScrollContext = createContext<React.RefObject<HTMLDivElement | null> | null>(null);
 export const useScrollContainer = () => useContext(ScrollContext);
@@ -111,7 +110,6 @@ const Layout = memo(() => {
 
   return (
     <div className="h-[calc(var(--vh,1dvh)*100)] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">
-      <LiquidFilter />
       <div
         className="fixed inset-0 z-0 pointer-events-none transition-all duration-1000 ease-in-out"
         style={auraStyle}

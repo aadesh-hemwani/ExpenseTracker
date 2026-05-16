@@ -34,6 +34,8 @@
   backdrop-filter: blur(10px) saturate(var(--saturation));
   -webkit-backdrop-filter: blur(10px) saturate(var(--saturation));
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transform: translateZ(0);
+  will-change: backdrop-filter;
 }
 
 .liquid-pill-effect {
@@ -69,8 +71,10 @@
   background-color: color-mix(in srgb,
       var(--c-action) 70%,
       color-mix(in srgb, var(--c-glass) 12%, transparent));
-  backdrop-filter: blur(2px) url(#liquid-filter) saturate(var(--saturation));
-  -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
+  backdrop-filter: blur(16px) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(16px) saturate(var(--saturation));
+  transform: translateZ(0);
+  will-change: transform, backdrop-filter;
 
   /* Minimal Apple-style ambient depth */
   box-shadow:
@@ -130,6 +134,7 @@
   -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
   transition: all 0.3s ease;
   transform: translateZ(0);
+  will-change: backdrop-filter;
 }
 
 .liquid-pill {
@@ -144,8 +149,10 @@
 
   /* Glass Base */
   background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
-  backdrop-filter: blur(2px) url(#liquid-filter) saturate(var(--saturation));
-  -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
+  backdrop-filter: blur(12px) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(12px) saturate(var(--saturation));
+  transform: translateZ(0);
+  will-change: transform, backdrop-filter;
 
   /* Subtle ambient shadow */
   box-shadow:

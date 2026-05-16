@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation, animate } from "framer-motion";
 import { Calendar, Clock, Delete, Edit2, ChevronDown, User, TentTree } from "lucide-react";
 import { useExpenses, useMonthlyStats } from "../hooks/useExpenses";
+import { useExpenseData } from "../context/ExpenseContext";
 import { useEvents } from "../hooks/useEvents";
 import { CATEGORIES, CATEGORY_COLORS, getCategoryIcon } from "../utils/uiUtils";
 import { LiquidFAB } from "./ui/LiquidFAB";
@@ -84,7 +85,7 @@ NumKey.displayName = "NumKey";
 
 const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const { addExpense, updateExpense } = useExpenses();
-  const { stats } = useMonthlyStats();
+  const { stats } = useExpenseData();
   const { events } = useEvents();
   const { isOpen, mode, expenseData, closeModal, setMode, openModal, updateExpenseData } = useGlobalModal();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -674,29 +675,41 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                           style={{ backgroundColor: catColor }}
                                         />
 
-                                        <div className="absolute inset-0 flex justify-between items-end pointer-events-none">
-                                          {Array.from({ length: 101 }).map((_, i) => {
-                                            const isMajor = i % 10 === 0;
-                                            const isMedium = i % 5 === 0 && !isMajor;
-                                            const isFilled = i <= pct;
+                                        <div className="absolute inset-0 flex items-end pointer-events-none">
+                                          {/* Base Ticks (Unfilled) */}
+                                          <div className="absolute inset-0 bg-gray-200 dark:bg-white/20" style={{
+                                            maskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 2%)',
+                                            WebkitMaskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 2%)',
+                                            height: '10px'
+                                          }} />
+                                          
+                                          {/* Major Ticks (Unfilled) */}
+                                          <div className="absolute inset-0 bg-gray-300 dark:bg-white/30" style={{
+                                            maskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 10%)',
+                                            WebkitMaskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 10%)',
+                                            height: '14px'
+                                          }} />
 
-                                            let h = "4px";
-                                            if (isMajor) h = "14px";
-                                            else if (isMedium) h = "8px";
-
-                                            return (
-                                              <div
-                                                key={i}
-                                                className={`w-[1px] rounded-full transition-colors duration-500
-                                                  ${isFilled ? '' : (isMajor ? 'bg-gray-300 dark:bg-white/30' : 'bg-gray-100 dark:bg-white/10')}
-                                                `}
-                                                style={{
-                                                  height: h,
-                                                  backgroundColor: isFilled ? catColor : undefined
-                                                }}
-                                              />
-                                            );
-                                          })}
+                                          {/* Active Ticks (Filled) */}
+                                          <motion.div 
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${pct}%` }}
+                                            transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                                            className="absolute inset-0 overflow-hidden"
+                                          >
+                                            <div className="absolute inset-0" style={{
+                                              backgroundColor: catColor,
+                                              maskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 2%)',
+                                              WebkitMaskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 2%)',
+                                              height: '10px'
+                                            }} />
+                                            <div className="absolute inset-0" style={{
+                                              backgroundColor: catColor,
+                                              maskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 10%)',
+                                              WebkitMaskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 10%)',
+                                              height: '14px'
+                                            }} />
+                                          </motion.div>
                                         </div>
 
                                         <div className="absolute left-0 right-0 top-full pt-2 flex justify-between pointer-events-none">

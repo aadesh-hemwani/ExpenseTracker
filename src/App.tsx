@@ -1,24 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import IOSSpinner from "./components/ui/IOSSpinner";
 
 import { ThemeProvider } from "./context/ThemeContext";
 import { GlobalModalProvider } from "./context/GlobalModalContext";
+import { ExpenseProvider } from "./context/ExpenseContext";
 
 import ReloadPrompt from "./components/ReloadPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 
-// Static Imports
+// Critical Static Imports
 import Home from "./pages/Home";
-import History from "./pages/History";
-import Analytics from "./pages/Analytics";
-import Admin from "./pages/Admin";
 import Login from "./pages/Login";
-import Profile from "./pages/Profile";
-import Chat from "./pages/Chat";
-import EventDetail from "./pages/EventDetail";
+
+// Lazy Loaded Pages (Heavy/Secondary)
+const History = lazy(() => import("./pages/History"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Profile = lazy(() => import("./pages/Profile"));
+const Chat = lazy(() => import("./pages/Chat"));
+const EventDetail = lazy(() => import("./pages/EventDetail"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 function App() {
   // Prevent Zoom on iOS and snap the window viewport back to full screen
@@ -59,27 +63,35 @@ function App() {
         <ReloadPrompt />
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              {/* Protected Routes */}
-              <Route
-                element={
-                  <ProtectedRoute>
+            <Suspense fallback={
+              <div className="flex items-center justify-center h-screen bg-body">
+                <IOSSpinner size={40} />
+              </div>
+            }>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                {/* Protected Routes */}
+                <Route
+                  element={
+                    <ProtectedRoute>
                     <GlobalModalProvider>
-                      <Layout />
+                      <ExpenseProvider>
+                        <Layout />
+                      </ExpenseProvider>
                     </GlobalModalProvider>
                   </ProtectedRoute>
-                }
-              >
-                <Route path="/" element={<Home />} />
-                <Route path="/history" element={<History />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/event/:eventId" element={<EventDetail />} />
-                <Route path="/chat" element={<Chat />} />
-                <Route path="/admin" element={<Admin />} />
-              </Route>
-            </Routes>
+                  }
+                >
+                  <Route path="/" element={<Home />} />
+                  <Route path="/history" element={<History />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/event/:eventId" element={<EventDetail />} />
+                  <Route path="/chat" element={<Chat />} />
+                  <Route path="/admin" element={<Admin />} />
+                </Route>
+              </Routes>
+            </Suspense>
           </AuthProvider>
         </BrowserRouter>
       </ErrorBoundary>

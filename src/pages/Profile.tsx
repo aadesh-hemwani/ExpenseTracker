@@ -4,6 +4,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useNavigate } from "react-router-dom";
 import { db } from "../firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { calculateRecommendedBudget } from "../services/gemini";
 import {
   LogOut,
   Save,
@@ -148,7 +149,6 @@ const Profile = React.memo(() => {
         return;
       }
 
-      const { calculateRecommendedBudget } = await import("../services/gemini");
       const rec = await calculateRecommendedBudget(expenses as any);
 
       if (rec) {

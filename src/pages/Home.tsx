@@ -106,7 +106,7 @@ const Home = React.memo(() => {
     lastMonthDate,
     stats,
     !loadingStats,
-    true
+    false // No need to subscribe to a month that is already finished
   );
 
   const greeting = useMemo(() => {
