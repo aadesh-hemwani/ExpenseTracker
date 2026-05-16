@@ -37,7 +37,9 @@ const HeroProgressTimer = ({
   isTopHero: boolean;
   statusColor: string;
 }) => {
-  const { theme } = useTheme();
+  const { theme, accentColor, accentColors } = useTheme();
+  // @ts-ignore
+  const activeColor = accentColors[accentColor]?.default || "#6366f1";
   const [timeState, setTimeState] = useState(calculateTimeState);
 
   useEffect(() => {
@@ -64,7 +66,8 @@ const HeroProgressTimer = ({
         initial={{ width: 0 }}
         animate={{ width: `${spentPercentage}%` }}
         transition={{ duration: 1, ease: "easeOut" }}
-        className={`absolute top-0 left-0 h-full rounded-full z-0 ${isTopHero ? 'bg-black/30 dark:bg-white/40' : statusColor}`}
+        className={`absolute top-0 left-0 h-full rounded-full z-0 ${isTopHero ? '' : statusColor}`}
+        style={isTopHero ? { backgroundColor: activeColor, opacity: 0.35 } : {}}
       />
       {/* Current Time Indicator Line */}
       <div
@@ -132,11 +135,19 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
     // Almost invisible gradients, flat matte look
     const baseColor = theme === 'dark' ? 'rgba(11, 11, 12, 1)' : 'rgba(250, 250, 251, 1)';
     const subtleHighlight = theme === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)';
-    return `radial-gradient(120% 120% at 50% 0%, 
-      ${subtleHighlight} 0%, 
-      ${baseColor} 40%, 
+
+    // Add a very subtle hint of the accent color at the top
+    const accentAlpha = theme === 'dark' ? '0.08' : '0.04';
+    const accentWithAlpha = activeColor.startsWith('#')
+      ? `${activeColor}${Math.round(parseFloat(accentAlpha) * 255).toString(16).padStart(2, '0')}`
+      : activeColor;
+
+    return `radial-gradient(150% 150% at 50% -20%, 
+      ${accentWithAlpha} 0%, 
+      ${subtleHighlight} 40%, 
+      ${baseColor} 80%, 
       ${baseColor} 100%)`;
-  }, [theme]);
+  }, [theme, activeColor]);
 
   const bleedColor = "#0B0B0C";
 
@@ -158,6 +169,12 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
               background: gradientBg,
             }}
           >
+            {/* Soft Accent Glow */}
+            <div
+              className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
+              style={{ backgroundColor: activeColor }}
+            />
+
             {/* Overscroll Bleed: Extends the gradient upwards so pulling down doesn't show black */}
             <div
               className="absolute -top-[500px] left-0 right-0 h-[500px]"
@@ -167,9 +184,9 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
         </>
       ) : (
         <div
-          className="absolute inset-0 z-0 transition-opacity duration-500 opacity-[0.02] dark:opacity-[0.03]"
+          className="absolute inset-0 z-0 transition-opacity duration-500 opacity-[0.03] dark:opacity-[0.05]"
           style={{
-            background: `conic-gradient(from 180deg, currentColor ${timeState.dayProgress}%, transparent ${timeState.dayProgress}%)`,
+            background: `conic-gradient(from 180deg, ${activeColor} ${timeState.dayProgress}%, transparent ${timeState.dayProgress}%)`,
           }}
         />
       )}
@@ -209,7 +226,9 @@ const HeroBalance: React.FC<HeroBalanceProps> = ({
               value={Math.trunc(currentBalance)}
               currency={false}
               prefix="₹"
-              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${isTopHero ? 'text-[2rem] sm:text-[2.4rem] text-zinc-900/40 dark:text-white/40' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'}`}
+              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${isTopHero ? 'text-[2rem] sm:text-[2.4rem]' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'}`}
+              // @ts-ignore
+              prefixStyle={isTopHero ? { color: activeColor, opacity: 0.4 } : {}}
               className={`tracking-tighter font-semibold font-sans ${isTopHero ? 'text-[3.5rem] sm:text-[4.2rem] leading-none text-zinc-900 dark:text-white' : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'}`}
             />
             {hasDecimals && (

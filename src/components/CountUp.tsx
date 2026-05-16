@@ -7,10 +7,11 @@ interface CountUpProps {
     className?: string;
     prefix?: string;
     prefixClassName?: string;
+    prefixStyle?: React.CSSProperties;
     currency?: boolean;
 }
 
-const CountUp = ({ value, duration = 0.75, className, prefix, prefixClassName, currency = true }: CountUpProps) => {
+const CountUp = ({ value, duration = 0.75, className, prefix, prefixClassName, prefixStyle, currency = true }: CountUpProps) => {
     // 1. Create a MotionValue for the count
     const count = useMotionValue(0);
 
@@ -50,7 +51,7 @@ const CountUp = ({ value, duration = 0.75, className, prefix, prefixClassName, c
     if (prefix !== undefined) {
         return (
             <>
-                <span className={prefixClassName}>{prefix}</span>
+                <span className={prefixClassName} style={prefixStyle}>{prefix}</span>
                 <motion.span className={className}>{displayValue}</motion.span>
             </>
         );
