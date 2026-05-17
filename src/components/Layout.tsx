@@ -110,6 +110,12 @@ const Layout = memo(() => {
 
   const mainClassName = useMemo(() => {
     const isChat = location.pathname === "/chat";
+    const isEvent = location.pathname.startsWith("/event/");
+    
+    if (isEvent) {
+      return "relative z-10 w-full h-full";
+    }
+
     return `relative z-10 max-w-2xl mx-auto ${isChat
       ? "h-full"
       : "px-5 pt-0 pb-32 md:p-12"

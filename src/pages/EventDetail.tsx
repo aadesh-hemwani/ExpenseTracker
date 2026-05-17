@@ -186,96 +186,90 @@ const EventDetail = memo(() => {
   const gradientClass = getEventGradient(event.id, theme);
 
   return (
-    <div className="pt-[calc(env(safe-area-inset-top)+2rem)] max-w-lg mx-auto pb-32">
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate("/profile")}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-all"
-        >
-          <ChevronLeft size={20} className="text-gray-700 dark:text-white" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight truncate flex-1">
-          {event.name}
-        </h1>
-        <button
-          onClick={handleOpenEdit}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-accent/10 text-accent hover:bg-accent/20 transition-all"
-        >
-          <Edit2 size={18} />
-        </button>
-      </div>
+    <div className="relative min-h-screen">
+      {/* Seamless edge-to-edge background */}
+      <div 
+        className={`absolute top-0 left-0 right-0 h-[50vh] bg-gradient-to-br ${gradientClass} pointer-events-none opacity-80 dark:opacity-40`}
+        style={{ 
+          maskImage: 'linear-gradient(to bottom, black 30%, transparent 100%)', 
+          WebkitMaskImage: 'linear-gradient(to bottom, black 30%, transparent 100%)' 
+        }}
+      />
 
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className={`bg-gradient-to-br ${gradientClass} rounded-[20px] p-6 mb-6 shadow-sm relative overflow-hidden border border-transparent dark:border-none`}
-      >
-        <div className="relative z-10">
-          <div className="flex justify-between items-start mb-6">
-            <div className="p-3 bg-white/40 dark:bg-white/10 rounded-2xl shadow-sm backdrop-blur-md">
-              <TentTree size={28} className="text-gray-900 dark:text-white" />
-            </div>
-            <div className="text-right">
-              <p className="text-2xl font-black text-gray-900 dark:text-white leading-none mb-1">
-                {formatCurrency(totalSpent)}
-              </p>
-              <p className="text-[9px] font-bold uppercase tracking-[0.15em] text-gray-800/60 dark:text-white/60">
-                Total spent
-              </p>
-            </div>
+      <div className="relative z-10 pt-[calc(env(safe-area-inset-top)+1rem)] px-4 max-w-lg mx-auto pb-32">
+        {/* Header Bar */}
+        <div className="flex items-center justify-between mb-8">
+          <button
+            onClick={() => navigate("/profile")}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-black/40 backdrop-blur-md hover:bg-black/10 dark:hover:bg-black/60 transition-all"
+          >
+            <ChevronLeft size={20} className="text-gray-900 dark:text-white" />
+          </button>
+          <button
+            onClick={handleOpenEdit}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-black/40 backdrop-blur-md hover:bg-black/10 dark:hover:bg-black/60 transition-all"
+          >
+            <Edit2 size={18} className="text-gray-900 dark:text-white" />
+          </button>
+        </div>
+
+        {/* Seamless Immersive Info */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col items-center text-center mb-10 mt-2"
+        >
+          <div className="w-20 h-20 mb-6 bg-white/20 dark:bg-black/20 backdrop-blur-xl rounded-[24px] shadow-[0_8px_32px_rgba(0,0,0,0.1)] border border-white/30 dark:border-white/10 flex items-center justify-center">
+             <TentTree size={36} className="text-gray-900 dark:text-white opacity-80" />
           </div>
 
-          <div className="mb-6">
-            <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mb-1">
-              {event.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-gray-800/80 dark:text-white/80 font-medium text-xs">
-              <div className="flex items-center gap-1.5">
-                <Calendar size={14} className="opacity-60" />
-                <span>{format(start, "MMM d")} – {format(end, "MMM d, yyyy")}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <Clock size={14} className="opacity-60" />
-                <span className="uppercase tracking-widest font-bold text-[10px]">{durationStr}</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <div className="w-1 h-1 rounded-full bg-current opacity-40"></div>
-                <span>{expenses.length} expense{expenses.length !== 1 ? "s" : ""}</span>
-              </div>
-            </div>
+          <h1 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight mb-2 drop-shadow-sm">
+            {event.name}
+          </h1>
+          
+          <div className="text-gray-800/70 dark:text-white/70 font-medium text-[13px] flex flex-col items-center gap-1.5 drop-shadow-sm">
+            <p className="flex items-center justify-center">
+              {format(start, "MMM d")} – {format(end, "MMM d, yyyy")}
+              <span className="mx-2 opacity-40">•</span>
+              <span className="uppercase tracking-widest text-[10px] font-bold">{durationStr}</span>
+            </p>
+            <p className="opacity-80">{expenses.length} expense{expenses.length !== 1 ? 's' : ''}</p>
+          </div>
+
+          <div className="mt-8 flex flex-col items-center w-full">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-gray-600 dark:text-white/60 mb-1">Total Spent</p>
+            <p className="text-5xl font-black text-gray-900 dark:text-white leading-none tracking-tighter drop-shadow-sm">
+              {formatCurrency(totalSpent)}
+            </p>
           </div>
 
           {event.budget && (
-            <div className="mt-6 pt-6 border-t border-black/5 dark:border-white/10">
-              <div className="flex items-center justify-between text-xs mb-2">
-                <span className="text-gray-800/60 dark:text-white/60 font-bold uppercase tracking-[0.15em] flex items-center gap-1.5">
-                  <Wallet size={12} /> Budget
-                </span>
+            <div className="w-full mt-10">
+              <div className="flex items-center justify-between text-xs mb-2 px-1">
+                <span className="text-gray-600 dark:text-white/60 font-bold uppercase tracking-[0.1em]">Budget</span>
                 <span className="font-bold text-gray-900 dark:text-white">
                   {formatCurrency(totalSpent)} / {formatCurrency(event.budget)}
                 </span>
               </div>
-              <div className="w-full bg-black/5 dark:bg-white/10 rounded-full h-2.5 overflow-hidden">
+              <div className="w-full bg-black/10 dark:bg-white/10 rounded-full h-2 overflow-hidden backdrop-blur-sm">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${Math.min(budgetUsed, 100)}%` }}
                   transition={{ duration: 1, ease: "easeOut" }}
-                  className={`h-full rounded-full ${budgetUsed > 100 ? "bg-red-500" : budgetUsed > 80 ? "bg-amber-400" : "bg-emerald-500"
-                    }`}
+                  className={`h-full rounded-full ${budgetUsed > 100 ? "bg-red-500" : budgetUsed > 80 ? "bg-amber-400" : "bg-gray-900 dark:bg-white"}`}
                 />
               </div>
               {budgetUsed > 100 && (
-                <p className="text-red-600 dark:text-red-400 text-[11px] mt-2 font-bold flex items-center gap-1.5 bg-red-500/10 dark:bg-red-500/20 w-fit px-2 py-0.5 rounded-md">
+                <p className="text-red-600 dark:text-red-400 text-[11px] mt-3 font-bold flex items-center justify-center gap-1.5 w-full">
                   <AlertTriangle size={12} /> Over budget by {formatCurrency(totalSpent - event.budget)}
                 </p>
               )}
             </div>
           )}
-        </div>
-      </motion.div>
+        </motion.div>
 
-      <div className="mb-6">
-        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Expenses</h2>
+        <div className="mb-6 relative z-10">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4 pl-1">Expenses</h2>
         {expensesLoading ? (
           <div className="flex items-center justify-center py-10">
             <IOSSpinner size={28} />
@@ -504,6 +498,7 @@ const EventDetail = memo(() => {
         </AnimatePresence>,
         document.body
       )}
+      </div>
     </div>
   );
 });

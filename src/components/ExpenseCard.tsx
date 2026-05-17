@@ -4,7 +4,7 @@ import { Edit2, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
 import { Expense } from "../types";
-import { CATEGORY_COLORS, getCategoryIcon } from "../utils/uiUtils";
+import { CATEGORY_COLORS, getCategoryIcon, getEventBorder } from "../utils/uiUtils";
 
 interface ExpenseCardProps {
   expense: Expense;
@@ -48,6 +48,13 @@ export const ExpenseCard = React.memo(({
       subNote: rest.join("-").trim()
     };
   }, [expense.note, expense.category]);
+
+  const borderClass = useMemo(() => {
+    if (expense.context === "event" && expense.contextId) {
+      return `border ${getEventBorder(expense.contextId)}`;
+    }
+    return "border-none";
+  }, [expense.context, expense.contextId]);
 
   const startPress = useCallback(() => {
     if (readOnly || showActions || showConfirm) return;
@@ -108,7 +115,7 @@ export const ExpenseCard = React.memo(({
         onPointerUp={endPress}
         onPointerLeave={endPress}
         onClick={handleClick}
-        className="bg-white/60 dark:bg-white/[0.06] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-2 flex items-center gap-4 text-left w-full min-h-[60px] relative overflow-hidden group border-none transition-colors hover:bg-white/70 dark:hover:bg-white/[0.1]"
+        className={`bg-white/60 dark:bg-white/[0.06] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-2 flex items-center gap-4 text-left w-full min-h-[60px] relative overflow-hidden group transition-colors hover:bg-white/70 dark:hover:bg-white/[0.1] ${borderClass}`}
       >
         <div
           className="relative z-10 w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 bg-white/60 dark:bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"

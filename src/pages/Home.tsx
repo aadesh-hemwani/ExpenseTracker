@@ -51,7 +51,7 @@ const DaySection = React.memo(({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2.5">
       <div className="flex justify-between items-center">
         <span className="text-[10px] font-bold text-zinc-400 dark:text-[#A0A0A0] uppercase tracking-[0.25em]">
           {label}
@@ -214,7 +214,7 @@ const Home = React.memo(() => {
   }
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-5 pb-12">
       <header className="sticky top-0 z-50 -mx-5">
         <HeroBalance
           currentBalance={metrics.total}
@@ -230,7 +230,7 @@ const Home = React.memo(() => {
         />
       </header>
 
-      <section className="space-y-5">
+      <section className="space-y-3.5">
         <h3 className="text-xl font-bold text-zinc-900 dark:text-white tracking-tight">
           Recent Activity
         </h3>
@@ -245,7 +245,7 @@ const Home = React.memo(() => {
               variants={containerVariants}
               initial="hidden"
               animate="show"
-              className="flex flex-col space-y-10"
+              className="flex flex-col space-y-6"
               layout
             >
               {groupedRecentExpenses.map(([label, expenses]) => (

@@ -101,3 +101,21 @@ export const getEventGradient = (id: string, theme: Theme = "light") => {
   return isDark ? scheme.dark : scheme.light;
 };
 
+export const getEventBorder = (id: string) => {
+  const borderColors = [
+    "border-indigo-200 dark:border-indigo-500/20",
+    "border-cyan-200 dark:border-cyan-500/20",
+    "border-teal-200 dark:border-teal-500/20",
+    "border-orange-200 dark:border-orange-500/20",
+    "border-pink-200 dark:border-pink-500/20",
+    "border-amber-200 dark:border-amber-500/20",
+    "border-blue-200 dark:border-blue-500/20",
+    "border-purple-200 dark:border-purple-500/20",
+  ];
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return borderColors[Math.abs(hash) % borderColors.length];
+};
+

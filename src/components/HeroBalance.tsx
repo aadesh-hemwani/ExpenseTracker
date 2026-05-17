@@ -59,43 +59,45 @@ const HeroProgressTimer = React.memo(({
     [currentBalance, budgetAmount]
   );
 
-  const containerClass = `relative w-full rounded-full overflow-hidden ${
-    isTopHero ? 'h-[3px] bg-black/[0.03] dark:bg-white/[0.04]' : 'h-[3px] bg-zinc-100 dark:bg-zinc-800'
-  }`;
-
-  const timeProgressStyle = {
-    width: `${timeState.progress}%`,
-    backgroundColor: isTopHero 
-      ? (theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)') 
-      : 'rgba(128,128,128,0.1)'
-  };
-
-  const spendProgressStyle = isTopHero ? { backgroundColor: activeColor, opacity: 0.35 } : {};
-  
-  const indicatorClass = `absolute top-0 h-full z-20 transition-all duration-1000 ease-linear ${
-    isTopHero ? 'w-[2px] bg-black/20 dark:bg-white/30' : 'w-[2px] bg-zinc-400 dark:bg-zinc-500'
-  }`;
+  const isOverspending = spentPercentage > timeState.progress + 5; // adding 5% buffer to avoid turning red for minor discrepancies
 
   return (
-    <div className={containerClass}>
-      <div
-        className="absolute top-0 left-0 h-full rounded-full transition-all duration-1000 ease-linear"
-        style={timeProgressStyle}
-      />
-      <motion.div
-        initial={{ width: 0 }}
-        animate={{ width: `${spentPercentage}%` }}
-        transition={{ duration: 1, ease: "easeOut" }}
-        className={`absolute top-0 left-0 h-full rounded-full z-0 ${isTopHero ? '' : statusColor}`}
-        style={spendProgressStyle}
-      />
-      <div
-        className={indicatorClass}
-        style={{
-          left: `${timeState.progress}%`,
-          transform: 'translateX(-50%)',
-        }}
-      />
+    <div className="flex items-center gap-5 w-full mt-2">
+      {/* Spent Bar */}
+      <div className="flex-1 flex flex-col gap-1.5">
+        <div className="flex justify-between items-end text-[10px] font-bold tracking-widest uppercase">
+          <span className="text-zinc-500 dark:text-zinc-400">Spent</span>
+          <span className={`${isOverspending ? "text-rose-500 dark:text-rose-400" : "text-zinc-900 dark:text-white"}`}>
+            {spentPercentage.toFixed(0)}%
+          </span>
+        </div>
+        <div className={`w-full h-[5px] rounded-full ${isTopHero ? 'bg-black/5 dark:bg-white/10' : 'bg-zinc-100 dark:bg-zinc-800'} overflow-hidden`}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${spentPercentage}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={`h-full rounded-full ${isTopHero && statusColor.includes("zinc") ? '' : statusColor}`}
+            style={isTopHero && statusColor.includes("zinc") ? { backgroundColor: activeColor, opacity: 0.9 } : {}}
+          />
+        </div>
+      </div>
+
+      {/* Time Bar */}
+      <div className="flex-1 flex flex-col gap-1.5">
+        <div className="flex justify-between items-end text-[10px] font-bold tracking-widest uppercase">
+          <span className="text-zinc-500 dark:text-zinc-400">Time</span>
+          <span className="text-zinc-900 dark:text-white">{timeState.progress.toFixed(0)}%</span>
+        </div>
+        <div className={`w-full h-[5px] rounded-full ${isTopHero ? 'bg-black/5 dark:bg-white/10' : 'bg-zinc-100 dark:bg-zinc-800'} overflow-hidden`}>
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${timeState.progress}%` }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className={`h-full rounded-full ${isTopHero ? '' : 'bg-zinc-400 dark:bg-zinc-500'}`}
+            style={isTopHero ? { backgroundColor: activeColor, opacity: 0.3 } : {}}
+          />
+        </div>
+      </div>
     </div>
   );
 });
@@ -178,12 +180,12 @@ const HeroBalance = React.memo(({
 
   const innerClass = `relative z-10 w-full overflow-hidden ${
     isTopHero
-      ? "hero-inner px-5 sm:px-8 bg-transparent backdrop-blur-sm flex flex-col pt-4 pb-8"
+      ? "hero-inner px-5 sm:px-8 bg-transparent backdrop-blur-sm flex flex-col pt-4 pb-3"
       : "rounded-[calc(16px-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-none transition-all duration-300"
   }`;
 
   const balanceRowClass = `hero-balance-row relative z-10 flex items-center active:scale-95 transition-opacity ${
-    isTopHero ? 'mb-8' : 'justify-center pb-6'
+    isTopHero ? 'mb-5' : 'justify-center pb-6'
   } ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`;
 
   const statsRowClass = `flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium tracking-tight cursor-pointer active:opacity-60 transition-opacity ${
@@ -213,7 +215,7 @@ const HeroBalance = React.memo(({
         {isTopHero && <div className="w-full" style={{ height: "env(safe-area-inset-top, 0px)" }} />}
 
         {isTopHero && (
-          <div className="mb-3 opacity-90">
+          <div className="mb-2 opacity-90">
             <h2 className="text-[15px] font-medium text-zinc-900/40 dark:text-white/40 tracking-tight">
               {greeting}, {firstName || "there"}
             </h2>
@@ -252,7 +254,7 @@ const HeroBalance = React.memo(({
         </div>
 
         {budgetAmount > 0 && (
-          <div className="mb-4">
+          <div className="mb-2.5">
             <HeroProgressTimer
               budgetAmount={budgetAmount}
               currentBalance={currentBalance}
@@ -265,15 +267,15 @@ const HeroBalance = React.memo(({
 
         <div className={statsRowClass} onClick={onTrendClick} role="button" aria-label="View Trend Details">
           {budgetAmount > 0 ? (
-            <>
-              <span>{Math.min((currentBalance / budgetAmount) * 100, 100).toFixed(0)}% spent</span>
-              <span className="opacity-30">·</span>
-              <span>{timeState.progress.toFixed(0)}% time</span>
-              <span className="opacity-30">·</span>
-              <span>{formatCurrency(remainingAmount).split('.')[0]} left</span>
-            </>
+            <div className="flex w-full items-center justify-between pt-1">
+              <span>{formatCurrency(remainingAmount).split('.')[0]} remaining</span>
+              <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">View Trend &rarr;</span>
+            </div>
           ) : (
-            <span>Avg {formatCurrency(dailyAverage || 0).split('.')[0]}/day</span>
+            <div className="flex w-full items-center justify-between pt-1">
+              <span>Avg {formatCurrency(dailyAverage || 0).split('.')[0]}/day</span>
+              <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">View Trend &rarr;</span>
+            </div>
           )}
         </div>
       </div>

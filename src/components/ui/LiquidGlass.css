@@ -13,7 +13,9 @@
   --glass-reflex-light: 1.5;
   --saturation: 150%;
 
-  /* FAB Specific colors maybe? */
+  --shadow-ambient: rgba(0, 0, 0, 0.12);
+  --shadow-inset: rgba(0, 0, 0, 0.04);
+  --shadow-highlight: rgba(255, 255, 255, 0.6);
 }
 
 /* Dark mode overrides if needed - assuming generic dark mode class on body/html */
@@ -27,6 +29,10 @@
   --glass-reflex-dark: 2;
   --glass-reflex-light: 0.3;
   --saturation: 150%;
+
+  --shadow-ambient: rgba(0, 0, 0, 0.5);
+  --shadow-inset: rgba(0, 0, 0, 0.15);
+  --shadow-highlight: rgba(255, 255, 255, 0.15);
 }
 
 .liquid-glass-effect {
@@ -34,9 +40,9 @@
   backdrop-filter: blur(2px) saturate(var(--saturation));
   -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    inset 0 4px 16px rgba(0, 0, 0, 0.15),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    0 4px 20px var(--shadow-ambient),
+    inset 0 4px 16px var(--shadow-inset),
+    inset 0 1px 1px var(--shadow-highlight);
   transform: translateZ(0);
   will-change: backdrop-filter;
 }
@@ -44,9 +50,9 @@
 .liquid-pill-effect {
   background-color: rgba(255, 255, 255, 0.06);
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    inset 0 4px 16px rgba(0, 0, 0, 0.15),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    0 4px 20px var(--shadow-ambient),
+    inset 0 4px 16px var(--shadow-inset),
+    inset 0 1px 1px var(--shadow-highlight);
 }
 
 
@@ -84,9 +90,9 @@
 
   /* Minimal Apple-style ambient depth */
   box-shadow:
-    0 4px 20px rgba(0, 0, 0, 0.5),
-    inset 0 4px 16px rgba(0, 0, 0, 0.15),
-    inset 0 1px 1px rgba(255, 255, 255, 0.15);
+    0 4px 20px var(--shadow-ambient),
+    inset 0 4px 16px var(--shadow-inset),
+    inset 0 1px 1px var(--shadow-highlight);
 
   transition: transform 200ms cubic-bezier(0.5, 0, 0, 1);
   z-index: 40;

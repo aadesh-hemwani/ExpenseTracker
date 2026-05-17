@@ -295,12 +295,12 @@ const Profile = React.memo(() => {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleAddEvent}
-                className="overflow-hidden mb-4"
+                className="overflow-hidden mb-6 mt-2"
               >
-                <div className="p-4 bg-gray-50 dark:bg-white/5 rounded-2xl space-y-3 border border-gray-100 dark:border-white/10">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-bold text-gray-700 dark:text-gray-300">New Event</p>
-                    <button type="button" onClick={() => setShowAddEventForm(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-white transition-colors">
+                <div className="p-5 bg-gray-50 dark:bg-[#1A1A1C] rounded-[24px] space-y-4 shadow-inner">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-base font-bold text-gray-900 dark:text-white">New Event</p>
+                    <button type="button" onClick={() => setShowAddEventForm(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/10 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors">
                       <X size={16} />
                     </button>
                   </div>
@@ -311,48 +311,48 @@ const Profile = React.memo(() => {
                     onChange={(e) => setNewEventName(e.target.value)}
                     placeholder="Event name (e.g. Goa Trip)"
                     required
-                    className="w-full px-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
+                    className="w-full min-w-0 px-4 py-3.5 bg-black/5 dark:bg-white/5 border-none rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
                   />
 
-                  <div className="grid grid-cols-1 gap-4">
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Start</label>
+                  <div className="flex flex-col gap-4">
+                    <div className="w-full overflow-hidden">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5 ml-1">Start Date & Time</label>
                       <input
                         type="datetime-local"
                         value={newEventStart}
                         onChange={(e) => setNewEventStart(e.target.value)}
                         required
-                        className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all dark:[color-scheme:dark]"
+                        className="w-full max-w-full min-w-0 block px-3.5 py-3.5 bg-black/5 dark:bg-white/5 border-none rounded-xl text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all dark:[color-scheme:dark] overflow-hidden text-ellipsis appearance-none"
                       />
                     </div>
-                    <div>
-                      <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">End</label>
+                    <div className="w-full overflow-hidden">
+                      <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5 ml-1">End Date & Time</label>
                       <input
                         type="datetime-local"
                         value={newEventEnd}
                         onChange={(e) => setNewEventEnd(e.target.value)}
                         required
-                        className="w-full px-3 py-2 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all dark:[color-scheme:dark]"
+                        className="w-full max-w-full min-w-0 block px-3.5 py-3.5 bg-black/5 dark:bg-white/5 border-none rounded-xl text-sm font-medium text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all dark:[color-scheme:dark] overflow-hidden text-ellipsis appearance-none"
                       />
                     </div>
                   </div>
 
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₹</span>
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-base">₹</span>
                     <input
                       type="number"
                       value={newEventBudget}
                       onChange={(e) => setNewEventBudget(e.target.value)}
                       placeholder="Budget (optional)"
                       min="0"
-                      className="w-full pl-8 pr-4 py-2.5 bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
+                      className="w-full min-w-0 pl-9 pr-4 py-3.5 bg-black/5 dark:bg-white/5 border-none rounded-xl text-sm font-medium text-gray-900 dark:text-white placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent/50 transition-all"
                     />
                   </div>
 
                   <button
                     type="submit"
                     disabled={savingEvent || !newEventName.trim()}
-                    className="w-full py-2.5 bg-accent text-white rounded-xl text-sm font-bold disabled:opacity-50 transition-all active:scale-95"
+                    className="w-full py-3.5 mt-2 bg-accent text-white rounded-xl text-sm font-bold shadow-lg shadow-accent/20 disabled:opacity-50 transition-all active:scale-95"
                   >
                     {savingEvent ? "Creating..." : "Create Event"}
                   </button>
