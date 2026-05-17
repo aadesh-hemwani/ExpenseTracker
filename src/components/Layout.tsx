@@ -26,8 +26,8 @@ const NavItem = memo(({
   label,
   activeColor,
 }: NavItemProps) => (
-  <NavLink 
-    to={to} 
+  <NavLink
+    to={to}
     className="relative flex items-center group"
     onMouseEnter={() => prefetchRoute(to)}
     onFocus={() => prefetchRoute(to)}
@@ -167,8 +167,8 @@ const Layout = memo(() => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ 
-                  duration: 0.2, 
+                transition={{
+                  duration: 0.2,
                   ease: "easeOut"
                 }}
                 className="w-full"

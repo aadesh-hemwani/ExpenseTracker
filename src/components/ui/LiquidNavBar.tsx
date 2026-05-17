@@ -21,7 +21,7 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) 
     return config?.default || "#6366f1";
   }, [accentColor, accentColors]);
 
-  const activeIndex = useMemo(() => 
+  const activeIndex = useMemo(() =>
     items.findIndex((item) => item.path === location.pathname),
     [items, location.pathname]
   );
