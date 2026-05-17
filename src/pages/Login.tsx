@@ -13,7 +13,7 @@ const Login = memo(() => {
     }, [user, navigate]);
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen bg-gray-50 dark:bg-black px-6 transition-colors duration-200">
+        <div className="flex flex-col items-center justify-center bg-gray-50 dark:bg-black px-6 transition-colors duration-200" style={{ height: "100lvh" }}>
             <div className="w-full max-w-sm text-center">
                 <div className="flex justify-center mb-6">
                     <img src="/pwa-512x512.png" alt="App Icon" className="w-24 h-24 rounded-3xl shadow-2xl" />

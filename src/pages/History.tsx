@@ -388,7 +388,7 @@ const CalendarView = memo(({
         {typeof document !== 'undefined' && createPortal((
           <AnimatePresence>
             {showFilters && (
-              <div className="fixed inset-0 z-[100] flex justify-center items-end sm:items-center p-0 sm:p-4 pointer-events-none">
+              <div className="fixed top-0 left-0 right-0 z-[100] flex justify-center items-end sm:items-center p-0 sm:p-4 pointer-events-none" style={{ height: "100lvh" }}>
                 <motion.div
                   initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   onClick={() => setShowFilters(false)}

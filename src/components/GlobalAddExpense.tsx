@@ -313,7 +313,10 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
       {createPortal(
         <AnimatePresence>
           {isOpen && (
-            <div className="fixed inset-0 z-[9999] flex justify-center pointer-events-none transition-all duration-300 items-end">
+            <div
+              className="fixed left-0 right-0 top-0 z-[9999] flex justify-center pointer-events-none items-end"
+              style={{ height: "100lvh" }}
+            >
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -442,7 +445,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                         }
                       }
                     }}
-                    style={{ WebkitOverflowScrolling: "touch" }}
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                     className={`w-full overflow-x-auto no-scrollbar py-2 pl-4 ${isReadOnly ? 'pointer-events-none' : ''}`}
                   >
                     <div className="flex space-x-4 pr-4">
@@ -498,6 +501,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                       onChange={(e) => setNote(e.target.value)}
                       placeholder={isReadOnly ? "No note" : (NOTE_PLACEHOLDERS[category] || "Add a note...")}
                       readOnly={isReadOnly}
+                      inputMode={isReadOnly ? "none" : "text"}
                       className={`w-full bg-gray-50 dark:bg-white/5 rounded-xl py-3 px-4 text-sm md:text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
                     />
                   </div>

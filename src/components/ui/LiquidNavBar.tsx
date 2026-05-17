@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../../context/ThemeContext";
 import { LucideIcon } from "lucide-react";
+import { prefetchRoute } from "../../utils/prefetch";
 
 import "./LiquidGlass.css";
 
@@ -35,6 +36,8 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) 
           <button
             key={item.path}
             onClick={() => navigate(item.path)}
+            onMouseEnter={() => prefetchRoute(item.path)}
+            onTouchStart={() => prefetchRoute(item.path)}
             className="relative flex flex-col items-center justify-center flex-1 h-full gap-1 pt-1 rounded-full tap-highlight-transparent group"
           >
             <AnimatePresence>

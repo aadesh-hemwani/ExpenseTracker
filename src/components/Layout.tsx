@@ -18,13 +18,20 @@ interface NavItemProps {
   activeColor: string;
 }
 
+import { prefetchRoute } from "../utils/prefetch";
+
 const NavItem = memo(({
   to,
   icon: Icon,
   label,
   activeColor,
 }: NavItemProps) => (
-  <NavLink to={to} className="relative flex items-center group">
+  <NavLink 
+    to={to} 
+    className="relative flex items-center group"
+    onMouseEnter={() => prefetchRoute(to)}
+    onFocus={() => prefetchRoute(to)}
+  >
     {({ isActive }) => (
       <div className="flex items-center w-full px-4 py-3 rounded-2xl transition-all duration-300 relative overflow-hidden">
         {isActive && (
@@ -93,6 +100,7 @@ const Layout = memo(() => {
     }
   }, [location.pathname]);
 
+
   const auraStyle = useMemo(() => ({
     background: `
       radial-gradient(circle at 0% 0%, ${theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'} 0%, transparent 40%),
@@ -109,7 +117,10 @@ const Layout = memo(() => {
   }, [location.pathname]);
 
   return (
-    <div className="h-[calc(var(--vh,1dvh)*100)] w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20">
+    <div
+      className="w-full flex flex-col bg-body text-primary font-sans md:flex-row transition-colors duration-500 selection:bg-primary/20"
+      style={{ height: "100lvh" }}
+    >
       <div
         className="fixed inset-0 z-0 pointer-events-none transition-all duration-1000 ease-in-out"
         style={auraStyle}
@@ -147,7 +158,6 @@ const Layout = memo(() => {
       <main
         ref={mainRef}
         className="flex-1 relative overflow-y-auto no-scrollbar overscroll-none"
-        style={{ WebkitOverflowScrolling: "touch" }}
       >
         <div className={mainClassName}>
           <ScrollContext.Provider value={mainRef}>

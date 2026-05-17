@@ -21,16 +21,7 @@ const CountUp = memo(({
     currency = true 
 }: CountUpProps) => {
     const count = useMotionValue(0);
-
-    useEffect(() => {
-        const finalValue = Number(value) || 0;
-        const controls = animate(count, finalValue, {
-            duration: duration,
-            ease: "easeOut"
-        });
-
-        return controls.stop;
-    }, [value, duration, count]);
+    const spanRef = React.useRef<HTMLSpanElement>(null);
 
     const formatter = useMemo(() => new Intl.NumberFormat('en-IN', {
         style: currency ? 'currency' : 'decimal',
@@ -38,18 +29,31 @@ const CountUp = memo(({
         maximumFractionDigits: 0
     }), [currency]);
 
-    const displayValue = useTransform(count, (latest: number) => formatter.format(latest));
+    useEffect(() => {
+        const finalValue = Number(value) || 0;
+        const controls = animate(count, finalValue, {
+            duration: duration,
+            ease: "easeOut",
+            onUpdate: (latest: number) => {
+                if (spanRef.current) {
+                    spanRef.current.textContent = formatter.format(latest);
+                }
+            }
+        });
+
+        return controls.stop;
+    }, [value, duration, count, formatter]);
 
     if (prefix !== undefined) {
         return (
             <>
                 <span className={prefixClassName} style={prefixStyle}>{prefix}</span>
-                <motion.span className={className}>{displayValue}</motion.span>
+                <span ref={spanRef} className={className} />
             </>
         );
     }
 
-    return <motion.span className={className}>{displayValue}</motion.span>;
+    return <span ref={spanRef} className={className} />;
 });
 
 CountUp.displayName = "CountUp";

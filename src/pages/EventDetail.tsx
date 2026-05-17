@@ -314,7 +314,7 @@ const EventDetail = memo(() => {
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showDeleteModal && (
-            <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none pb-8">
+            <div className="fixed top-0 left-0 right-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none pb-8" style={{ height: "100lvh" }}>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -411,7 +411,7 @@ const EventDetail = memo(() => {
       {typeof document !== "undefined" && createPortal(
         <AnimatePresence>
           {showEditModal && (
-            <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none pb-8">
+            <div className="fixed top-0 left-0 right-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none pb-8" style={{ height: "100lvh" }}>
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

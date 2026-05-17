@@ -4,95 +4,18 @@
 <head>
   <meta charset="UTF-8" />
   <link rel="icon" type="image/png" href="/pwa-192x192.png" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="apple-touch-icon" href="/pwa-192x192.png">
   <meta name="theme-color" content="#000000" />
-  <script>
-    // Robust iOS PWA viewport height fix
-    // Uses visualViewport.height (most accurate on iOS) and handles
-    // keyboard open/close, cold launch, and orientation changes.
-    (function () {
-      var lastHeight = 0;
-      function setVH() {
-        // Prefer visualViewport.height — it excludes the keyboard on iOS
-        var h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
-        if (h === lastHeight) return;
-        lastHeight = h;
-        document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
-      }
-
-      // Run immediately (catches cold launch)
-      setVH();
-
-      // Also run after a brief delay to catch iOS PWA status bar adjustment
-      setTimeout(setVH, 50);
-      setTimeout(setVH, 300);
-
-      // Listen on every event that can shift the viewport
-      window.addEventListener('resize', setVH);
-      window.addEventListener('orientationchange', function() {
-        setTimeout(setVH, 100); // wait for orientation to settle
-      });
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', setVH);
-        window.visualViewport.addEventListener('scroll', setVH);
-      }
-
-      // When the keyboard closes, snap the vh back immediately
-      document.addEventListener('focusout', function() {
-        setTimeout(setVH, 100);
-      }, true);
-    })();
-  </script>
   <title>Expenses.</title>
   <meta name="description" content="Minimalist Expense Tracker" />
-  <script>
-    // Global Error Handler for Mobile Debugging
-    window.onerror = function (msg, url, line, col, error) {
-      const debugDiv = document.getElementById('debug-console') || createDebugDiv();
-      debugDiv.innerHTML += `<div style="color:red; border-bottom:1px solid #333; padding:4px;">
-        <strong>Error:</strong> ${msg}<br>
-        <small>${url}:${line}:${col}</small><br>
-        <small>${error?.stack || ''}</small>
-      </div>`;
-    };
-
-    window.onunhandledrejection = function (event) {
-      const debugDiv = document.getElementById('debug-console') || createDebugDiv();
-      debugDiv.innerHTML += `<div style="color:orange; border-bottom:1px solid #333; padding:4px;">
-        <strong>Unhandled Rejection:</strong> ${event.reason}<br>
-      </div>`;
-    };
-
-    // Capture logs too if needed
-    /*
-    const originalLog = console.log;
-    console.log = function(...args) {
-       originalLog.apply(console, args);
-       const debugDiv = document.getElementById('debug-console') || createDebugDiv();
-       debugDiv.innerHTML += `<div style="color:#aaa; border-bottom:1px solid #333; padding:4px;">
-        LOG: ${args.join(' ')}
-      </div>`;
-    }
-    */
-
-    function createDebugDiv() {
-      const div = document.createElement('div');
-      div.id = 'debug-console';
-      div.style.cssText = "position:fixed; top:0; left:0; width:100%; height:50vh; background:rgba(0,0,0,0.8); color:white; overflow:auto; z-index:10000; font-family:monospace; font-size:10px; pointer-events:none;";
-      document.body.appendChild(div);
-      return div;
-    }
-  </script>
 </head>
 
 <body>
   <div id="root">
-    <!-- Immediate Pre-loader (inline for speed) -->
     <style>
       .initial-loader {
         position: fixed;
@@ -104,7 +27,6 @@
         z-index: 9999;
         transition: opacity 0.4s ease-out;
       }
-
       .initial-sp {
         width: 40px;
         height: 40px;
@@ -113,27 +35,13 @@
         border-top-color: #6366f1;
         animation: spin 1s ease-in-out infinite;
       }
-
-      @keyframes spin {
-        to {
-          transform: rotate(360deg);
-        }
-      }
-
+      @keyframes spin { to { transform: rotate(360deg); } }
       @media (prefers-color-scheme: light) {
-        .initial-loader {
-          background-color: #ffffff;
-        }
-
-        .initial-sp {
-          border-color: rgba(0, 0, 0, 0.1);
-          border-top-color: #6366f1;
-        }
+        .initial-loader { background-color: #ffffff; }
+        .initial-sp { border-color: rgba(0,0,0,0.1); border-top-color: #6366f1; }
       }
     </style>
-    <div class="initial-loader">
-      <div class="initial-sp"></div>
-    </div>
+    <div class="initial-loader"><div class="initial-sp"></div></div>
   </div>
   <script type="module" src="/src/main.tsx"></script>
 </body>

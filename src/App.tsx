@@ -25,7 +25,7 @@ const EventDetail = lazy(() => import("./pages/EventDetail"));
 const Admin = lazy(() => import("./pages/Admin"));
 
 function App() {
-  // Prevent Zoom on iOS and snap the window viewport back to full screen
+  // Prevent pinch-zoom on iOS and snap the window viewport back to full screen
   useEffect(() => {
     const handleGestureStart = (e: Event) => {
       e.preventDefault();
@@ -37,13 +37,6 @@ function App() {
       }
     };
 
-    const setVh = () => {
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty("--vh", `${vh}px`);
-    };
-
-    setVh();
-    window.addEventListener("resize", setVh);
     document.addEventListener("gesturestart", handleGestureStart);
     window.addEventListener("scroll", handleScrollReset);
 
@@ -51,7 +44,6 @@ function App() {
     window.scrollTo(0, 0);
 
     return () => {
-      window.removeEventListener("resize", setVh);
       document.removeEventListener("gesturestart", handleGestureStart);
       window.removeEventListener("scroll", handleScrollReset);
     };
@@ -64,7 +56,7 @@ function App() {
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <AuthProvider>
             <Suspense fallback={
-              <div className="flex items-center justify-center h-screen bg-body">
+              <div className="flex items-center justify-center bg-body" style={{ height: "100lvh" }}>
                 <IOSSpinner size={40} />
               </div>
             }>

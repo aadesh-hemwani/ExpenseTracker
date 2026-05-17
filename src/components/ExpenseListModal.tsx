@@ -29,7 +29,7 @@ const ExpenseListModal = memo(({
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none">
+    <div className="fixed top-0 left-0 right-0 z-[9999] flex items-end md:items-center justify-center pointer-events-none" style={{ height: "100lvh" }}>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
