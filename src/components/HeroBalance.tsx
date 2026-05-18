@@ -55,7 +55,7 @@ const HeroProgressTimer = React.memo(({
   }, []);
 
   const spentPercentage = useMemo(() => 
-    budgetAmount > 0 ? Math.min((currentBalance / budgetAmount) * 100, 100) : 0,
+    budgetAmount > 0 ? (currentBalance / budgetAmount) * 100 : 0,
     [currentBalance, budgetAmount]
   );
 
@@ -74,7 +74,7 @@ const HeroProgressTimer = React.memo(({
         <div className={`w-full h-[5px] rounded-full ${isTopHero ? 'bg-black/5 dark:bg-white/10' : 'bg-zinc-100 dark:bg-zinc-800'} overflow-hidden`}>
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${spentPercentage}%` }}
+            animate={{ width: `${Math.min(spentPercentage, 100)}%` }}
             transition={{ duration: 1, ease: "easeOut" }}
             className={`h-full rounded-full ${isTopHero && statusColor.includes("zinc") ? '' : statusColor}`}
             style={isTopHero && statusColor.includes("zinc") ? { backgroundColor: activeColor, opacity: 0.9 } : {}}
@@ -137,18 +137,19 @@ const HeroBalance = React.memo(({
 
   const timeState = useMemo(() => calculateTimeState(), []);
 
-  const { remainingAmount, statusColor } = useMemo(() => {
+  const { remainingAmount, isOverspent, statusColor } = useMemo(() => {
     if (!budgetAmount || budgetAmount <= 0) {
-      return { remainingAmount: 0, statusColor: "bg-zinc-400" };
+      return { remainingAmount: 0, isOverspent: false, statusColor: "bg-zinc-400" };
     }
     const percentage = (currentBalance / budgetAmount) * 100;
-    const remaining = Math.max(0, budgetAmount - currentBalance);
+    const isOverspent = currentBalance > budgetAmount;
+    const remaining = isOverspent ? currentBalance - budgetAmount : budgetAmount - currentBalance;
 
     let color = "bg-zinc-400 dark:bg-zinc-500";
     if (percentage > 85) color = "bg-rose-500";
     else if (percentage > 60) color = "bg-amber-500";
 
-    return { remainingAmount: remaining, statusColor: color };
+    return { remainingAmount: remaining, isOverspent, statusColor: color };
   }, [currentBalance, budgetAmount]);
 
   const hasDecimals = currentBalance % 1 !== 0;
@@ -268,7 +269,7 @@ const HeroBalance = React.memo(({
         <div className={statsRowClass} onClick={onTrendClick} role="button" aria-label="View Trend Details">
           {budgetAmount > 0 ? (
             <div className="flex w-full items-center justify-between pt-1">
-              <span>{formatCurrency(remainingAmount).split('.')[0]} remaining</span>
+              <span>{formatCurrency(remainingAmount).split('.')[0]} {isOverspent ? 'overspent' : 'remaining'}</span>
               <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">View Trend &rarr;</span>
             </div>
           ) : (

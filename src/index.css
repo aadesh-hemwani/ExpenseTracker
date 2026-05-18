@@ -116,7 +116,7 @@ p {
 
   .glass-card {
     /* Apple-style embedded spatial material */
-    @apply backdrop-blur-md bg-white/60 dark:bg-white/[0.06] rounded-2xl border-none shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] transition-all duration-300;
+    @apply backdrop-blur-md bg-white/60 dark:bg-white/[0.06] rounded-2xl border-none shadow-[0_2px_10px_#0000000a] dark:shadow-[inset_0_1px_0_#ffffff0d] transition-all duration-300;
   }
 
   .glass-nav {

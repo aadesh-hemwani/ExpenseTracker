@@ -25,8 +25,8 @@ export const ExpenseCard = React.memo(({
   const [showConfirm, setShowConfirm] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const amount = useMemo(() => 
-    Number(expense.amount).toLocaleString("en-IN"), 
+  const amount = useMemo(() =>
+    Number(expense.amount).toLocaleString("en-IN"),
     [expense.amount]
   );
 
@@ -35,7 +35,7 @@ export const ExpenseCard = React.memo(({
     return format(date, "hh:mm a");
   }, [expense.date]);
 
-  const accentColor = useMemo(() => 
+  const accentColor = useMemo(() =>
     CATEGORY_COLORS[expense.category as keyof typeof CATEGORY_COLORS] || "#A0A0A0",
     [expense.category]
   );
@@ -115,7 +115,7 @@ export const ExpenseCard = React.memo(({
         onPointerUp={endPress}
         onPointerLeave={endPress}
         onClick={handleClick}
-        className={`bg-white/60 dark:bg-white/[0.06] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-2 flex items-center gap-4 text-left w-full min-h-[60px] relative overflow-hidden group transition-colors hover:bg-white/70 dark:hover:bg-white/[0.1] ${borderClass}`}
+        className={`bg-white/60 dark:bg-white/[0.06] backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-2 flex items-center gap-4 text-left w-full min-h-[60px] relative overflow-hidden group transition-colors hover:bg-white/70 dark:hover:bg-white/[0.1] ${borderClass}`}
       >
         <div
           className="relative z-10 w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 bg-white/60 dark:bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
