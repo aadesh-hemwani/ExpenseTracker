@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
+import React, { useMemo, useState, useEffect, lazy, Suspense, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   useMonthlyStats,
@@ -6,7 +6,6 @@ import {
   useExpenses,
 } from "../hooks/useExpenses";
 import { getCategoryBreakdown } from "../utils/analyticsHelpers";
-import { getCategoryIcon } from "../utils/uiUtils";
 import { formatCurrency } from "../utils/formatUtils";
 import { format, subMonths } from "date-fns";
 import {
@@ -21,14 +20,14 @@ import {
   BotMessageSquare
 } from "lucide-react";
 import { useAiInsights } from "../hooks/useAiInsights";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import CountUp from "../components/CountUp";
 import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import Card from "../components/Card";
-import ExpenseListModal from "../components/ExpenseListModal";
+
 import AiInsights from "../components/AiInsights";
 import { generateInsights } from "../utils/insights";
 import { Expense } from "../types";
@@ -74,15 +73,7 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
     userId,
   );
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const handleCategoryClick = useCallback((category: string) => {
-    setSelectedCategory(category);
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
-    setSelectedCategory(null);
-  }, []);
 
   const { theme, accentColor, accentColors } = useTheme();
   const [budget, setBudget] = useState(0);
@@ -439,35 +430,7 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
         </Card>
       </motion.div>
 
-      <motion.div variants={itemVariants} className="space-y-4 pb-20">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-white">This Month's Breakdown</h3>
-        <div className="overflow-hidden">
-          {categoryBreakdown.map((cat, index) => (
-            <button
-              key={index}
-              onClick={() => handleCategoryClick(cat.name)}
-              className={`w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${index !== categoryBreakdown.length - 1 ? "border-b border-gray-100 dark:border-white/5" : ""}`}
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 flex items-center justify-center scale-125">{getCategoryIcon(cat.name, "25px")}</div>
-                <span className="font-medium text-gray-700 dark:text-gray-300">{cat.name}</span>
-              </div>
-              <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(cat.value)}</span>
-            </button>
-          ))}
-        </div>
-        {categoryBreakdown.length === 0 && <div className="text-center py-10 text-gray-400 text-sm">No expenses recorded yet.</div>}
-      </motion.div>
 
-      <AnimatePresence>
-        {selectedCategory && (
-          <ExpenseListModal
-            title={selectedCategory}
-            expenses={monthlyExpenses.filter((e) => e.category === selectedCategory)}
-            onClose={handleCloseModal}
-          />
-        )}
-      </AnimatePresence>
     </motion.div>
   );
 });

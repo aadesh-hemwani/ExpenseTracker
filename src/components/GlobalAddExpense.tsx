@@ -74,7 +74,7 @@ const NumKey = memo(({ val, label, transparent = false, onPress }: NumKeyProps) 
     }}
     className={`
       relative h-14 sm:h-16 rounded-xl flex items-center justify-center text-2xl sm:text-3xl font-normal select-none touch-manipulation transition-colors duration-200
-      ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-gray-100 dark:bg-[#1c1c1e] text-gray-900 dark:text-white"}
+      ${transparent ? "bg-transparent text-gray-900 dark:text-white" : "bg-white/70 dark:bg-white/[0.08] shadow-sm text-gray-900 dark:text-white backdrop-blur-sm"}
     `}
   >
     {label || val}
@@ -314,29 +314,24 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
         <AnimatePresence>
           {isOpen && (
             <div
-              className="fixed left-0 right-0 top-0 z-[9999] flex justify-center pointer-events-none items-end"
+              className="fixed left-0 right-0 top-0 z-[9999] flex justify-center pointer-events-none items-end md:items-center"
               style={{ height: "100lvh" }}
             >
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="absolute inset-0 bg-gray-900/60 dark:bg-black/40 backdrop-blur-[8px] pointer-events-auto"
+                transition={{ duration: 0.3 }}
+                className="absolute inset-0 bg-black/20 dark:bg-black/30 backdrop-blur-[4px] pointer-events-auto"
                 onClick={handleCloseModal}
               />
 
               <motion.div
-                initial={{ y: "110%" }}
+                initial={{ y: "100%" }}
                 animate={{ y: 0 }}
-                exit={{ y: "110%" }}
-                transition={{
-                  type: "spring",
-                  damping: 25,
-                  stiffness: 300,
-                  mass: 0.8,
-                }}
-                className="relative z-10 w-full max-w-md bg-white dark:bg-[#121316] rounded-t-[20px] shadow-lg overflow-hidden pb-safe pointer-events-auto"
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 26, stiffness: 320 }}
+                className="relative z-10 w-full max-w-md bg-white/40 dark:bg-white/[0.03] backdrop-blur-[60px] rounded-t-[32px] md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_-10px_40px_rgba(0,0,0,0.6)] border-t md:border border-white/60 dark:border-white/10 overflow-hidden pb-safe pointer-events-auto"
               >
                 <div className="w-full h-6 flex items-center justify-center pt-2">
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full" />
@@ -502,7 +497,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                       placeholder={isReadOnly ? "No note" : (NOTE_PLACEHOLDERS[category] || "Add a note...")}
                       readOnly={isReadOnly}
                       inputMode={isReadOnly ? "none" : "text"}
-                      className={`w-full bg-gray-50 dark:bg-white/5 rounded-xl py-3 px-4 text-sm md:text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
+                      className={`w-full bg-white/50 dark:bg-black/20 shadow-inner backdrop-blur-sm border border-white/50 dark:border-white/5 rounded-xl py-3 px-4 text-sm md:text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
                     />
                   </div>
 
@@ -686,7 +681,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                             WebkitMaskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 2%)',
                                             height: '10px'
                                           }} />
-                                          
+
                                           {/* Major Ticks (Unfilled) */}
                                           <div className="absolute inset-0 bg-gray-300 dark:bg-white/30" style={{
                                             maskImage: 'repeating-linear-gradient(to right, black 0px, black 1px, transparent 1px, transparent 10%)',
@@ -695,7 +690,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                           }} />
 
                                           {/* Active Ticks (Filled) */}
-                                          <motion.div 
+                                          <motion.div
                                             initial={{ width: 0 }}
                                             animate={{ width: `${pct}%` }}
                                             transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}

@@ -59,53 +59,48 @@ const CategoryDonutChart = memo(({
   if (data.length === 0) return null;
 
   return (
-    <div className="w-full h-80 bg-surface rounded-3xl p-6 border border-subtle shadow-sm mb-6">
-      <h3 className="text-lg font-bold text-primary mb-4">
-        Spending by Category
-      </h3>
-      <div className="h-64 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              innerRadius={70}
-              outerRadius={90}
-              paddingAngle={4}
-              dataKey="value"
-              stroke="none"
-              cornerRadius={6}
-              isAnimationActive={animate}
-            >
-              {data.map((entry, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={CATEGORY_COLORS[entry.name as keyof typeof CATEGORY_COLORS] || "#64748b"}
-                  className="stroke-transparent outline-none"
-                />
-              ))}
-            </Pie>
-            <Tooltip
-              content={<CustomTooltip />}
-              cursor={false}
-              animationDuration={500}
-            />
-            <Legend
-              verticalAlign="middle"
-              align="right"
-              layout="vertical"
-              iconType="circle"
-              iconSize={8}
-              wrapperStyle={{
-                paddingLeft: "20px",
-                fontSize: "12px",
-                color: "hsl(var(--text-tertiary))",
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
+    <div className="w-full h-[260px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={70}
+            outerRadius={90}
+            paddingAngle={4}
+            dataKey="value"
+            stroke="none"
+            cornerRadius={6}
+            isAnimationActive={animate}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={CATEGORY_COLORS[entry.name as keyof typeof CATEGORY_COLORS] || "#64748b"}
+                className="stroke-transparent outline-none"
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={false}
+            animationDuration={500}
+          />
+          <Legend
+            verticalAlign="middle"
+            align="right"
+            layout="vertical"
+            iconType="circle"
+            iconSize={8}
+            wrapperStyle={{
+              paddingLeft: "20px",
+              fontSize: "12px",
+              color: "hsl(var(--text-tertiary))",
+            }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
     </div>
   );
 });

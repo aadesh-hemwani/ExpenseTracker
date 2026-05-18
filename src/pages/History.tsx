@@ -249,6 +249,16 @@ const CalendarView = memo(({
   }, [expenses, filters]);
 
 
+  const categoryBreakdown = useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpenses.forEach(e => {
+      breakdown[e.category] = (breakdown[e.category] || 0) + Number(e.amount);
+    });
+    return Object.entries(breakdown)
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredExpenses]);
+
   const groupedExpenses = useMemo(() => {
     const groups: Record<string, Expense[]> = {};
     const todayStr = format(new Date(), "yyyy-MM-dd");
@@ -572,10 +582,47 @@ const CalendarView = memo(({
           />
 
           <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-800">
-            <div ref={chartContainerRef} className="mb-8 min-h-[250px] flex items-center justify-center">
-              <Suspense fallback={<ChartSkeleton />}>
-                <CategoryDonutChart expenses={filteredExpenses} animate={!isGeneratingPDF} />
-              </Suspense>
+            <div ref={chartContainerRef} className="mb-8 bg-white/60 dark:bg-white/[0.06] backdrop-blur-md rounded-[24px] shadow-[0_2px_10px_#0000000a] dark:shadow-[inset_0_1px_0_#ffffff0d] overflow-hidden flex flex-col">
+              <div className="p-6 pb-4">
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Spending by Category</h3>
+                <div className="min-h-[260px] flex items-center justify-center w-full">
+                  <Suspense fallback={<ChartSkeleton />}>
+                    <CategoryDonutChart expenses={filteredExpenses} animate={!isGeneratingPDF} />
+                  </Suspense>
+                </div>
+              </div>
+
+              <div className="flex flex-col border-t border-gray-100 dark:border-white/5">
+                {categoryBreakdown.map((cat, index) => {
+                  const isSelected = filters.category === cat.name;
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => {
+                        setFilters(prev => ({ 
+                          ...prev, 
+                          category: isSelected ? 'all' : cat.name 
+                        }));
+                        if (!isSelected && chartContainerRef.current) {
+                          chartContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                      }}
+                      className={`w-full flex items-center justify-between p-4 transition-colors ${
+                        isSelected 
+                          ? "bg-accent/10 dark:bg-accent/20" 
+                          : "hover:bg-white/70 dark:hover:bg-white/10"
+                      } ${index !== categoryBreakdown.length - 1 ? "border-b border-gray-100 dark:border-white/5" : ""}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 flex items-center justify-center scale-125">{getCategoryIcon(cat.name, "25px")}</div>
+                        <span className={`font-medium ${isSelected ? "text-accent dark:text-accent" : "text-gray-700 dark:text-gray-300"}`}>{cat.name}</span>
+                      </div>
+                      <span className={`font-semibold ${isSelected ? "text-accent dark:text-accent" : "text-gray-900 dark:text-white"}`}>{formatCurrency(cat.value)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {categoryBreakdown.length === 0 && <div className="text-center py-10 text-gray-400 text-sm">No expenses recorded yet.</div>}
             </div>
 
             <MonthInsights expenses={filteredExpenses} currentMonth={currentMonth} />
