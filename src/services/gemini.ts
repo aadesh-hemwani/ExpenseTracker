@@ -24,7 +24,7 @@ export const generateAnalyticsInsights = async (
   monthlyLimit: number,
   totalSpent: number
 ): Promise<AnalyticsInsight[]> => {
-  if (!API_KEY) return [];
+  if (!API_KEY || !navigator.onLine) return [];
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -78,7 +78,7 @@ export interface BudgetRecommendation {
 export const calculateRecommendedBudget = async (
   recentExpenses: Expense[]
 ): Promise<BudgetRecommendation | null> => {
-  if (!API_KEY) return null;
+  if (!API_KEY || !navigator.onLine) return null;
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
@@ -154,7 +154,7 @@ export const chatWithFinancialAssistant = async (
   expenses: Expense[],
   monthlyLimit: number = 0
 ): Promise<string> => {
-  if (!API_KEY) return "Sorry, I can't connect to my brain right now.";
+  if (!API_KEY || !navigator.onLine) return "Sorry, I can't connect to my brain right now.";
 
   try {
     // Model fallback chain — if one model hits rate limit (429), automatically try the next
@@ -360,7 +360,7 @@ export const chatWithFinancialAssistant = async (
 };
 
 export const generateEmbedding = async (text: string): Promise<number[] | null> => {
-  if (!API_KEY) return null;
+  if (!API_KEY || !navigator.onLine) return null;
 
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-embedding-001" });

@@ -16,6 +16,7 @@
   --shadow-ambient: rgba(0, 0, 0, 0.12);
   --shadow-inset: rgba(0, 0, 0, 0.04);
   --shadow-highlight: rgba(255, 255, 255, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.65);
 }
 
 /* Dark mode overrides if needed - assuming generic dark mode class on body/html */
@@ -33,10 +34,11 @@
   --shadow-ambient: rgba(0, 0, 0, 0.5);
   --shadow-inset: rgba(0, 0, 0, 0.15);
   --shadow-highlight: rgba(255, 255, 255, 0.15);
+  --glass-bg: rgba(28, 28, 30, 0.85);
 }
 
 .liquid-glass-effect {
-  background-color: rgba(255, 255, 255, 0.03);
+  background-color: var(--glass-bg);
   backdrop-filter: blur(2px) saturate(var(--saturation));
   -webkit-backdrop-filter: blur(2px) saturate(var(--saturation));
   box-shadow:

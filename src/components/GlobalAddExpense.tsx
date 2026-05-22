@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useAnimation, animate } from "framer-motion";
 import { Calendar, Clock, Delete, Edit2, ChevronDown, User, TentTree } from "lucide-react";
-import { useExpenses, useMonthlyStats } from "../hooks/useExpenses";
+import { useExpenses } from "../hooks/useExpenses";
 import { useExpenseData } from "../context/ExpenseContext";
 import { useEvents } from "../hooks/useEvents";
 import { CATEGORIES, CATEGORY_COLORS, getCategoryIcon } from "../utils/uiUtils";
@@ -13,6 +13,7 @@ import IOSSpinner from "./ui/IOSSpinner";
 import { useGlobalModal } from "../context/GlobalModalContext";
 import { format } from "date-fns";
 import { Timestamp } from "firebase/firestore";
+import "./ui/LiquidGlass.css";
 
 const NOTE_PLACEHOLDERS: Record<string, string> = {
   Food: "What did you eat?",
@@ -226,7 +227,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
     try {
       if (mode === "edit" && expenseData) {
-        await updateExpense(expenseData.id, {
+        updateExpense(expenseData.id, {
           amount: amountVal,
           category,
           note,
@@ -234,7 +235,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
           type: legacyType,
           context,
           contextId,
-        });
+        }, expenseData);
 
         updateExpenseData({
           amount: amountVal,
@@ -248,7 +249,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
 
         setMode("view");
       } else {
-        await addExpense(
+        addExpense(
           amountVal.toString(),
           category,
           note,
@@ -260,9 +261,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
           contextId
         );
 
-        setTimeout(() => {
-          handleCloseModal();
-        }, 500);
+        handleCloseModal();
       }
 
     } catch (error) {
@@ -331,7 +330,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 26, stiffness: 320 }}
-                className="relative z-10 w-full max-w-md bg-white/40 dark:bg-white/[0.03] backdrop-blur-[60px] rounded-t-[32px] md:rounded-[32px] shadow-[0_-10px_40px_rgba(0,0,0,0.1)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.1),0_-10px_40px_rgba(0,0,0,0.6)] border-t md:border border-white/60 dark:border-white/10 overflow-hidden pb-safe pointer-events-auto"
+                className="relative z-10 w-full max-w-md liquid-glass-effect rounded-t-[32px] md:rounded-[32px] overflow-hidden pb-safe pointer-events-auto"
               >
                 <div className="w-full h-6 flex items-center justify-center pt-2">
                   <div className="w-12 h-1.5 bg-gray-200 dark:bg-white/10 rounded-full" />
@@ -501,7 +500,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 w-full">
+                  <div className="grid grid-cols-[1.3fr_1fr] gap-2.5 w-full">
                     {isReadOnly ? (
                       <>
                         <div className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-500">
@@ -514,16 +513,16 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                       </>
                     ) : (
                       <>
-                        <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1 gap-1">
+                        <div className="flex items-center bg-gray-100 dark:bg-white/5 rounded-xl p-1 gap-1 min-w-0">
                           <button
                             onClick={() => setContextType("personal")}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${contextType === "personal"
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${contextType === "personal"
                               ? "bg-white dark:bg-white/15 text-gray-900 dark:text-white shadow-sm"
                               : "text-gray-400 dark:text-gray-500"
                               }`}
                           >
-                            <User size={14} />
-                            <span>Personal</span>
+                            <User size={13} className="flex-shrink-0" />
+                            <span className="truncate">Personal</span>
                           </button>
                           <button
                             onClick={() => {
@@ -532,13 +531,13 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                                 setSelectedEventId(events[0].id);
                               }
                             }}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-bold transition-all ${contextType === "event"
+                            className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1 rounded-lg text-[11px] sm:text-xs font-bold transition-all ${contextType === "event"
                               ? "bg-white dark:bg-white/15 text-gray-900 dark:text-white shadow-sm"
                               : "text-gray-400 dark:text-gray-500"
                               }`}
                           >
-                            <TentTree size={14} />
-                            <span>Event</span>
+                            <TentTree size={13} className="flex-shrink-0" />
+                            <span className="truncate">Event</span>
                           </button>
                         </div>
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, lazy, Suspense, useRef } from "react";
+import { useMemo, useState, useEffect, lazy, Suspense, useRef, memo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   useMonthlyStats,
@@ -27,6 +27,7 @@ import { useAuth } from "../context/AuthContext";
 import { db } from "../firebase";
 import { doc, getDoc, Timestamp } from "firebase/firestore";
 import Card from "../components/Card";
+import { CATEGORY_COLORS, getCategoryIcon } from "../utils/uiUtils";
 
 import AiInsights from "../components/AiInsights";
 import { generateInsights } from "../utils/insights";
@@ -38,14 +39,14 @@ const containerVariants = {
   show: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.1,
+      staggerChildren: 0.08,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 350, damping: 25 } },
 };
 
 const MonthlyTrendChart = lazy(() => import("../components/MonthlyTrendChart"));
@@ -56,7 +57,7 @@ interface AnalyticsProps {
   readOnly?: boolean;
 }
 
-const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
+const Analytics = memo(({ userId, readOnly: _readOnly = false }: AnalyticsProps) => {
   const { user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -72,8 +73,6 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
     false,
     userId,
   );
-
-
 
   const { theme, accentColor, accentColors } = useTheme();
   const [budget, setBudget] = useState(0);
@@ -279,7 +278,6 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
   }, [location.state]);
 
   const gridColor = theme === "dark" ? "#374151" : "#f3f4f6";
-  const cursorColor = theme === "dark" ? "#1f2937" : "#f9fafb";
   const textColor = "#9ca3af";
 
   return (
@@ -289,89 +287,310 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
       animate="show"
       className="space-y-16 pt-[calc(env(safe-area-inset-top)+2rem)] pb-32"
     >
-      <motion.div variants={itemVariants} className="flex justify-between items-start">
+      {/* 1. Header welcome */}
+      <motion.div variants={itemVariants} className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900 dark:text-white">Insights</h1>
-          <p className="text-gray-500 mt-2">Visualize your spending patterns.</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white bg-gradient-to-r from-gray-900 via-gray-800 to-gray-600 dark:from-white dark:via-gray-100 dark:to-gray-400 bg-clip-text text-transparent">Insights</h1>
+          <p className="text-gray-400 dark:text-zinc-500 mt-1.5 font-medium text-sm">Visualize your spending patterns.</p>
         </div>
         {!_readOnly && (
           <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => navigate("/chat")}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 text-gray-900 dark:text-white rounded-2xl transition-colors shadow-sm font-semibold text-sm"
+            className="relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-violet-600/95 to-indigo-600/95 hover:from-violet-600 hover:to-indigo-600 text-white rounded-2xl transition-all duration-300 font-bold text-xs uppercase tracking-wider shadow-[0_8px_30px_rgba(99,102,241,0.2)] border border-violet-500/10 overflow-hidden group"
           >
-            <BotMessageSquare size={18} className="text-accent" />
-            <span>Ask AI</span>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+            <BotMessageSquare size={16} className="text-white flex-shrink-0 animate-pulse" />
+            <span>Ask</span>
           </motion.button>
         )}
       </motion.div>
 
-      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-6">
+      {/* 2. Top Stats Grid */}
+      <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4 sm:gap-6">
         <motion.div
+          whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="p-5 bg-gradient-to-br from-accent to-indigo-600 dark:from-accent dark:to-indigo-500 text-white rounded-[20px] shadow-sm backdrop-blur-md"
+          transition={{ type: "spring", stiffness: 450, damping: 20 }}
+          className="p-5 sm:p-6 bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-[24px] shadow-[0_8px_32px_rgba(99,102,241,0.25)] border border-indigo-500/20 backdrop-blur-md relative overflow-hidden group cursor-pointer flex flex-col justify-between"
+          onClick={() => trajectoryChartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
         >
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[9px] font-bold text-white/90 uppercase tracking-[0.15em]">This Month</span>
-            <ArrowRight color="rgba(255,255,255,0.6)" size={14} className="-rotate-45" strokeWidth={1.5} />
+          <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
+          
+          <div className="w-full min-w-0">
+            <div className="flex justify-between items-start mb-4 relative z-10 w-full min-w-0">
+              <span className="text-[10px] font-extrabold text-white/70 uppercase tracking-[0.18em] whitespace-nowrap">This Month</span>
+              <ArrowRight color="rgba(255,255,255,0.7)" size={14} className="-rotate-45 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform flex-shrink-0" strokeWidth={2} />
+            </div>
+            <div className="text-3xl sm:text-4xl font-extrabold tracking-tighter relative z-10 flex items-baseline drop-shadow-[0_2px_12px_rgba(255,255,255,0.15)] whitespace-nowrap">
+              <CountUp value={trajectoryData.currentMonthTotal} />
+            </div>
           </div>
-          <div className="text-4xl font-bold">
-            <CountUp value={trajectoryData.currentMonthTotal} />
+
+          {/* Premium Savings/Spend Trend Badge */}
+          <div className="mt-8 relative z-10 flex items-center">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-[9px] font-extrabold uppercase tracking-wider bg-white/10 border border-white/15 text-white/95 backdrop-blur-md shadow-sm">
+              {trajectoryData.trendDirection === "down" ? "↓" : "↑"}{" "}
+              {trajectoryData.percentageChange}% vs last month
+            </span>
           </div>
         </motion.div>
 
-        <Card className="p-5">
-          <div className="flex justify-between items-start mb-4">
-            <span className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.15em]">Top Category</span>
-            <PieChart color="var(--color-accent)" size={16} className="text-accent" />
-          </div>
-          <div className="text-xl font-bold text-gray-900 dark:text-white truncate">
-            {topCategory ? topCategory.name : "—"}
-          </div>
-          <div className="text-sm text-gray-500 mt-1">
-            {topCategory ? formatCurrency(topCategory.value) : "No data"}
-          </div>
-        </Card>
+        {(() => {
+          const catColor = topCategory ? (CATEGORY_COLORS[topCategory.name] || "#6366f1") : "#9ca3af";
+          const pctOfTotal = topCategory && trajectoryData.currentMonthTotal > 0
+            ? ((topCategory.value / trajectoryData.currentMonthTotal) * 100).toFixed(0)
+            : null;
+
+          return (
+            <Card className="p-5 sm:p-6 rounded-[24px] relative overflow-hidden group cursor-pointer flex flex-col justify-between min-h-[170px] sm:min-h-[190px]">
+              <div className="absolute -right-10 -bottom-10 w-32 h-32 rounded-full blur-2xl opacity-[0.04] dark:opacity-[0.07] group-hover:scale-125 transition-transform duration-700 pointer-events-none" style={{ backgroundColor: catColor }} />
+              
+              <div className="flex justify-between items-center mb-4 relative z-10 w-full min-w-0">
+                <span className="text-[10px] font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-[0.15em] whitespace-nowrap">Top Category</span>
+                {pctOfTotal && (
+                  <span 
+                    className="text-[9px] font-extrabold px-2.5 py-0.5 rounded-full border whitespace-nowrap flex-shrink-0 transition-colors duration-300"
+                    style={{ 
+                      backgroundColor: `${catColor}12`, 
+                      borderColor: `${catColor}25`,
+                      color: catColor
+                    }}
+                  >
+                    {pctOfTotal}%
+                  </span>
+                )}
+              </div>
+
+              {topCategory ? (
+                <div className="relative z-10 flex flex-col justify-between h-full w-full min-w-0">
+                  {/* Category Details Block */}
+                  <div className="flex items-center gap-3 w-full min-w-0">
+                    <div 
+                      className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 shadow-sm"
+                      style={{ 
+                        backgroundColor: `${catColor}12`, 
+                        borderColor: `${catColor}25` 
+                      }}
+                    >
+                      {getCategoryIcon(topCategory.name, "20px", catColor)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-[9px] font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-wider leading-none">
+                        Category
+                      </h4>
+                      <p className="text-base font-bold text-gray-900 dark:text-white truncate mt-1">
+                        {topCategory.name}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Value Block */}
+                  <div className="mt-4 sm:mt-5">
+                    <h4 className="text-[9px] font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-wider leading-none mb-1">
+                      Total Outflow
+                    </h4>
+                    <div className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-white tracking-tighter">
+                      {formatCurrency(topCategory.value)}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-xl font-bold text-gray-400 dark:text-zinc-500 italic relative z-10">
+                  No spend data
+                </div>
+              )}
+            </Card>
+          );
+        })()}
       </motion.div>
 
+      {/* 3. Luxury Budget Gauge */}
       {budget > 0 && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-          <Card className="p-6">
-            <div className="flex justify-between items-end mb-2">
-              <div>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-[0.15em]">Monthly Budget</p>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
-                  {formatCurrency(trajectoryData.currentMonthTotal)}{" "}
-                  <span className="text-sm font-normal text-gray-400">/ {formatCurrency(budget)}</span>
-                </h2>
-              </div>
-              <div className="text-right">
-                <span className={`text-xl font-bold ${trajectoryData.currentMonthTotal / budget > 1 ? "text-red-500" : trajectoryData.currentMonthTotal / budget > 0.8 ? "text-yellow-500" : "text-green-500"}`}>
-                  {Math.min(Number(((trajectoryData.currentMonthTotal / budget) * 100).toFixed(0)), 999)}%
-                </span>
-              </div>
-            </div>
-            <div className="h-4 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mt-3">
-              <div
-                className={`h-full rounded-full transition-all duration-1000 ease-out ${trajectoryData.currentMonthTotal / budget > 1 ? "bg-red-500" : trajectoryData.currentMonthTotal / budget > 0.8 ? "bg-yellow-400" : "bg-green-500"}`}
-                style={{ width: `${Math.min((trajectoryData.currentMonthTotal / budget) * 100, 100)}%` }}
-              />
-            </div>
-            <p className="text-xs text-gray-400 mt-3 text-right">
-              {trajectoryData.currentMonthTotal > budget
-                ? `Over budget by ${formatCurrency(trajectoryData.currentMonthTotal - budget)}`
-                : `${formatCurrency(budget - trajectoryData.currentMonthTotal)} remaining`}
-            </p>
-          </Card>
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          {(() => {
+            const pct = Math.min((trajectoryData.currentMonthTotal / budget) * 100, 100);
+            const isOverBudget = trajectoryData.currentMonthTotal > budget;
+            const isWarningBudget = !isOverBudget && trajectoryData.currentMonthTotal / budget > 0.8;
+            
+            const accentColorHex = isOverBudget ? "#ef4444" : isWarningBudget ? "#f59e0b" : "#10b981";
+            
+            return (
+              <Card className="p-6 rounded-[24px]">
+                <div className="flex flex-col gap-1.5 mb-2 w-full">
+                  <div className="flex justify-between items-center w-full gap-2">
+                    <p className="text-[10px] font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-[0.18em] whitespace-nowrap">Monthly Budget</p>
+                    
+                    {/* Status Glass Badge */}
+                    <div className="flex-shrink-0">
+                      <span 
+                        className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border transition-colors duration-300 shadow-sm whitespace-nowrap"
+                        style={{
+                          backgroundColor: `${accentColorHex}12`,
+                          borderColor: `${accentColorHex}25`,
+                          color: accentColorHex
+                        }}
+                      >
+                        {pct.toFixed(0)}% Utilized
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white tracking-tight mt-1 flex items-baseline flex-wrap gap-x-2 w-full">
+                    <span className="whitespace-nowrap">{formatCurrency(trajectoryData.currentMonthTotal)}</span>
+                    <span className="text-sm font-semibold text-gray-400 dark:text-zinc-500 whitespace-nowrap">/ {formatCurrency(budget)}</span>
+                  </h2>
+                </div>
+
+                {/* Notched Progress Track */}
+                <div className="relative w-full mt-5">
+                  <div className="relative w-full h-3.5 bg-gray-100 dark:bg-white/[0.03] border border-white/10 dark:border-white/5 rounded-full overflow-hidden shadow-[inset_0_1px_3px_rgba(0,0,0,0.05)]">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${pct}%` }}
+                      transition={{ duration: 1.2, ease: "easeOut" }}
+                      className="h-full rounded-full"
+                      style={{
+                        background: isOverBudget
+                          ? "linear-gradient(to right, #ef4444, #f43f5e)" 
+                          : isWarningBudget
+                            ? "linear-gradient(to right, #f59e0b, #eab308)" 
+                            : "linear-gradient(to right, #10b981, #06b6d4)",
+                      }}
+                    />
+                    
+                    {/* Visual notches */}
+                    <div className="absolute inset-0 flex justify-between pointer-events-none px-1.5">
+                      {Array.from({ length: 16 }).map((_, i) => (
+                        <div 
+                          key={i} 
+                          className="w-[1.5px] h-full bg-white dark:bg-black/35 opacity-25" 
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Concentric Glowing Cursor indicator */}
+                  {pct > 0 && pct < 100 && (
+                    <motion.div
+                      initial={{ left: 0 }}
+                      animate={{ left: `${pct}%` }}
+                      transition={{ duration: 1.2, ease: "easeOut" }}
+                      className="absolute top-[2px] -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-white shadow-md border-2"
+                      style={{ borderColor: accentColorHex }}
+                    >
+                      <motion.div
+                        animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0.1, 0.6] }}
+                        transition={{ duration: 1.8, repeat: Infinity }}
+                        className="absolute -inset-1.5 rounded-full opacity-30 pointer-events-none"
+                        style={{ backgroundColor: accentColorHex }}
+                      />
+                    </motion.div>
+                  )}
+                </div>
+
+                <div className="flex justify-end items-center mt-4">
+                  <p className="text-xs font-extrabold tracking-wider uppercase whitespace-nowrap" style={{ color: accentColorHex }}>
+                    {trajectoryData.currentMonthTotal > budget
+                      ? `Over budget by ${formatCurrency(trajectoryData.currentMonthTotal - budget)}`
+                      : `${formatCurrency(budget - trajectoryData.currentMonthTotal)} remaining`}
+                  </p>
+                </div>
+              </Card>
+            );
+          })()}
         </motion.div>
       )}
 
+      {/* 4. AI Insights Panel */}
       <motion.div variants={itemVariants}>
         <AiInsights insights={insights} isLoading={aiLoading} />
       </motion.div>
 
+      {/* 5. Category Breakdown Component */}
+      <motion.div variants={itemVariants} className="pt-8">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-1.5 bg-violet-500/10 rounded-lg">
+            <PieChart color="var(--color-accent)" size={20} className="text-accent" />
+          </div>
+          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">Category Allocation</h2>
+        </div>
+
+        <Card className="p-6 rounded-[24px]">
+          <h3 className="text-sm font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-[0.18em] mb-6">Distribution share</h3>
+
+          {categoryBreakdown.length > 0 ? (
+            <div className="flex flex-col gap-6">
+              {categoryBreakdown.map((cat, index) => {
+                const catColor = CATEGORY_COLORS[cat.name] || "#6366f1";
+                const pct = trajectoryData.currentMonthTotal > 0
+                  ? (cat.value / trajectoryData.currentMonthTotal) * 100
+                  : 0;
+
+                return (
+                  <motion.div
+                    key={cat.name}
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    viewport={{ once: true }}
+                    className="flex flex-col gap-2 group cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center w-full">
+                      <div className="flex items-center gap-3">
+                        <div 
+                          className="w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300"
+                          style={{ 
+                            backgroundColor: `${catColor}12`, 
+                            borderColor: `${catColor}25` 
+                          }}
+                        >
+                          {getCategoryIcon(cat.name, "20px", catColor)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-900 dark:text-white transition-colors group-hover:text-accent">
+                            {cat.name}
+                          </p>
+                          <p className="text-[10px] text-gray-400 dark:text-zinc-500 font-bold uppercase tracking-wider">
+                            {pct.toFixed(0)}% of outflow
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-extrabold text-gray-900 dark:text-white">
+                          {formatCurrency(cat.value)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Custom Branded Progress Bar */}
+                    <div className="relative w-full h-1.5 bg-gray-100 dark:bg-white/[0.02] border border-white/5 rounded-full overflow-hidden mt-1">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
+                        viewport={{ once: true }}
+                        className="h-full rounded-full"
+                        style={{ 
+                          backgroundColor: catColor,
+                          boxShadow: `0 0 8px ${catColor}35` 
+                        }}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-400 dark:text-zinc-500 italic">
+              No expenses recorded for this period
+            </div>
+          )}
+        </Card>
+      </motion.div>
+
+      {/* 6. Spend Trajectory Area Chart */}
       <motion.div variants={itemVariants} className="pt-8" ref={trajectoryChartRef}>
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-accent/10 rounded-lg">
@@ -396,32 +615,32 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
           <div className="mt-8 flex justify-between items-start w-full px-2">
             <div className="flex-1 pr-4">
               <div className="text-sm text-gray-700 dark:text-gray-300 leading-snug mb-0.5">
-                <span className={`font-bold ${trajectoryData.trendDirection === "down" ? "text-emerald-500" : "text-rose-500"}`}>{formatCurrency(trajectoryData.diff)}</span>{" "}
-                {trajectoryData.trendDirection === "down" ? "lower" : "higher"} than last month
+                <span className={`font-extrabold ${trajectoryData.trendDirection === "down" ? "text-emerald-500" : "text-rose-500"}`}>{formatCurrency(trajectoryData.diff)}</span>{" "}
+                <span className="font-medium text-gray-600 dark:text-zinc-400">{trajectoryData.trendDirection === "down" ? "lower" : "higher"} than last month</span>
               </div>
-              <p className="text-xs text-gray-500 leading-tight">By {format(lastMonthDate, "MMMM do")}, you had spent <span className="font-medium text-gray-500 dark:text-gray-400">{formatCurrency(trajectoryData.lastMonthPartialSum)}</span></p>
+              <p className="text-xs text-gray-500 leading-tight">By {format(lastMonthDate, "MMMM do")}, you had spent <span className="font-semibold text-gray-600 dark:text-gray-400">{formatCurrency(trajectoryData.lastMonthPartialSum)}</span></p>
             </div>
           </div>
         </Card>
       </motion.div>
 
+      {/* 7. Monthly Trend Bar Chart */}
       <motion.div variants={itemVariants} className="pt-8">
         <div className="flex items-center gap-2 mb-4">
           <div className="p-1.5 bg-indigo-500/10 rounded-lg">
             <BarChart3 color="var(--color-accent)" size={20} className="text-accent" />
           </div>
-          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">Monthly Trend</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-br from-accent to-accent/60 bg-clip-text text-transparent">Monthly Outflow</h2>
         </div>
-        {chartInsight && <p className="text-xs text-gray-500 dark:text-gray-400 mt-[-14px] mb-4 ml-9 font-medium">{chartInsight}</p>}
-        <Card className="mt-0">
-          <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Monthly Trend</h3>
+        {chartInsight && <p className="text-xs text-gray-500 dark:text-zinc-500 mt-[-14px] mb-4 ml-9 font-bold tracking-wide uppercase">{chartInsight}</p>}
+        <Card className="mt-0 pt-8 pb-4">
+          <h3 className="text-sm font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-[0.18em] mb-6 px-2">Outflow Trend</h3>
           <div className="h-64 w-full">
             <Suspense fallback={<ChartSkeleton />}>
               <MonthlyTrendChart
                 data={monthlyTrendData}
                 gridColor={gridColor}
                 textColor={textColor}
-                cursorColor={cursorColor}
                 accentColor={accentColor}
                 accentColors={accentColors}
               />
@@ -429,7 +648,6 @@ const Analytics = React.memo(({ userId, readOnly: _readOnly = false }: Analytics
           </div>
         </Card>
       </motion.div>
-
 
     </motion.div>
   );
