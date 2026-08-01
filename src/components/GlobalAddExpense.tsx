@@ -25,6 +25,26 @@ const NOTE_PLACEHOLDERS: Record<string, string> = {
   Misc: "Add a note...",
 };
 
+const HighlightedSuggestion = memo(({ suggestion, query }: { suggestion: string, query: string }) => {
+  if (!query.trim()) return <>{suggestion}</>;
+  
+  const lowerSugg = suggestion.toLowerCase();
+  const lowerQuery = query.toLowerCase();
+  const index = lowerSugg.indexOf(lowerQuery);
+  
+  if (index === -1) return <>{suggestion}</>;
+  
+  return (
+    <>
+      {suggestion.substring(0, index)}
+      <span className="text-accent font-bold">
+        {suggestion.substring(index, index + query.length)}
+      </span>
+      {suggestion.substring(index + query.length)}
+    </>
+  );
+});
+
 const AnimatedPercentage = memo(({ value, color }: { value: number; color: string }) => {
   const [display, setDisplay] = useState(0);
 
@@ -110,6 +130,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   
   // Note suggestions state
   const [activeSuggestions, setActiveSuggestions] = useState<string[]>([]);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [isNoteFocused, setIsNoteFocused] = useState(false);
 
   const personalChipRef = useRef<HTMLButtonElement>(null);
@@ -117,16 +138,28 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const noteInputRef = useRef<HTMLInputElement>(null);
   const controls = useAnimation();
 
-  // Handle note change and update suggestions via Trie
+  // Reset active index when suggestions change
+  useEffect(() => {
+    setActiveSuggestionIndex(-1);
+  }, [activeSuggestions]);
+
+  // Handle note change
   const handleNoteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setNote(val);
-    if (val.trim().length > 0) {
-      setActiveSuggestions(getSuggestions(category, val));
-    } else {
-      setActiveSuggestions([]);
-    }
+    setNote(e.target.value);
   };
+
+  // Debounced suggestion fetch
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      const trimmed = note.trim();
+      if (isNoteFocused && trimmed.length > 0) {
+        setActiveSuggestions(getSuggestions(category, trimmed));
+      } else {
+        setActiveSuggestions([]);
+      }
+    }, 150);
+    return () => clearTimeout(timeoutId);
+  }, [note, category, isNoteFocused, getSuggestions]);
 
   const handleSuggestionClick = (suggestion: string) => {
     setNote(suggestion);
@@ -135,9 +168,27 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
     noteInputRef.current?.blur();
   };
 
+  const handleNoteKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!isNoteFocused || activeSuggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => 
+        prev < activeSuggestions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
+    } else if (e.key === 'Enter' && activeSuggestionIndex >= 0) {
+      e.preventDefault();
+      handleSuggestionClick(activeSuggestions[activeSuggestionIndex]);
+    } else if (e.key === 'Escape') {
+      setIsNoteFocused(false);
+    }
+  };
+
   // Close dropdown if category changes
   useEffect(() => {
-    setActiveSuggestions([]);
     setNote("");
   }, [category]);
 
@@ -530,8 +581,9 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                       type="text"
                       value={note}
                       onChange={handleNoteChange}
+                      onKeyDown={handleNoteKeyDown}
                       onFocus={() => setIsNoteFocused(true)}
-                      onBlur={() => setTimeout(() => setIsNoteFocused(false), 200)}
+                      onBlur={() => setIsNoteFocused(false)}
                       placeholder={isReadOnly ? "No note" : (NOTE_PLACEHOLDERS[category] || "Add a note...")}
                       readOnly={isReadOnly}
                       inputMode={isReadOnly ? "none" : "text"}
@@ -541,24 +593,28 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     <AnimatePresence>
                       {!isReadOnly && isNoteFocused && activeSuggestions.length > 0 && (
                         <motion.div
-                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
-                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           transition={{ duration: 0.15 }}
-                          className="absolute top-full left-0 right-0 mt-1.5 bg-white/80 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-[60]"
+                          className="absolute bottom-full left-0 right-0 mb-1.5 bg-white/80 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-[60]"
                         >
                           <ul className="max-h-48 overflow-y-auto no-scrollbar py-1">
                             {activeSuggestions.map((sugg, idx) => (
                               <li key={idx}>
                                 <button
                                   type="button"
-                                  onClick={(e) => {
+                                  onMouseDown={(e) => {
                                     e.preventDefault();
                                     handleSuggestionClick(sugg);
                                   }}
-                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors"
+                                  className={`w-full text-left px-4 py-2.5 text-sm font-medium transition-colors ${
+                                    activeSuggestionIndex === idx
+                                      ? "bg-black/10 dark:bg-white/20 text-gray-900 dark:text-white"
+                                      : "text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20"
+                                  }`}
                                 >
-                                  {sugg}
+                                  <HighlightedSuggestion suggestion={sugg} query={note.trim()} />
                                 </button>
                               </li>
                             ))}
