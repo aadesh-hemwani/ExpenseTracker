@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useRef, useEffect, useMemo, memo } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { Home, Calendar, BarChart3, User, LucideIcon } from "lucide-react";
+import { Home, Calendar, BarChart3, User, LucideIcon, Landmark } from "lucide-react";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,6 +80,7 @@ const NAV_ITEMS = [
   { path: "/", icon: Home, label: "Home" },
   { path: "/history", icon: Calendar, label: "History" },
   { path: "/analytics", icon: BarChart3, label: "Insights" },
+  { path: "/bank", icon: Landmark, label: "Bank" },
   { path: "/profile", icon: User, label: "Profile" },
 ];
 
@@ -116,7 +117,22 @@ const Layout = memo(() => {
       return "relative z-10 w-full h-full";
     }
 
-    return `relative z-10 max-w-2xl mx-auto ${isChat
+    // Determine max-width based on the current page to optimize desktop space
+    let maxWidthClass = "max-w-2xl"; // default/mobile container width
+    
+    if (
+      location.pathname.startsWith("/bank") || 
+      location.pathname === "/analytics" || 
+      location.pathname === "/history"
+    ) {
+      maxWidthClass = "max-w-2xl md:max-w-6xl 2xl:max-w-7xl";
+    } else if (isChat) {
+      maxWidthClass = "max-w-2xl md:max-w-4xl";
+    } else {
+      maxWidthClass = "max-w-2xl md:max-w-3xl";
+    }
+
+    return `relative z-10 w-full ${maxWidthClass} mx-auto ${isChat
       ? "h-full"
       : "px-5 pt-0 pb-32 md:p-12"
       }`;
@@ -149,6 +165,7 @@ const Layout = memo(() => {
           <NavItem to="/" icon={Home} label="Dashboard" activeColor={activeColor} />
           <NavItem to="/history" icon={Calendar} label="History" activeColor={activeColor} />
           <NavItem to="/analytics" icon={BarChart3} label="Insights" activeColor={activeColor} />
+          <NavItem to="/bank" icon={Landmark} label="Bank" activeColor={activeColor} />
           <NavItem to="/profile" icon={User} label="Profile" activeColor={activeColor} />
         </nav>
 

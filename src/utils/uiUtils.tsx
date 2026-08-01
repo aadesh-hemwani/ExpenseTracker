@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import { Activity, Briefcase, Car, Grid2x2, Receipt, ShoppingCart, Ticket, Utensils } from "lucide-react";
+import { Activity, Briefcase, Car, Grid2x2, Receipt, ShoppingCart, Ticket, Utensils, Coins, Percent, TrendingUp, Users, Wallet } from "lucide-react";
 import { Theme } from "../types";
 
 export const CATEGORIES = [
@@ -12,13 +12,33 @@ export const CATEGORIES = [
   "Misc",
 ];
 
+export const BANK_CATEGORIES = [
+  "Salary",
+  "Interest",
+  "Investment",
+  "Loans",
+  "Social",
+  "Food",
+  "Transport",
+  "Shopping",
+  "Bills",
+  "Entertainment",
+  "Health",
+  "Misc",
+];
+
 export const CATEGORY_COLORS: Record<string, string> = {
+  Salary: "#06b6d4", // cyan-500
   Food: "#f97316", // orange-500
   Transport: "#3b82f6", // blue-500
   Shopping: "#a855f7", // purple-500
   Bills: "#ef4444", // red-500
   Entertainment: "#ec4899", // pink-500
   Health: "#22c55e", // green-500
+  Interest: "#10b981", // emerald-500
+  Investment: "#6366f1", // indigo-500
+  Loans: "#f59e0b", // amber-500
+  Social: "#d946ef", // fuchsia-500
   Misc: "#6b7280", // gray-500
   Other: "#6b7280", // gray-500
 };
@@ -32,6 +52,8 @@ export const getCategoryIcon = (
   const sizeNum = parseInt(size.replace("px", "")) || 20;
 
   switch (cat) {
+    case "Salary":
+      return <Wallet color={color} size={sizeNum} />;
     case "Food":
       return <Utensils color={color} size={sizeNum} />;
     case "Shopping":
@@ -44,6 +66,14 @@ export const getCategoryIcon = (
       return <Activity color={color} size={sizeNum} />;
     case "Bills":
       return <Receipt color={color} size={sizeNum} />;
+    case "Interest":
+      return <Percent color={color} size={sizeNum} />;
+    case "Investment":
+      return <TrendingUp color={color} size={sizeNum} />;
+    case "Loans":
+      return <Coins color={color} size={sizeNum} />;
+    case "Social":
+      return <Users color={color} size={sizeNum} />;
     case "Misc":
       return <Grid2x2 color={color} size={sizeNum} />;
     default:

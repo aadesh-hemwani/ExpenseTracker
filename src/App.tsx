@@ -24,6 +24,13 @@ const Chat = lazy(() => import("./pages/Chat"));
 const EventDetail = lazy(() => import("./pages/EventDetail"));
 const Admin = lazy(() => import("./pages/Admin"));
 
+// Bank Analytics Pages
+const BankDashboard = lazy(() => import("./pages/analytics/BankDashboard"));
+const BankAccountsPage = lazy(() => import("./pages/analytics/BankAccountsPage"));
+const StatementImportPage = lazy(() => import("./pages/analytics/StatementImportPage"));
+const RulesResolutionPage = lazy(() => import("./pages/analytics/RulesResolutionPage"));
+const CategoryExplorerPage = lazy(() => import("./pages/analytics/CategoryExplorerPage"));
+
 function App() {
   // Prevent pinch-zoom on iOS and snap the window viewport back to full screen
   useEffect(() => {
@@ -77,6 +84,11 @@ function App() {
                   <Route path="/" element={<Home />} />
                   <Route path="/history" element={<History />} />
                   <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/bank" element={<BankDashboard />} />
+                  <Route path="/bank/accounts" element={<BankAccountsPage />} />
+                  <Route path="/bank/import" element={<StatementImportPage />} />
+                  <Route path="/bank/unmapped" element={<RulesResolutionPage />} />
+                  <Route path="/bank/category-explorer" element={<CategoryExplorerPage />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/event/:eventId" element={<EventDetail />} />
                   <Route path="/chat" element={<Chat />} />
