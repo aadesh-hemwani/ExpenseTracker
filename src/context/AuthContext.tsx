@@ -225,10 +225,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   return (
     <AuthContext.Provider value={value}>
-      <AnimatePresence mode="wait">
+      {/* Mount children immediately when not loading so they can fetch data, while splash fades out on top */}
+      {!loading && children}
+      <AnimatePresence>
         {loading && <SplashScreen key="splash" />}
       </AnimatePresence>
-      {!loading && children}
     </AuthContext.Provider>
   );
 };

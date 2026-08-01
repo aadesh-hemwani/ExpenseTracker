@@ -9,6 +9,8 @@ import { ThemeProvider } from "./context/ThemeContext";
 import { GlobalModalProvider } from "./context/GlobalModalContext";
 import { ExpenseProvider } from "./context/ExpenseContext";
 
+import { NoteTrieProvider } from "./context/NoteTrieContext";
+
 import ReloadPrompt from "./components/ReloadPrompt";
 import ErrorBoundary from "./components/ErrorBoundary";
 
@@ -68,7 +70,9 @@ function App() {
                     <ProtectedRoute>
                     <GlobalModalProvider>
                       <ExpenseProvider>
-                        <Layout />
+                        <NoteTrieProvider>
+                          <Layout />
+                        </NoteTrieProvider>
                       </ExpenseProvider>
                     </GlobalModalProvider>
                   </ProtectedRoute>

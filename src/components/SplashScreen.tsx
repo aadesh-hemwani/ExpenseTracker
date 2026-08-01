@@ -6,7 +6,7 @@ const SplashScreen: React.FC = () => {
       key="splash"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-      transition={{ duration: 0.5, ease: "easeInOut" }}
+      transition={{ duration: 0.25, ease: "easeInOut" }}
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-body overflow-hidden"
     >
       {/* Logo Animation */}

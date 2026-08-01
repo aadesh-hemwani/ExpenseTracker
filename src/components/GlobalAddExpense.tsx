@@ -84,12 +84,15 @@ const NumKey = memo(({ val, label, transparent = false, onPress }: NumKeyProps) 
 
 NumKey.displayName = "NumKey";
 
+import { useNoteTrie } from "../context/NoteTrieContext";
+
 const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const { addExpense, updateExpense } = useExpenses();
-  const { stats } = useExpenseData();
+  const { stats, currentMonthExpenses } = useExpenseData();
   const { events } = useEvents();
   const { isOpen, mode, expenseData, closeModal, setMode, openModal, updateExpenseData } = useGlobalModal();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { getSuggestions, addNote } = useNoteTrie();
 
   const [amountStr, setAmountStr] = useState("0");
   const [category, setCategory] = useState("Food");
@@ -104,9 +107,39 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
   const [showPersonalDropdown, setShowPersonalDropdown] = useState(false);
   const [showEventDropdown, setShowEventDropdown] = useState(false);
   const [amountKey, setAmountKey] = useState(0);
+  
+  // Note suggestions state
+  const [activeSuggestions, setActiveSuggestions] = useState<string[]>([]);
+  const [isNoteFocused, setIsNoteFocused] = useState(false);
+
   const personalChipRef = useRef<HTMLButtonElement>(null);
   const eventChipRef = useRef<HTMLButtonElement>(null);
+  const noteInputRef = useRef<HTMLInputElement>(null);
   const controls = useAnimation();
+
+  // Handle note change and update suggestions via Trie
+  const handleNoteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setNote(val);
+    if (val.trim().length > 0) {
+      setActiveSuggestions(getSuggestions(category, val));
+    } else {
+      setActiveSuggestions([]);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion: string) => {
+    setNote(suggestion);
+    setActiveSuggestions([]);
+    setIsNoteFocused(false);
+    noteInputRef.current?.blur();
+  };
+
+  // Close dropdown if category changes
+  useEffect(() => {
+    setActiveSuggestions([]);
+    setNote("");
+  }, [category]);
 
   useEffect(() => {
     const action = searchParams.get("action");
@@ -247,6 +280,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
           contextId,
         });
 
+        addNote(category, note);
         setMode("view");
       } else {
         addExpense(
@@ -261,6 +295,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
           contextId
         );
 
+        addNote(category, note);
         handleCloseModal();
       }
 
@@ -285,6 +320,7 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
     controls,
     setMode,
     updateExpenseData,
+    addNote,
   ]);
 
   const onKeyClick = useCallback((val: string) => {
@@ -488,16 +524,48 @@ const GlobalAddExpense = memo(({ showFAB = true }: { showFAB?: boolean }) => {
                     </div>
                   </div>
 
-                  <div className="w-full">
+                  <div className="w-full relative">
                     <input
+                      ref={noteInputRef}
                       type="text"
                       value={note}
-                      onChange={(e) => setNote(e.target.value)}
+                      onChange={handleNoteChange}
+                      onFocus={() => setIsNoteFocused(true)}
+                      onBlur={() => setTimeout(() => setIsNoteFocused(false), 200)}
                       placeholder={isReadOnly ? "No note" : (NOTE_PLACEHOLDERS[category] || "Add a note...")}
                       readOnly={isReadOnly}
                       inputMode={isReadOnly ? "none" : "text"}
                       className={`w-full bg-white/50 dark:bg-black/20 shadow-inner backdrop-blur-sm border border-white/50 dark:border-white/5 rounded-xl py-3 px-4 text-sm md:text-base text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-accent transition-all font-medium ${isReadOnly ? 'focus:ring-0' : ''}`}
                     />
+                    
+                    <AnimatePresence>
+                      {!isReadOnly && isNoteFocused && activeSuggestions.length > 0 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute top-full left-0 right-0 mt-1.5 bg-white/80 dark:bg-[#1c1c1e]/90 backdrop-blur-xl border border-black/5 dark:border-white/10 rounded-xl shadow-xl overflow-hidden z-[60]"
+                        >
+                          <ul className="max-h-48 overflow-y-auto no-scrollbar py-1">
+                            {activeSuggestions.map((sugg, idx) => (
+                              <li key={idx}>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    handleSuggestionClick(sugg);
+                                  }}
+                                  className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-black/5 dark:hover:bg-white/10 active:bg-black/10 dark:active:bg-white/20 transition-colors"
+                                >
+                                  {sugg}
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div className="grid grid-cols-[1.3fr_1fr] gap-2.5 w-full">
