@@ -145,12 +145,21 @@ const HeroBalance = React.memo(({
     const isOverspent = currentBalance > budgetAmount;
     const remaining = isOverspent ? currentBalance - budgetAmount : budgetAmount - currentBalance;
 
-    let color = "bg-zinc-400 dark:bg-zinc-500";
-    if (percentage > 85) color = "bg-rose-500";
-    else if (percentage > 60) color = "bg-amber-500";
+    // Compare spent percentage against time elapsed percentage
+    // If spent % exceeds time % by more than 5% buffer, check threshold severity
+    let color = "bg-emerald-500";
+    if (isOverspent || percentage >= 100) {
+      color = "bg-rose-500";
+    } else if (percentage > timeState.progress + 15) {
+      // Significantly pacing ahead of time
+      color = "bg-rose-500";
+    } else if (percentage > timeState.progress + 5) {
+      // Slightly pacing ahead of time
+      color = "bg-amber-500";
+    }
 
     return { remainingAmount: remaining, isOverspent, statusColor: color };
-  }, [currentBalance, budgetAmount]);
+  }, [currentBalance, budgetAmount, timeState.progress]);
 
   const hasDecimals = currentBalance % 1 !== 0;
 
@@ -216,13 +225,28 @@ const HeroBalance = React.memo(({
         {isTopHero && <div className="w-full" style={{ height: "env(safe-area-inset-top, 0px)" }} />}
 
         {isTopHero && (
-          <div className="mb-2 opacity-90">
-            <h2 className="text-[15px] font-medium text-zinc-900/40 dark:text-white/40 tracking-tight">
-              {greeting}, {firstName || "there"}
-            </h2>
-            <p className="text-[13px] font-medium text-zinc-900/30 dark:text-white/30 tracking-tight mt-0.5">
-              Total spent this month
-            </p>
+          <div className="mb-2 opacity-90 flex items-start justify-between">
+            <div>
+              <h2 className="text-[15px] font-medium text-zinc-900/40 dark:text-white/40 tracking-tight">
+                {greeting}, {firstName || "there"}
+              </h2>
+              <p className="text-[13px] font-medium text-zinc-900/30 dark:text-white/30 tracking-tight mt-0.5">
+                Total spent this month
+              </p>
+            </div>
+            {/* Clean Date Text: Saturday, Aug 1st */}
+            <div className="text-right select-none pt-0.5">
+              <span className="text-[12px] font-semibold tracking-tight text-zinc-900/40 dark:text-white/40">
+                {(() => {
+                  const now = new Date();
+                  const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
+                  const month = now.toLocaleDateString("en-US", { month: "short" });
+                  const day = now.getDate();
+                  const suffix = ["th", "st", "nd", "rd"][(day % 100 > 10 && day % 100 < 14) ? 0 : (day % 10 < 4 ? day % 10 : 0)];
+                  return `${weekday}, ${month} ${day}${suffix}`;
+                })()}
+              </span>
+            </div>
           </div>
         )}
 
