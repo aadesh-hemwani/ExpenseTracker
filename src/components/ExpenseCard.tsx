@@ -108,6 +108,10 @@ export const ExpenseCard = React.memo(({
       className="relative w-full select-none"
       onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
       layout
+      initial={{ opacity: 0, y: -15, scale: 0.95, filter: "blur(4px)" }}
+      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+      exit={{ opacity: 0, scale: 0.95, filter: "blur(2px)", transition: { duration: 0.2 } }}
+      transition={{ type: "spring", stiffness: 400, damping: 25, mass: 0.8 }}
     >
       <motion.button
         whileTap={{ scale: 0.98 }}

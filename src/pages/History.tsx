@@ -106,16 +106,18 @@ const MemoizedExpenseList = memo(({ label, expenses, onDelete, onView, onEdit, r
         {label}
       </h4>
       <div className="space-y-2">
-        {expenses.map((expense) => (
-          <ExpenseCard
-            key={expense.id}
-            expense={expense}
-            onClick={onView}
-            onDelete={onDelete}
-            onEdit={onEdit}
-            readOnly={readOnly}
-          />
-        ))}
+        <AnimatePresence mode="popLayout" initial={false}>
+          {expenses.map((expense) => (
+            <ExpenseCard
+              key={expense.id}
+              expense={expense}
+              onClick={onView}
+              onDelete={onDelete}
+              onEdit={onEdit}
+              readOnly={readOnly}
+            />
+          ))}
+        </AnimatePresence>
       </div>
     </div>
   );

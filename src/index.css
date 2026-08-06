@@ -87,8 +87,8 @@ p {
 /* Dark Mode Overrides */
 .dark {
   /* Premium Deep Dark Mode */
+  /* Gradient from Pure Black to Deep Dark */
   --bg-body: 240 6% 4%;
-  /* #0B0B0C */
   --bg-surface: 225 10% 8%;
   /* #121316 */
   --bg-elevated: 225 10% 12%;
@@ -103,8 +103,9 @@ p {
   --border-subtle: 217 33% 15%;
 }
 
-.dark body {
+.dark html, .dark body {
   background-color: hsl(var(--bg-body));
+  background-image: linear-gradient(to bottom, #000000, hsl(var(--bg-body)));
 }
 
 /* Utilities */

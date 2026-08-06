@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useRef, useEffect, useMemo, memo } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
-import { Home, Calendar, BarChart3, User, LucideIcon } from "lucide-react";
+import { HomeIcon, CalendarDaysIcon, ChartColumnIncreasingIcon, UserIcon } from "lucide-animated";
 import GlobalAddExpense from "./GlobalAddExpense";
 import { LiquidNavBar } from "./ui/LiquidNavBar";
 import { motion, AnimatePresence } from "framer-motion";
@@ -13,7 +13,7 @@ export const useScrollContainer = () => useContext(ScrollContext);
 
 interface NavItemProps {
   to: string;
-  icon: LucideIcon;
+  icon: React.ElementType;
   label: string;
   activeColor: string;
 }
@@ -25,62 +25,76 @@ const NavItem = memo(({
   icon: Icon,
   label,
   activeColor,
-}: NavItemProps) => (
-  <NavLink
-    to={to}
-    className="relative flex items-center group"
-    onMouseEnter={() => prefetchRoute(to)}
-    onFocus={() => prefetchRoute(to)}
-  >
-    {({ isActive }) => (
-      <div className="flex items-center w-full px-4 py-3 rounded-2xl transition-all duration-300 relative overflow-hidden">
-        {isActive && (
-          <motion.div
-            layoutId="active-nav-bg"
-            className="absolute inset-0 bg-white dark:bg-white/5 shadow-soft z-0"
-            transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          />
-        )}
+}: NavItemProps) => {
+  const iconRef = useRef<any>(null);
 
-        <div className="relative z-10 flex items-center gap-4">
-          <motion.div
-            whileTap={{ scale: 0.9 }}
-            className={`
-              relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300
-              ${isActive
-                ? "text-white"
-                : "text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-white"
-              }
-            `}
-            style={isActive ? { backgroundColor: activeColor } : {}}
-          >
-            <Icon
-              color={isActive ? "white" : "currentColor"}
-              size={22}
-              className="transition-all duration-300"
-              strokeWidth={isActive ? 2.5 : 2}
+  return (
+    <NavLink
+      to={to}
+      className="relative flex items-center group"
+      onMouseEnter={() => {
+        iconRef.current?.startAnimation?.();
+        prefetchRoute(to);
+      }}
+      onMouseLeave={() => {
+        iconRef.current?.stopAnimation?.();
+      }}
+      onClick={() => {
+        iconRef.current?.startAnimation?.();
+      }}
+      onFocus={() => prefetchRoute(to)}
+    >
+      {({ isActive }) => (
+        <div className="flex items-center w-full px-4 py-3 rounded-2xl transition-all duration-300 relative overflow-hidden">
+          {isActive && (
+            <motion.div
+              layoutId="active-nav-bg"
+              className="absolute inset-0 bg-white dark:bg-white/5 shadow-soft z-0"
+              transition={{ type: "spring", stiffness: 300, damping: 30 }}
             />
-          </motion.div>
+          )}
 
-          <span
-            className={`text-sm font-semibold transition-colors duration-300 ${isActive ? "text-primary dark:text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200"
-              }`}
-          >
-            {label}
-          </span>
+          <div className="relative z-10 flex items-center gap-4">
+            <motion.div
+              whileTap={{ scale: 0.9 }}
+              className={`
+                relative flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-300
+                ${isActive
+                  ? "text-white"
+                  : "text-gray-400 dark:text-gray-500 group-hover:text-primary dark:group-hover:text-white"
+                }
+              `}
+              style={isActive ? { backgroundColor: activeColor } : {}}
+            >
+              <Icon
+                ref={iconRef}
+                color={isActive ? "white" : "currentColor"}
+                size={22}
+                className="transition-all duration-300"
+                strokeWidth={isActive ? 2.5 : 2}
+              />
+            </motion.div>
+
+            <span
+              className={`text-sm font-semibold transition-colors duration-300 ${isActive ? "text-primary dark:text-white" : "text-gray-500 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-gray-200"
+                }`}
+            >
+              {label}
+            </span>
+          </div>
         </div>
-      </div>
-    )}
-  </NavLink>
-));
+      )}
+    </NavLink>
+  );
+});
 
 NavItem.displayName = "NavItem";
 
 const NAV_ITEMS = [
-  { path: "/", icon: Home, label: "Home" },
-  { path: "/history", icon: Calendar, label: "History" },
-  { path: "/analytics", icon: BarChart3, label: "Insights" },
-  { path: "/profile", icon: User, label: "Profile" },
+  { path: "/", icon: HomeIcon, label: "Home" },
+  { path: "/history", icon: CalendarDaysIcon, label: "History" },
+  { path: "/analytics", icon: ChartColumnIncreasingIcon, label: "Insights" },
+  { path: "/profile", icon: UserIcon, label: "Profile" },
 ];
 
 const Layout = memo(() => {
@@ -138,7 +152,7 @@ const Layout = memo(() => {
             className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-lg"
             style={{ backgroundColor: activeColor }}
           >
-            <BarChart3 color="white" size={24} />
+            <ChartColumnIncreasingIcon color="white" size={24} />
           </div>
           <h1 className="text-2xl font-black tracking-tight text-primary dark:text-white">
             Expenses<span className="text-primary" style={{ color: activeColor }}>.</span>
@@ -146,10 +160,10 @@ const Layout = memo(() => {
         </div>
 
         <nav className="flex flex-col space-y-2">
-          <NavItem to="/" icon={Home} label="Dashboard" activeColor={activeColor} />
-          <NavItem to="/history" icon={Calendar} label="History" activeColor={activeColor} />
-          <NavItem to="/analytics" icon={BarChart3} label="Insights" activeColor={activeColor} />
-          <NavItem to="/profile" icon={User} label="Profile" activeColor={activeColor} />
+          <NavItem to="/" icon={HomeIcon} label="Dashboard" activeColor={activeColor} />
+          <NavItem to="/history" icon={CalendarDaysIcon} label="History" activeColor={activeColor} />
+          <NavItem to="/analytics" icon={ChartColumnIncreasingIcon} label="Insights" activeColor={activeColor} />
+          <NavItem to="/profile" icon={UserIcon} label="Profile" activeColor={activeColor} />
         </nav>
 
         <div className="mt-auto p-4 rounded-3xl bg-primary/5 border border-primary/10">
@@ -170,12 +184,14 @@ const Layout = memo(() => {
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
                 key={location.pathname}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
+                initial={{ opacity: 0, y: 15, scale: 0.98, filter: "blur(4px)" }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
+                exit={{ opacity: 0, scale: 0.98, filter: "blur(2px)", transition: { duration: 0.2 } }}
                 transition={{
-                  duration: 0.2,
-                  ease: "easeOut"
+                  type: "spring",
+                  stiffness: 400,
+                  damping: 30,
+                  mass: 0.8
                 }}
                 className="w-full"
               >

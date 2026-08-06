@@ -2,7 +2,7 @@ import { memo, useMemo } from "react";
 import { getCategoryIcon, CATEGORIES } from "../utils/uiUtils";
 import { createPortal } from "react-dom";
 import { formatCurrency } from "../utils/formatUtils";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Expense } from "../types";
 import { LiquidClose } from "./ui/LiquidClose";
 import { ExpenseCard } from "./ExpenseCard";
@@ -61,16 +61,18 @@ const ExpenseListModal = memo(({
         <div className="overflow-y-auto px-1 pb-4 min-h-[200px] no-scrollbar">
           {expenses.length > 0 ? (
             <div className="flex flex-col gap-2">
-              {expenses.map((expense) => (
-                <ExpenseCard
-                  key={expense.id}
-                  expense={expense}
-                  readOnly={true}
-                  onClick={() => { }}
-                  onEdit={() => { }}
-                  onDelete={() => { }}
-                />
-              ))}
+              <AnimatePresence mode="popLayout" initial={false}>
+                {expenses.map((expense) => (
+                  <ExpenseCard
+                    key={expense.id}
+                    expense={expense}
+                    readOnly={true}
+                    onClick={() => { }}
+                    onEdit={() => { }}
+                    onDelete={() => { }}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="text-center py-12 flex flex-col items-center justify-center opacity-60">

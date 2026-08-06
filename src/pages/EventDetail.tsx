@@ -282,7 +282,7 @@ const EventDetail = memo(() => {
           </div>
         ) : (
           <div className="space-y-2">
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout" initial={false}>
               {expenses.map((expense) => (
                 <ExpenseCard
                   key={expense.id}

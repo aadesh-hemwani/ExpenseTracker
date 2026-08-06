@@ -1,6 +1,6 @@
 import React, { useMemo, memo } from "react";
 import { motion } from "framer-motion";
-import { Plus } from "lucide-react";
+import { PlusIcon } from "lucide-animated";
 import { useTheme } from "../../context/ThemeContext";
 import "./LiquidGlass.css";
 
@@ -29,9 +29,14 @@ export const LiquidFAB: React.FC<LiquidFABProps> = memo(({ onClick, icon }) => {
       whileHover={{ scale: 1.05 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
     >
-      <div className="relative z-10">
-        {icon || <Plus style={{ color: activeColor }} size={32} strokeWidth={2.5} />}
-      </div>
+      <motion.div 
+        className="relative z-10"
+        whileHover={{ rotate: 90 }}
+        whileTap={{ rotate: 180, scale: 0.8 }}
+        transition={{ type: "spring", stiffness: 300, damping: 15 }}
+      >
+        {icon || <PlusIcon style={{ color: activeColor }} size={32} />}
+      </motion.div>
     </motion.button>
   );
 });
