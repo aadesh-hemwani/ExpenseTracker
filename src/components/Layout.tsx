@@ -117,8 +117,8 @@ const Layout = memo(() => {
 
   const auraStyle = useMemo(() => ({
     background: `
-      radial-gradient(circle at 0% 0%, ${theme === 'dark' ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.015)'} 0%, transparent 40%),
-      radial-gradient(circle at 100% 100%, ${theme === 'dark' ? 'rgba(255,255,255,0.015)' : 'rgba(0,0,0,0.01)'} 0%, transparent 40%)
+      radial-gradient(circle at 0% 0%, rgba(var(--text-primary) / 0.02) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(var(--text-primary) / 0.015) 0%, transparent 40%)
     `
   }), [theme]);
 
@@ -132,7 +132,7 @@ const Layout = memo(() => {
 
     return `relative z-10 max-w-2xl mx-auto ${isChat
       ? "h-full"
-      : "px-5 pt-0 pb-32 md:p-12"
+      : "px-4 pt-0 pb-32 md:p-8"
       }`;
   }, [location.pathname]);
 

@@ -163,123 +163,55 @@ const HeroBalance = React.memo(({
 
   const hasDecimals = currentBalance % 1 !== 0;
 
-  const gradientBg = useMemo(() => {
-    const isDark = theme === 'dark';
-    const baseColor = isDark ? 'rgba(11, 11, 12, 1)' : 'rgba(250, 250, 251, 1)';
-    const subtleHighlight = isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)';
-    const accentAlpha = isDark ? '0.08' : '0.04';
-    
-    let accentWithAlpha = activeColor;
-    if (activeColor.startsWith('#')) {
-      const alphaHex = Math.round(parseFloat(accentAlpha) * 255).toString(16).padStart(2, '0');
-      accentWithAlpha = `${activeColor}${alphaHex}`;
-    }
-
-    return `radial-gradient(150% 150% at 50% -20%, 
-      ${accentWithAlpha} 0%, 
-      ${subtleHighlight} 40%, 
-      ${baseColor} 80%, 
-      ${baseColor} 100%)`;
-  }, [theme, activeColor]);
-
-  const containerClass = `relative w-full mx-auto group ${
-    isTopHero
-      ? "hero-scroll-root z-30 overflow-hidden rounded-b-[16px]"
-      : "max-w-[400px] rounded-2xl p-[1.5px] overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.02)] transition-all duration-700"
-  }`;
-
-  const innerClass = `relative z-10 w-full overflow-hidden ${
-    isTopHero
-      ? "hero-inner px-5 sm:px-8 bg-transparent backdrop-blur-sm flex flex-col pt-4 pb-3"
-      : "rounded-[calc(16px-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-none transition-all duration-300"
-  }`;
-
-  const balanceRowClass = `hero-balance-row relative z-10 flex items-center active:scale-95 transition-opacity ${
-    isTopHero ? 'mb-5' : 'justify-center pb-6'
-  } ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`;
-
-  const statsRowClass = `flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium tracking-tight cursor-pointer active:opacity-60 transition-opacity ${
-    isTopHero ? 'text-zinc-900/50 dark:text-white/50' : 'text-zinc-500 dark:text-zinc-400'
-  }`;
-
   return (
-    <div className={containerClass} role="region" aria-label="Account Balance Summary">
-      {isTopHero ? (
-        <div className="absolute inset-0 z-0 will-change-transform" style={{ background: gradientBg }}>
-          <div
-            className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
-            style={{ backgroundColor: activeColor }}
-          />
-          <div className="absolute -top-[500px] left-0 right-0 h-[500px] bg-[#0B0B0C]" />
-        </div>
-      ) : (
-        <div
-          className="absolute inset-0 z-0 transition-opacity duration-500 opacity-[0.03] dark:opacity-[0.05]"
-          style={{
-            background: `conic-gradient(from 180deg, ${activeColor} ${timeState.dayProgress}%, transparent ${timeState.dayProgress}%)`,
-          }}
-        />
-      )}
-
-      <div className={innerClass}>
-        {isTopHero && <div className="w-full" style={{ height: "env(safe-area-inset-top, 0px)" }} />}
-
+    <section className={`w-full ${isTopHero ? 'pt-8 pb-4' : 'max-w-[400px] mx-auto py-2'}`} role="region" aria-label="Account Balance Summary">
+      <div className={`w-full flex flex-col ${isTopHero ? 'px-6' : 'glass-card p-6'}`}>
+        
         {isTopHero && (
-          <div className="mb-2 opacity-90 flex items-start justify-between">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-between mb-4"
+          >
             <div>
-              <h2 className="text-[15px] font-medium text-zinc-900/40 dark:text-white/40 tracking-tight">
+              <h2 className="text-[17px] font-semibold text-primary tracking-tight">
                 {greeting}, {firstName || "there"}
               </h2>
-              <p className="text-[13px] font-medium text-zinc-900/30 dark:text-white/30 tracking-tight mt-0.5">
+              <p className="text-[13px] text-tertiary mt-1">
                 Total spent this month
               </p>
             </div>
-            {/* Clean Date Text: Saturday, Aug 1st */}
-            <div className="text-right select-none pt-0.5">
-              <span className="text-[12px] font-semibold tracking-tight text-zinc-900/40 dark:text-white/40">
+            <div className="text-right">
+              <span className="text-[13px] font-medium text-tertiary">
                 {(() => {
                   const now = new Date();
-                  const weekday = now.toLocaleDateString("en-US", { weekday: "long" });
-                  const month = now.toLocaleDateString("en-US", { month: "short" });
-                  const day = now.getDate();
-                  const suffix = ["th", "st", "nd", "rd"][(day % 100 > 10 && day % 100 < 14) ? 0 : (day % 10 < 4 ? day % 10 : 0)];
-                  return `${weekday}, ${month} ${day}${suffix}`;
+                  return now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
                 })()}
               </span>
             </div>
-          </div>
+          </motion.div>
         )}
 
-        <div className={balanceRowClass} onClick={onAmountClick}>
-          <div className={`flex items-baseline ${isTopHero ? 'will-change-transform' : ''}`}>
-            <CountUp
-              value={Math.trunc(currentBalance)}
-              currency={false}
-              prefix="₹"
-              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${
-                isTopHero ? 'text-[2rem] sm:text-[2.4rem]' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
-              }`}
-              prefixStyle={isTopHero ? { color: activeColor, opacity: 0.4 } : {}}
-              className={`tracking-tighter font-semibold font-sans ${
-                isTopHero 
-                  ? 'text-[3.5rem] sm:text-[4.2rem] leading-none text-zinc-900 dark:text-white' 
-                  : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
-              }`}
-            />
-            {hasDecimals && (
-              <span className={`font-medium tracking-tight ml-0.5 ${
-                isTopHero 
-                  ? 'text-[1.5rem] sm:text-[1.8rem] text-zinc-900/40 dark:text-white/40' 
-                  : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
-              }`}>
-                .{currentBalance.toFixed(2).split(".")[1]}
-              </span>
-            )}
-          </div>
-        </div>
+        <motion.div 
+          className={`flex items-baseline ${onAmountClick ? 'cursor-pointer hover:opacity-80 active:scale-[0.98] transition-all' : ''}`} 
+          onClick={onAmountClick}
+          whileTap={onAmountClick ? { scale: 0.96 } : {}}
+        >
+          <span className="text-3xl font-medium text-tertiary pr-1" style={{ color: activeColor }}>₹</span>
+          <CountUp
+            value={Math.trunc(currentBalance)}
+            currency={false}
+            className={`font-bold tracking-tighter text-primary ${isTopHero ? 'text-[clamp(3rem,8vw,4.5rem)] leading-none' : 'text-5xl'}`}
+          />
+          {hasDecimals && (
+            <span className="text-2xl font-medium text-tertiary ml-1">
+              .{currentBalance.toFixed(2).split(".")[1]}
+            </span>
+          )}
+        </motion.div>
 
         {budgetAmount > 0 && (
-          <div className="mb-2.5">
+          <div className="mt-6 mb-2">
             <HeroProgressTimer
               budgetAmount={budgetAmount}
               currentBalance={currentBalance}
@@ -290,21 +222,23 @@ const HeroBalance = React.memo(({
           </div>
         )}
 
-        <div className={statsRowClass} onClick={onTrendClick} role="button" aria-label="View Trend Details">
-          {budgetAmount > 0 ? (
-            <div className="flex w-full items-center justify-between pt-1">
-              <span>{formatCurrency(remainingAmount).split('.')[0]} {isOverspent ? 'overspent' : 'remaining'}</span>
-              <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">View Trend &rarr;</span>
-            </div>
-          ) : (
-            <div className="flex w-full items-center justify-between pt-1">
-              <span>Avg {formatCurrency(dailyAverage || 0).split('.')[0]}/day</span>
-              <span className="text-[10px] font-bold tracking-widest uppercase opacity-70">View Trend &rarr;</span>
-            </div>
-          )}
+        <div 
+          className="flex w-full items-center justify-between mt-4 pt-4 border-t border-subtle/50 cursor-pointer hover:opacity-70 active:opacity-50 transition-opacity" 
+          onClick={onTrendClick}
+        >
+          <span className="text-[15px] text-secondary font-medium tracking-tight">
+            {budgetAmount > 0 
+              ? `${formatCurrency(remainingAmount).split('.')[0]} ${isOverspent ? 'overspent' : 'remaining'}`
+              : `Avg ${formatCurrency(dailyAverage || 0).split('.')[0]}/day`
+            }
+          </span>
+          <span className="text-[13px] font-semibold text-primary opacity-50 flex items-center gap-1">
+            Trend <span className="text-[16px] leading-none">&rarr;</span>
+          </span>
         </div>
+
       </div>
-    </div>
+    </section>
   );
 });
 

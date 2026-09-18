@@ -51,16 +51,16 @@ const DaySection = React.memo(({
   );
 
   return (
-    <div className="space-y-2.5">
-      <div className="flex justify-between items-center">
-        <span className="text-[10px] font-bold text-zinc-400 dark:text-[#A0A0A0] uppercase tracking-[0.25em]">
+    <div className="flex flex-col gap-3">
+      <div className="flex justify-between items-end px-2">
+        <span className="text-[14px] font-semibold text-secondary tracking-tight">
           {label}
         </span>
-        <span className="text-sm font-bold text-zinc-900 dark:text-white">
+        <span className="text-[14px] font-bold text-primary tracking-tight">
           ₹{dailyTotal.toLocaleString("en-IN")}
         </span>
       </div>
-      <div className="space-y-1.5">
+      <div className="flex flex-col gap-0">
         <AnimatePresence mode="popLayout" initial={false}>
           {expenses.map((expense) => (
             <motion.div key={expense.id} variants={itemVariants} layout>
@@ -237,8 +237,12 @@ const Home = React.memo(() => {
 
         <div className="space-y-6 pb-6">
           {recentExpenses.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 dark:bg-white/5 rounded-[20px]">
-              <p className="text-tertiary text-sm">No expenses yet.</p>
+            <div className="flex flex-col items-center justify-center py-16 px-4 bg-secondary/30 dark:bg-white/[0.02] rounded-[24px] border border-subtle/50">
+              <div className="w-12 h-12 rounded-full bg-secondary/50 dark:bg-white/5 flex items-center justify-center mb-4">
+                <span className="text-2xl opacity-50">💸</span>
+              </div>
+              <h4 className="text-[17px] font-semibold text-primary mb-1">No Recent Expenses</h4>
+              <p className="text-tertiary text-[15px] text-center max-w-[250px]">Your recent activity will appear here once you add an expense.</p>
             </div>
           ) : (
             <motion.div

@@ -17,25 +17,24 @@ export default {
       },
       colors: {
         /* Semantic Colors */
-        body: "hsl(var(--bg-body) / <alpha-value>)",
-        surface: "hsl(var(--bg-surface) / <alpha-value>)",
-        elevated: "hsl(var(--bg-elevated) / <alpha-value>)",
+        body: "rgb(var(--bg-primary) / <alpha-value>)",
+        surface: "rgb(var(--bg-secondary) / <alpha-value>)",
+        elevated: "rgb(var(--bg-primary) / <alpha-value>)",
 
-        primary: "hsl(var(--text-primary) / <alpha-value>)",
-        secondary: "hsl(var(--text-secondary) / <alpha-value>)",
-        tertiary: "hsl(var(--text-tertiary) / <alpha-value>)",
+        primary: "rgb(var(--text-primary) / <alpha-value>)",
+        secondary: "rgb(var(--text-secondary) / <alpha-value>)",
+        tertiary: "rgb(var(--text-tertiary) / <alpha-value>)",
 
-        subtle: "hsl(var(--border-subtle) / <alpha-value>)",
+        subtle: "rgb(var(--border-subtle) / <alpha-value>)",
 
         /* Accent */
         accent: {
-          DEFAULT:
-            "hsl(var(--accent-h) var(--accent-s) var(--accent-l) / <alpha-value>)",
-          hover: "var(--color-accent-hover)",
+          DEFAULT: "rgb(var(--accent-blue) / <alpha-value>)",
+          hover: "rgb(var(--accent-blue) / <alpha-value>)",
         },
 
         /* Legacy compat */
-        "dark-card": "#191919",
+        "dark-card": "rgb(var(--bg-secondary) / <alpha-value>)",
       },
       boxShadow: {
         soft: "0 4px 20px -2px rgba(0, 0, 0, 0.05)",

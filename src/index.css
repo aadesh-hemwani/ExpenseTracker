@@ -3,39 +3,46 @@
 @tailwind utilities;
 
 :root {
-  /* HSL Values for semantic manipulation */
-  --base-h: 0;
-  --base-s: 0%;
-  --base-l: 100%;
+  /* Apple Light Mode Colors (RGB channels for Tailwind opacity) */
+  --bg-primary: 255 255 255;       /* #ffffff */
+  --bg-secondary: 245 245 247;     /* #f5f5f7 */
+  --text-primary: 29 29 31;        /* #1d1d1f */
+  --text-secondary: 134 134 139;   /* #86868b */
+  --text-tertiary: 161 161 166;    /* #a1a1a6 */
+  --accent-blue: 0 113 227;        /* #0071e3 */
+  --accent-green: 48 209 88;       /* #30d158 */
+  
+  --border-color: 0 0 0;           /* used with opacity */
+  --border-subtle: 0 0 0;          /* used with opacity */
 
-  /* Semantic Colors (Light Mode) */
-  --bg-body: 210 20% 98%;
-  /* Cool Gray/Blue Tint */
-  --bg-surface: 0 0% 100%;
-  /* Pure White */
-  --bg-elevated: 0 0% 100%;
+  /* Shadow Scale */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,0.08), 0 16px 32px rgba(0,0,0,0.08);
+  --shadow-xl: 0 24px 48px rgba(0,0,0,0.12);
 
-  /* Premium "Ink" Grays */
-  --text-primary: 220 40% 10%;
-  /* Deep Blue-Black */
-  --text-secondary: 220 10% 40%;
-  /* Cool Gray */
-  --text-tertiary: 220 10% 65%;
-  /* Lighter Cool Gray */
+  /* Border Radius Scale */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+  --radius-full: 9999px;
 
-  --border-subtle: 220 15% 90%;
-  /* Cool Gray Border */
-
-  /* Accent Colors - Indigo default */
-  --accent-h: 245;
-  --accent-s: 80%;
-  --accent-l: 60%;
-  --accent-exact: #5c6ac4;
+  /* Animation Durations */
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+  
+  /* Legacy Mappings for compatibility */
+  --bg-body: var(--bg-primary);
+  --bg-surface: var(--bg-primary);
+  --bg-elevated: var(--bg-primary);
 }
 
 /* SF Pro Font Stack (Native System Fonts) */
 html {
-  background-color: hsl(var(--bg-body));
+  background-color: rgb(var(--bg-body));
   transition: background-color 0.3s ease;
   height: 100lvh;
   overflow: hidden;
@@ -54,8 +61,8 @@ body {
     "Helvetica Neue", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: hsl(var(--bg-body));
-  color: hsl(var(--text-primary));
+  background-color: rgb(var(--bg-body));
+  color: rgb(var(--text-primary));
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
@@ -86,26 +93,26 @@ p {
 
 /* Dark Mode Overrides */
 .dark {
-  /* Premium Deep Dark Mode */
-  /* Gradient from Pure Black to Deep Dark */
-  --bg-body: 240 6% 4%;
-  --bg-surface: 225 10% 8%;
-  /* #121316 */
-  --bg-elevated: 225 10% 12%;
+  /* Apple Dark Mode Colors (RGB channels) */
+  --bg-primary: 0 0 0;             /* #000000 */
+  --bg-secondary: 29 29 31;        /* #1d1d1f */
+  --text-primary: 245 245 247;     /* #f5f5f7 */
+  --text-secondary: 161 161 166;   /* #a1a1a6 */
+  --text-tertiary: 110 110 115;    /* #6e6e73 */
+  --accent-blue: 10 132 255;       /* #0a84ff */
+  --accent-green: 50 215 75;       /* #32d74b */
+  
+  --border-color: 255 255 255;
+  --border-subtle: 255 255 255;
 
-  --text-primary: 210 40% 98%;
-  /* White-ish */
-  --text-secondary: 215 20% 65%;
-  /* Cool Gray */
-  --text-tertiary: 215 15% 45%;
-  /* Darker Cool Gray */
-
-  --border-subtle: 217 33% 15%;
+  /* Legacy Mappings */
+  --bg-body: var(--bg-primary);
+  --bg-surface: var(--bg-secondary);
+  --bg-elevated: var(--bg-secondary);
 }
 
 .dark html, .dark body {
-  background-color: hsl(var(--bg-body));
-  background-image: linear-gradient(to bottom, #000000, hsl(var(--bg-body)));
+  background-color: var(--bg-primary);
 }
 
 /* Utilities */

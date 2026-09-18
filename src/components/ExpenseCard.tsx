@@ -105,50 +105,47 @@ export const ExpenseCard = React.memo(({
 
   return (
     <motion.div
-      className="relative w-full select-none"
+      className="relative w-full select-none mb-3"
       onContextMenu={(e: React.MouseEvent) => e.preventDefault()}
       layout
-      initial={{ opacity: 0, y: -15, scale: 0.95, filter: "blur(4px)" }}
-      animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
-      exit={{ opacity: 0, scale: 0.95, filter: "blur(2px)", transition: { duration: 0.2 } }}
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
       transition={{ type: "spring", stiffness: 400, damping: 25, mass: 0.8 }}
     >
       <motion.button
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.96 }}
         onPointerDown={startPress}
         onPointerUp={endPress}
         onPointerLeave={endPress}
         onClick={handleClick}
-        className={`bg-white/60 dark:bg-white/[0.06] backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.03)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] rounded-[20px] px-4 py-2 flex items-center gap-4 text-left w-full min-h-[60px] relative overflow-hidden group transition-colors hover:bg-white/70 dark:hover:bg-white/[0.1] ${borderClass}`}
+        className={`w-full glass-card hover:shadow-xl transition-all duration-300 flex items-center p-4 gap-4 text-left group ${borderClass}`}
       >
         <div
-          className="relative z-10 w-9 h-9 rounded-[10px] flex items-center justify-center shrink-0 bg-white/60 dark:bg-black/20 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-          style={{ color: accentColor }}
+          className="relative z-10 w-12 h-12 rounded-[14px] flex items-center justify-center shrink-0 shadow-sm"
+          style={{ backgroundColor: `${accentColor}15`, color: accentColor }}
         >
-          <div className="opacity-80">
-            {getCategoryIcon(expense.category, "20px")}
-          </div>
+          {getCategoryIcon(expense.category, "24px")}
         </div>
 
-        <div className="relative z-10 min-w-0 flex-1">
-          <div className="text-[15px] font-semibold text-zinc-900 dark:text-white leading-tight truncate">
+        <div className="relative z-10 min-w-0 flex-1 flex flex-col justify-center">
+          <div className="text-[17px] font-semibold text-primary leading-snug truncate">
             {noteDetails.main}
           </div>
           {noteDetails.subNote && (
-            <div className="mt-0.5 flex items-center gap-1.5 min-w-0 text-[11px] font-medium text-zinc-400 dark:text-[#A0A0A0] opacity-70">
-              <span className="normal-case tracking-normal font-medium truncate">
-                {noteDetails.subNote}
-              </span>
+            <div className="mt-0.5 text-[13px] text-secondary truncate">
+              {noteDetails.subNote}
             </div>
           )}
         </div>
 
-        <div className="relative z-10 flex flex-col items-end justify-center shrink-0 max-w-[42%]">
-          <span className={`font-bold text-zinc-900 dark:text-white tracking-tighter whitespace-nowrap ${amount.length >= 8 ? 'text-[14px]' : 'text-[17px]'
-            }`}>
+        <div className="relative z-10 flex flex-col items-end justify-center shrink-0">
+          <span className="font-semibold text-[17px] text-primary tracking-tight">
             ₹{amount}
           </span>
-          <span className="mt-0.5 text-[9px] text-zinc-400/60 dark:text-[#A0A0A0]/40 font-medium whitespace-nowrap">{time}</span>
+          <span className="mt-0.5 text-[13px] text-tertiary font-medium">
+            {time}
+          </span>
         </div>
       </motion.button>
 
@@ -158,25 +155,31 @@ export const ExpenseCard = React.memo(({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            className="absolute inset-0 z-30 bg-white/95 dark:bg-[#121316]/95 rounded-2xl flex items-center justify-center gap-4 backdrop-blur-sm"
+            className="absolute inset-0 z-30 bg-body/80 backdrop-blur-md rounded-[24px] flex items-center justify-center gap-6"
           >
             <button
               onClick={handleEdit}
-              className="w-10 h-10 rounded-full bg-zinc-100 dark:bg-white/10 flex items-center justify-center text-zinc-900 dark:text-white active:scale-90 transition-transform shadow-sm cursor-pointer"
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform cursor-pointer group"
             >
-              <Edit2 size={18} />
+              <div className="w-12 h-12 rounded-full bg-secondary text-primary flex items-center justify-center shadow-sm group-hover:bg-primary group-hover:text-body transition-colors">
+                <Edit2 size={20} />
+              </div>
+              <span className="text-[11px] font-semibold text-primary">Edit</span>
             </button>
             <button
               onClick={handleDeleteClick}
-              className="w-10 h-10 rounded-full bg-red-500/10 dark:bg-red-500/20 flex items-center justify-center text-red-500 active:scale-90 transition-transform cursor-pointer"
+              className="flex flex-col items-center gap-1 active:scale-90 transition-transform cursor-pointer group"
             >
-              <Trash2 size={18} />
+              <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center shadow-sm group-hover:bg-red-500 group-hover:text-white transition-colors">
+                <Trash2 size={20} />
+              </div>
+              <span className="text-[11px] font-semibold text-red-500">Delete</span>
             </button>
             <button
               onClick={closeActions}
-              className="absolute top-2 right-2 p-1 text-zinc-400 dark:text-white/40 hover:text-zinc-900 dark:hover:text-white cursor-pointer"
+              className="absolute top-3 right-3 p-2 text-tertiary hover:text-primary cursor-pointer active:scale-90 transition-transform"
             >
-              <X size={16} />
+              <X size={20} />
             </button>
           </motion.div>
         )}
@@ -188,19 +191,19 @@ export const ExpenseCard = React.memo(({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="absolute inset-0 z-40 bg-red-500 rounded-2xl flex flex-col items-center justify-center p-2 text-white"
+            className="absolute inset-0 z-40 bg-red-500 rounded-[24px] flex flex-col items-center justify-center p-4 text-white shadow-lg"
           >
-            <span className="text-[10px] font-bold uppercase tracking-wider mb-2">Are you sure?</span>
-            <div className="flex flex-row gap-2 w-full px-1">
+            <span className="text-[13px] font-semibold mb-3">Delete this expense?</span>
+            <div className="flex flex-row gap-3 w-full max-w-[200px]">
               <button
                 onClick={handleConfirmDelete}
-                className="flex-1 py-1.5 bg-white text-red-500 rounded-full text-[10px] font-bold active:scale-95 transition-transform cursor-pointer"
+                className="flex-1 py-2 bg-white text-red-500 rounded-full text-[13px] font-bold active:scale-95 transition-transform cursor-pointer"
               >
                 Delete
               </button>
               <button
                 onClick={closeConfirm}
-                className="flex-1 py-1.5 bg-black/20 text-white rounded-full text-[10px] font-bold active:scale-95 transition-transform cursor-pointer"
+                className="flex-1 py-2 bg-black/20 text-white rounded-full text-[13px] font-bold active:scale-95 transition-transform cursor-pointer"
               >
                 Cancel
               </button>
