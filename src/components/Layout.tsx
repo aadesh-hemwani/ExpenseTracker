@@ -131,7 +131,7 @@ const Layout = memo(() => {
       return "relative z-10 w-full h-full";
     }
 
-    return `relative z-10 max-w-2xl mx-auto ${isChat
+    return `relative z-10 max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto ${isChat
       ? "h-full"
       : "px-5 pt-0 pb-32 md:p-12"
       }`;

@@ -198,7 +198,7 @@ const Home = React.memo(() => {
   if (loadingCurrent || loadingStats) {
     return (
       <div className="space-y-8 pb-12">
-        <header className="-mx-5">
+        <header className="-mx-5 md:-mx-12">
           <HeroBalanceSkeleton />
         </header>
         <div className="space-y-4">
@@ -215,7 +215,7 @@ const Home = React.memo(() => {
 
   return (
     <div className="space-y-5 pb-12">
-      <header className="sticky top-0 z-50 -mx-5">
+      <header className="sticky top-0 z-50 -mx-5 md:-mx-12">
         <HeroBalance
           currentBalance={metrics.total}
           budgetAmount={user?.monthlyBudgetCap}
