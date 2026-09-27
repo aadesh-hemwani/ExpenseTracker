@@ -31,7 +31,7 @@ export type Theme = 'light' | 'dark' | 'system';
 
 export interface ThemeContextType {
     theme: Theme;
-    toggleTheme: () => void;
+
     accentColor: string;
     setAccentColor: (color: string) => void;
     accentColors: Record<string, { name: string; default: string; hover: string }>;

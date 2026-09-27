@@ -190,7 +190,7 @@ const HeroBalance = React.memo(({
 
   const innerClass = `relative z-10 w-full overflow-hidden ${
     isTopHero
-      ? "hero-inner px-5 sm:px-8 bg-transparent backdrop-blur-sm flex flex-col pt-4 pb-3"
+      ? "hero-inner px-5 sm:px-8 bg-transparent flex flex-col pt-4 pb-3"
       : "rounded-[calc(16px-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-none transition-all duration-300"
   }`;
 
@@ -205,7 +205,7 @@ const HeroBalance = React.memo(({
   return (
     <div className={containerClass} role="region" aria-label="Account Balance Summary">
       {isTopHero ? (
-        <div className="absolute inset-0 z-0 will-change-transform" style={{ background: gradientBg }}>
+        <div className="absolute inset-0 z-0 backdrop-blur-3xl backdrop-saturate-150" style={{ background: gradientBg }}>
           <div
             className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
             style={{ backgroundColor: activeColor }}

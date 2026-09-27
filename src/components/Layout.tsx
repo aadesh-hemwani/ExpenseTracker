@@ -69,6 +69,7 @@ const NavItem = memo(({
               <Icon
                 ref={iconRef}
                 color={isActive ? "white" : "currentColor"}
+                style={{ color: isActive ? "white" : undefined }}
                 size={22}
                 className="transition-all duration-300"
                 strokeWidth={isActive ? 2.5 : 2}
@@ -125,7 +126,7 @@ const Layout = memo(() => {
   const mainClassName = useMemo(() => {
     const isChat = location.pathname === "/chat";
     const isEvent = location.pathname.startsWith("/event/");
-    
+
     if (isEvent) {
       return "relative z-10 w-full h-full";
     }
@@ -193,7 +194,7 @@ const Layout = memo(() => {
                   damping: 30,
                   mass: 0.8
                 }}
-                className="w-full"
+                className={`w-full ${location.pathname === "/chat" || location.pathname.startsWith("/event/") ? "h-full" : ""}`}
               >
                 <Outlet />
               </motion.div>
@@ -204,7 +205,7 @@ const Layout = memo(() => {
 
       {!location.pathname.startsWith("/admin") && <GlobalAddExpense showFAB={false} />}
 
-      <div className="md:hidden fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-4 right-4 z-50 pointer-events-none flex items-center gap-3 keyboard-hide">
+      <div className="md:hidden fixed bottom-[calc(0.75rem+env(safe-area-inset-bottom))] left-4 right-4 z-50 pointer-events-none flex items-center gap-3">
         <div className="flex-1 pointer-events-auto">
           <LiquidNavBar items={NAV_ITEMS} />
         </div>

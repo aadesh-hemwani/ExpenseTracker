@@ -141,6 +141,7 @@ export const LiquidNavBar: React.FC<LiquidNavBarProps> = React.memo(({ items }) 
                 <Icon
                   ref={(el: any) => (iconRefs.current[index] = el)}
                   color={isActive ? activeColor : "currentColor"}
+                  style={{ color: isActive ? activeColor : undefined }}
                   size={22}
                   strokeWidth={isActive ? 2.5 : 2}
                   className={`transition-colors duration-300 ${isActive ? "" : "text-gray-500 dark:text-gray-400 opacity-80 group-hover:opacity-100"}`}

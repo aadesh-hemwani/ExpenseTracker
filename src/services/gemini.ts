@@ -27,7 +27,7 @@ export const generateAnalyticsInsights = async (
   if (!API_KEY || !navigator.onLine) return [];
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
     const recentTxns = expenses.slice(0, 30).map(e => {
       const dateStr = format(e.date instanceof Date ? e.date : (e.date as any).toDate(), "MMM dd");
@@ -81,7 +81,7 @@ export const calculateRecommendedBudget = async (
   if (!API_KEY || !navigator.onLine) return null;
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
 
     // 1. Pre-process Data: Group by Month -> Category
     const monthlyData: Record<string, { total: number; categories: Record<string, number> }> = {};
@@ -159,10 +159,11 @@ export const chatWithFinancialAssistant = async (
   try {
     // Model fallback chain — if one model hits rate limit (429), automatically try the next
     const CHAT_MODELS = [
-      "gemini-2.5-pro",
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-2.0-flash-lite"
+      "gemini-3.6-flash",
+      "gemini-3.8-flash",
+      "gemini-3.5-flash",
+      "gemini-3.5-flash-lite",
+      "gemini-3.1-pro-preview"
     ];
 
     const queryEmbedding = await generateEmbedding(message);
@@ -338,7 +339,7 @@ export const chatWithFinancialAssistant = async (
       } catch (modelError: any) {
         lastError = modelError;
         const msg = String(modelError?.message || modelError?.status || '').toLowerCase();
-        const isRateLimit = msg.includes('429') || msg.includes('resource has been exhausted') || msg.includes('quota');
+        const isRateLimit = msg.includes('429') || msg.includes('503') || msg.includes('resource has been exhausted') || msg.includes('quota') || msg.includes('high demand') || msg.includes('overloaded');
 
         if (isRateLimit && i < CHAT_MODELS.length - 1) {
           console.warn(`⚠️ Rate limited on ${modelName}, waiting 2s before trying ${CHAT_MODELS[i + 1]}...`);
@@ -353,9 +354,10 @@ export const chatWithFinancialAssistant = async (
     console.error("All models rate limited:", lastError);
     return "I've hit the rate limit on all available models. Please try again in a few minutes.";
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat Error:", error);
-    return "I'm having trouble analyzing your finances right now. Please try again.";
+    const errMsg = error?.message || String(error);
+    return `I'm having trouble analyzing your finances right now. \n\n**Error details:** ${errMsg}\n\nPlease try again.`;
   }
 };
 

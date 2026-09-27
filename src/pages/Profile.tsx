@@ -51,7 +51,7 @@ const toDate = (d: Timestamp | Date | undefined): Date => {
 
 const Profile = React.memo(() => {
   const { user, logOut } = useAuth();
-  const { theme, toggleTheme, accentColor, setAccentColor, accentColors } = useTheme();
+  const { theme, accentColor, setAccentColor, accentColors } = useTheme();
   const navigate = useNavigate();
   const { events, loading: eventsLoading, addEvent } = useEvents();
 
@@ -230,23 +230,7 @@ const Profile = React.memo(() => {
             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Appearance</h3>
           </div>
 
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full transition-colors ${theme === "dark" ? "bg-gray-800 text-yellow-400" : "bg-yellow-100 text-yellow-600"}`}>
-                {theme === "dark" ? <Moon size={20} color="currentColor" /> : <Sun size={20} color="currentColor" />}
-              </div>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">Dark Mode</p>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Adjust the appearance to reduce glare.</p>
-              </div>
-            </div>
-            <button
-              onClick={toggleTheme}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 ${theme === "dark" ? "bg-accent" : "bg-gray-200"}`}
-            >
-              <span className={`${theme === "dark" ? "translate-x-6" : "translate-x-1"} inline-block h-4 w-4 transform rounded-full bg-white transition-transform`} />
-            </button>
-          </div>
+
 
           <div>
             <label className="block text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-4">

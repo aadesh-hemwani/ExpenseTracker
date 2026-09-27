@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Loader2, Trash2, Plus, Sparkles, ChevronLeft } from "lucide-react";
+import { Send, Loader2, Trash2, Plus, Sparkles, ChevronLeft, Menu, X } from "lucide-react";
+import { format, isToday, isYesterday } from "date-fns";
 import { useRecentExpenses } from "../hooks/useExpenses";
 import { useChatHistory } from "../hooks/useChatHistory";
 import { chatWithFinancialAssistant } from "../services/gemini";
@@ -57,22 +58,33 @@ const Chat = memo(() => {
     const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const inputRef = useRef<HTMLTextAreaElement>(null);
-    const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [selectedDate, setSelectedDate] = useState<string | null>(null);
     const navigate = useNavigate();
+
+    const groupedMessages = useMemo(() => {
+        const groups: Record<string, typeof messages> = {};
+        messages.forEach(msg => {
+            const dateStr = format(msg.timestamp, 'yyyy-MM-dd');
+            if (!groups[dateStr]) groups[dateStr] = [];
+            groups[dateStr].push(msg);
+        });
+        return groups;
+    }, [messages]);
+
+    const availableDates = useMemo(() => {
+        return Object.keys(groupedMessages).sort((a, b) => b.localeCompare(a));
+    }, [groupedMessages]);
+
+    const activeDate = useMemo(() => {
+        if (selectedDate && availableDates.includes(selectedDate)) return selectedDate;
+        return availableDates.length > 0 ? availableDates[0] : format(new Date(), 'yyyy-MM-dd');
+    }, [selectedDate, availableDates]);
+
+    const activeMessages = groupedMessages[activeDate] || [];
 
     const scrollToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
         messagesEndRef.current?.scrollIntoView({ behavior });
-    }, []);
-
-    const handleInputFocus = useCallback(() => {
-        setIsKeyboardOpen(true);
-        document.documentElement.classList.add("keyboard-open");
-        setTimeout(() => scrollToBottom(), 300);
-    }, [scrollToBottom]);
-
-    const handleInputBlur = useCallback(() => {
-        setIsKeyboardOpen(false);
-        document.documentElement.classList.remove("keyboard-open");
     }, []);
 
     const formatMessageText = useCallback((text: string) => {
@@ -104,14 +116,15 @@ const Chat = memo(() => {
 
     useEffect(() => {
         scrollToBottom();
-    }, [messages, isTyping, scrollToBottom]);
-
-    useEffect(() => {
-        return () => document.documentElement.classList.remove("keyboard-open");
-    }, []);
+    }, [activeMessages, isTyping, scrollToBottom]);
 
     const submitMessage = async (text: string) => {
         if (!text.trim() || isTyping || loading) return;
+
+        const todayStr = format(new Date(), 'yyyy-MM-dd');
+        if (activeDate !== todayStr) {
+            setSelectedDate(todayStr);
+        }
 
         setInputValue("");
         setIsTyping(true);
@@ -155,38 +168,107 @@ const Chat = memo(() => {
         }
     }, [clearHistory]);
 
-    return (
-        <div className="absolute inset-0 flex flex-col h-full bg-white dark:bg-[#0A0A0A]">
-            {/* Header */}
-            <div className={`sticky top-0 z-20 pt-[calc(env(safe-area-inset-top)+0.75rem)] px-5 md:px-8 pb-3 shrink-0 flex items-center justify-between transition-all duration-200 bg-white/80 dark:bg-[#0A0A0A]/80 backdrop-blur-md`}>
-                <div className="flex items-center gap-2">
-                    <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors rounded-full">
-                        <ChevronLeft size={24} />
-                    </button>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-                        Chat
-                    </h1>
-                </div>
-
-                {messages.length > 0 && (
-                    <button
-                        onClick={handleClearHistory}
-                        className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
-                        title="Clear Chat"
-                    >
-                        <Trash2 size={20} />
-                    </button>
+    const SidebarContent = () => (
+        <div className="flex flex-col h-full">
+            <div className="p-4 border-b border-gray-200 dark:border-white/10 shrink-0 flex justify-between items-center">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Chat History</h2>
+                <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-2 text-gray-500 hover:text-gray-900 dark:hover:text-white rounded-full">
+                    <X size={20} />
+                </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-1">
+                {availableDates.length === 0 ? (
+                    <p className="text-sm text-gray-500 text-center py-4">No history yet</p>
+                ) : (
+                    availableDates.map(dateStr => {
+                        const [year, month, day] = dateStr.split('-');
+                        const localD = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                        const label = isToday(localD) ? 'Today' : isYesterday(localD) ? 'Yesterday' : format(localD, 'MMM dd, yyyy');
+                        const isActive = activeDate === dateStr;
+                        return (
+                            <button
+                                key={dateStr}
+                                onClick={() => {
+                                    setSelectedDate(dateStr);
+                                    setIsSidebarOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-2.5 rounded-xl transition-colors text-[14px] ${isActive ? 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-medium' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'}`}
+                            >
+                                {label}
+                            </button>
+                        )
+                    })
                 )}
             </div>
+        </div>
+    );
+
+    return (
+        <div className="absolute inset-0 flex h-full bg-white dark:bg-[#0A0A0A]">
+            {/* Sidebar for Desktop */}
+            <div className="hidden md:flex flex-col w-64 shrink-0 border-r border-gray-200 dark:border-white/10 bg-gray-50/30 dark:bg-[#0A0A0A] h-full overflow-y-auto">
+                <SidebarContent />
+            </div>
+
+            {/* Sidebar Drawer for Mobile */}
+            <AnimatePresence>
+                {isSidebarOpen && (
+                    <>
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40 md:hidden backdrop-blur-sm"
+                        />
+                        <motion.div
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                            className="fixed inset-y-0 left-0 w-64 bg-white dark:bg-[#111111] z-50 shadow-xl border-r border-gray-200 dark:border-white/10 overflow-y-auto flex flex-col"
+                        >
+                            <SidebarContent />
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Main Chat Area */}
+            <div className="flex-1 flex flex-col h-full relative min-w-0">
+                {/* Header */}
+                <div className={`sticky top-0 z-20 pt-[calc(env(safe-area-inset-top)+0.75rem)] px-5 md:px-8 pb-3 shrink-0 flex items-center justify-between transition-all duration-200 bg-white/80 dark:bg-[#0A0A0A]/80 backdrop-blur-md`}>
+                    <div className="flex items-center gap-2">
+                        <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors rounded-full">
+                            <ChevronLeft size={24} />
+                        </button>
+                        <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-1 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors rounded-full">
+                            <Menu size={24} />
+                        </button>
+                        <h1 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                            Chat
+                        </h1>
+                    </div>
+
+                    {activeMessages.length > 0 && (
+                        <button
+                            onClick={handleClearHistory}
+                            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-white/10"
+                            title="Clear Chat"
+                        >
+                            <Trash2 size={20} />
+                        </button>
+                    )}
+                </div>
 
             <div className="flex-1 overflow-y-auto no-scrollbar px-4 md:px-8 flex flex-col min-h-0 pt-2">
                 <div className="max-w-3xl mx-auto w-full flex-1 flex flex-col">
-                    {messages.length === 0 ? (
+                    {activeMessages.length === 0 ? (
                         <WelcomeMessage onSuggestionClick={handleSuggestionClick} />
                     ) : (
                         <div className="space-y-6 py-4 pb-6">
                             <AnimatePresence initial={false}>
-                                {messages.map((msg) => (
+                                {activeMessages.map((msg) => (
                                     <motion.div
                                         key={msg.id}
                                         initial={{ opacity: 0, y: 10 }}
@@ -231,10 +313,7 @@ const Chat = memo(() => {
                 </div>
             </div>
 
-            <div
-                className={`shrink-0 px-4 md:px-8 z-10 bg-white dark:bg-[#0A0A0A] transition-all duration-200 ${isKeyboardOpen ? "pb-3 pt-2" : "pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-2 md:pb-6"
-                    }`}
-            >
+            <div className="shrink-0 px-4 md:px-8 z-10 bg-white dark:bg-[#0A0A0A] transition-all duration-200 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-2 md:pb-6">
                 <div className="max-w-3xl mx-auto relative">
                     <form onSubmit={handleSendMessage} className="liquid-glass-effect rounded-[24px] p-2 flex items-end gap-2 transition-all">
                         <TextareaAutosize
@@ -243,8 +322,6 @@ const Chat = memo(() => {
                             maxRows={6}
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onFocus={handleInputFocus}
-                            onBlur={handleInputBlur}
                             onKeyDown={handleKeyDown}
                             placeholder="Ask AI..."
                             className="flex-1 bg-transparent py-2.5 pl-4 pr-1 text-[15px] placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none text-gray-900 dark:text-white resize-none"
@@ -267,6 +344,7 @@ const Chat = memo(() => {
                         </p>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );

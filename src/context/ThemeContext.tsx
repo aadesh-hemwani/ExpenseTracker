@@ -14,9 +14,20 @@ interface ThemeProviderProps {
 }
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage.getItem("theme") as Theme) || "light"
+  const [theme, setTheme] = useState<Theme>(() =>
+    window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
   );
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
   const [accentColor, setAccentColor] = useState<string>(
     () => localStorage.getItem("accentColor") || "royalBlue"
   );
@@ -106,7 +117,6 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     // Apply Theme
     root.classList.remove("light", "dark");
     root.classList.add(theme);
-    localStorage.setItem("theme", theme);
 
     // Apply Accent Color
     const colors = accentColors[accentColor] || accentColors.royalBlue;
@@ -147,13 +157,9 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
     }
   }, [theme, accentColor]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
-
   return (
     <ThemeContext.Provider
-      value={{ theme, toggleTheme, accentColor, setAccentColor, accentColors }}
+      value={{ theme, accentColor, setAccentColor, accentColors }}
     >
       {children}
     </ThemeContext.Provider>
