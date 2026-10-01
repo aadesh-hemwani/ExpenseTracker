@@ -205,7 +205,7 @@ const HeroBalance = React.memo(({
   return (
     <div className={containerClass} role="region" aria-label="Account Balance Summary">
       {isTopHero ? (
-        <div className="absolute inset-0 z-0 backdrop-blur-3xl backdrop-saturate-150" style={{ background: gradientBg }}>
+        <div className="absolute inset-0 z-0 backdrop-blur-md backdrop-saturate-150" style={{ background: gradientBg }}>
           <div
             className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
             style={{ backgroundColor: activeColor }}
@@ -254,6 +254,7 @@ const HeroBalance = React.memo(({
           <div className={`flex items-baseline ${isTopHero ? 'will-change-transform' : ''}`}>
             <CountUp
               value={Math.trunc(currentBalance)}
+              duration={0.3}
               currency={false}
               prefix="₹"
               prefixClassName={`inline-block font-medium tracking-tight pr-1 ${
