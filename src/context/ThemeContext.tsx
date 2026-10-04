@@ -3,6 +3,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useMemo,
   ReactNode,
 } from "react";
 import { ThemeContextType, Theme } from "../types";
@@ -19,13 +20,26 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   );
   
   useEffect(() => {
+    if (!window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = (e: MediaQueryListEvent) => {
+    const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
       setTheme(e.matches ? 'dark' : 'light');
     };
     
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleChange);
+    } else if (mediaQuery.addListener) {
+      // Fallback for older Safari/iOS
+      mediaQuery.addListener(handleChange);
+    }
+    
+    return () => {
+      if (mediaQuery.removeEventListener) {
+        mediaQuery.removeEventListener('change', handleChange);
+      } else if (mediaQuery.removeListener) {
+        mediaQuery.removeListener(handleChange);
+      }
+    };
   }, []);
 
   const [accentColor, setAccentColor] = useState<string>(
@@ -35,10 +49,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   const isDark = theme === "dark";
 
   // Define accent colors map - using Tailwind colors for reference
-  const accentColors: Record<
-    string,
-    { name: string; default: string; hover: string }
-  > = {
+  const accentColors = useMemo<Record<string, { name: string; default: string; hover: string }>>(() => ({
     royalBlue: {
       name: "Royal Blue",
       default: isDark ? "#60a5fa" : "#2563eb",
@@ -69,7 +80,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
       default: isDark ? "#22d3ee" : "#0891b2",
       hover: isDark ? "#67e8f9" : "#0e7490"
     },
-  };
+  }), [isDark]);
 
   // Helper to convert hex to HSL
   const hexToHSL = (hex: string): { h: number; s: number; l: number } => {
@@ -155,12 +166,15 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         theme === "dark" ? "black-translucent" : "default"
       );
     }
-  }, [theme, accentColor]);
+  }, [theme, accentColor, accentColors]);
+
+  const contextValue = useMemo(
+    () => ({ theme, accentColor, setAccentColor, accentColors }),
+    [theme, accentColor, accentColors]
+  );
 
   return (
-    <ThemeContext.Provider
-      value={{ theme, accentColor, setAccentColor, accentColors }}
-    >
+    <ThemeContext.Provider value={contextValue}>
       {children}
     </ThemeContext.Provider>
   );

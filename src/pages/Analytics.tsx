@@ -316,7 +316,7 @@ const Analytics = memo(({ userId, readOnly: _readOnly = false }: AnalyticsProps)
           className="p-5 sm:p-6 bg-gradient-to-br from-indigo-600 to-violet-700 text-white rounded-[24px] shadow-[0_8px_32px_rgba(99,102,241,0.25)] border border-indigo-500/20 backdrop-blur-md relative overflow-hidden group cursor-pointer flex flex-col justify-between"
           onClick={() => trajectoryChartRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
         >
-          <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/5 rounded-full blur-2xl group-hover:scale-125 transition-transform duration-700 pointer-events-none" />
+          <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full group-hover:scale-125 transition-transform duration-700 pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%)' }} />
           
           <div className="w-full min-w-0">
             <div className="flex justify-between items-start mb-4 relative z-10 w-full min-w-0">
@@ -345,7 +345,7 @@ const Analytics = memo(({ userId, readOnly: _readOnly = false }: AnalyticsProps)
 
           return (
             <Card className="p-5 sm:p-6 rounded-[24px] relative overflow-hidden group cursor-pointer flex flex-col justify-between min-h-[170px] sm:min-h-[190px]">
-              <div className="absolute -right-10 -bottom-10 w-32 h-32 rounded-full blur-2xl opacity-[0.04] dark:opacity-[0.07] group-hover:scale-125 transition-transform duration-700 pointer-events-none" style={{ backgroundColor: catColor }} />
+              <div className="absolute -right-10 -bottom-10 w-48 h-48 rounded-full group-hover:scale-125 transition-transform duration-700 pointer-events-none" style={{ background: `radial-gradient(circle, ${catColor}40 0%, transparent 60%)` }} />
               
               <div className="flex justify-between items-center mb-4 relative z-10 w-full min-w-0">
                 <span className="text-[10px] font-extrabold text-gray-400 dark:text-zinc-500 uppercase tracking-[0.15em] whitespace-nowrap">Top Category</span>

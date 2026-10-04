@@ -54,7 +54,7 @@ const HeroProgressTimer = React.memo(({
     return () => clearInterval(interval);
   }, []);
 
-  const spentPercentage = useMemo(() => 
+  const spentPercentage = useMemo(() =>
     budgetAmount > 0 ? (currentBalance / budgetAmount) * 100 : 0,
     [currentBalance, budgetAmount]
   );
@@ -129,7 +129,7 @@ const HeroBalance = React.memo(({
   onAmountClick,
 }: HeroBalanceProps) => {
   const { theme, accentColor, accentColors } = useTheme();
-  
+
   const activeColor = useMemo(() => {
     const color = accentColors[accentColor];
     return color ? color.default : "#6366f1";
@@ -168,7 +168,7 @@ const HeroBalance = React.memo(({
     const baseColor = isDark ? 'rgba(11, 11, 12, 1)' : 'rgba(250, 250, 251, 1)';
     const subtleHighlight = isDark ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.015)';
     const accentAlpha = isDark ? '0.08' : '0.04';
-    
+
     let accentWithAlpha = activeColor;
     if (activeColor.startsWith('#')) {
       const alphaHex = Math.round(parseFloat(accentAlpha) * 255).toString(16).padStart(2, '0');
@@ -182,33 +182,29 @@ const HeroBalance = React.memo(({
       ${baseColor} 100%)`;
   }, [theme, activeColor]);
 
-  const containerClass = `relative w-full mx-auto group ${
-    isTopHero
+  const containerClass = `relative w-full mx-auto group ${isTopHero
       ? "hero-scroll-root z-30 overflow-hidden rounded-b-[16px]"
       : "max-w-[400px] rounded-2xl p-[1.5px] overflow-hidden shadow-[0_0_25px_rgba(0,0,0,0.02)] transition-all duration-700"
-  }`;
+    }`;
 
-  const innerClass = `relative z-10 w-full overflow-hidden ${
-    isTopHero
+  const innerClass = `relative z-10 w-full overflow-hidden ${isTopHero
       ? "hero-inner px-5 sm:px-8 bg-transparent flex flex-col pt-4 pb-3"
       : "rounded-[calc(16px-1.5px)] px-5 py-6 sm:px-7 sm:py-8 bg-white/40 dark:bg-white/[0.02] backdrop-blur-md shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.05)] border-none transition-all duration-300"
-  }`;
+    }`;
 
-  const balanceRowClass = `hero-balance-row relative z-10 flex items-center active:scale-95 transition-opacity ${
-    isTopHero ? 'mb-5' : 'justify-center pb-6'
-  } ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`;
+  const balanceRowClass = `hero-balance-row relative z-10 flex items-center active:scale-95 transition-opacity ${isTopHero ? 'mb-5' : 'justify-center pb-6'
+    } ${onAmountClick ? 'cursor-pointer hover:opacity-80' : ''}`;
 
-  const statsRowClass = `flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium tracking-tight cursor-pointer active:opacity-60 transition-opacity ${
-    isTopHero ? 'text-zinc-900/50 dark:text-white/50' : 'text-zinc-500 dark:text-zinc-400'
-  }`;
+  const statsRowClass = `flex flex-wrap items-center gap-x-3 gap-y-2 text-[14px] font-medium tracking-tight cursor-pointer active:opacity-60 transition-opacity ${isTopHero ? 'text-zinc-900/50 dark:text-white/50' : 'text-zinc-500 dark:text-zinc-400'
+    }`;
 
   return (
     <div className={containerClass} role="region" aria-label="Account Balance Summary">
       {isTopHero ? (
-        <div className="absolute inset-0 z-0 backdrop-blur-md backdrop-saturate-150" style={{ background: gradientBg }}>
+        <div className="absolute inset-0 z-0 liquid-glass-effect" style={{ backgroundImage: gradientBg }}>
           <div
-            className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[70%] h-[50%] opacity-[0.1] dark:opacity-[0.15] blur-[100px] pointer-events-none z-0"
-            style={{ backgroundColor: activeColor }}
+            className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-[90%] h-[65%] opacity-[0.25] dark:opacity-[0.35] pointer-events-none z-0"
+            style={{ background: `radial-gradient(ellipse at center, ${activeColor} 0%, transparent 60%)` }}
           />
           <div className="absolute -top-[500px] left-0 right-0 h-[500px] bg-[#0B0B0C]" />
         </div>
@@ -257,22 +253,19 @@ const HeroBalance = React.memo(({
               duration={0.3}
               currency={false}
               prefix="₹"
-              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${
-                isTopHero ? 'text-[2rem] sm:text-[2.4rem]' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
-              }`}
+              prefixClassName={`inline-block font-medium tracking-tight pr-1 ${isTopHero ? 'text-[2rem] sm:text-[2.4rem]' : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
+                }`}
               prefixStyle={isTopHero ? { color: activeColor, opacity: 0.4 } : {}}
-              className={`tracking-tighter font-semibold font-sans ${
-                isTopHero 
-                  ? 'text-[3.5rem] sm:text-[4.2rem] leading-none text-zinc-900 dark:text-white' 
+              className={`tracking-tighter font-semibold font-sans ${isTopHero
+                  ? 'text-[3.5rem] sm:text-[4.2rem] leading-none text-zinc-900 dark:text-white'
                   : 'text-5xl sm:text-6xl text-zinc-900 dark:text-white'
-              }`}
+                }`}
             />
             {hasDecimals && (
-              <span className={`font-medium tracking-tight ml-0.5 ${
-                isTopHero 
-                  ? 'text-[1.5rem] sm:text-[1.8rem] text-zinc-900/40 dark:text-white/40' 
+              <span className={`font-medium tracking-tight ml-0.5 ${isTopHero
+                  ? 'text-[1.5rem] sm:text-[1.8rem] text-zinc-900/40 dark:text-white/40'
                   : 'text-4xl sm:text-5xl text-zinc-400 dark:text-zinc-500'
-              }`}>
+                }`}>
                 .{currentBalance.toFixed(2).split(".")[1]}
               </span>
             )}
